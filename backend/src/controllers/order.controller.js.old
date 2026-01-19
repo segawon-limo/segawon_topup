@@ -1,0 +1,377 @@
+// Order Controller - Complete with Multi-Payment Support
+const midtransService = require('../services/midtrans.service');
+const xenditService = require('../services/xendit.service');
+const vipResellerService = require('../services/vipreseller-working.service');
+const pricingCalculator = require('../services/payment-pricing-calculator.service');
+
+// Mock database - replace with your actual models
+// const { Order, Product, Game } = require('../models');
+
+/**
+ * Get all products with pricing for all payment methods
+ */
+exports.getProducts = async (req, res) => {
+  try {
+    const { gameSlug } = req.params;
+
+    // Get products from database
+    // Replace with your actual query
+    const products = await Product.findAll({
+      where: { 
+        is_active: true,
+      },
+      include: [{
+        model: Game,
+        where: { slug: gameSlug }
+      }],
+      order: [['sort_order', 'ASC']],
+    });
+
+    // Add pricing comparison to each product
+    const productsWithPricing = products.map(product => {
+      const pricing = pricingCalculator.getPriceComparison(product);
+      
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        sku: product.sku,
+        basePrice: product.base_price,
+        pricing: {
+          qris: {
+            price: product.selling_price_qris,
+            fee: pricing.qris.fee,
+            recommended: true,
+          },
+          va: {
+            price: product.selling_price_va,
+            fee: pricing.va.fee,
+          },
+          ewallet: {
+            price: product.selling_price_ewallet,
+            fee: pricing.ewallet.fee,
+          },
+        },
+        recommendedPayment: product.recommended_payment,
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: productsWithPricing,
+    });
+
+  } catch (error) {
+    console.error('Get Products Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get products',
+    });
+  }
+};
+
+/**
+ * Create Order with Multi-Payment Support
+ */
+exports.createOrder = async (req, res) => {
+  try {
+    const {
+      productId,
+      gameUserId,
+      gameUserTag,
+      customerEmail,
+      customerPhone,
+      customerName,
+      paymentMethod, // 'qris', 'gopay', 'va_bca', etc
+    } = req.body;
+
+    // Validate required fields
+    if (!productId || !gameUserId || !paymentMethod) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+      });
+    }
+
+    // 1. Get product
+    const product = await Product.findByPk(productId);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      });
+    }
+
+    if (!product.is_active) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product is not available',
+      });
+    }
+
+    // 2. Get price based on payment method
+    const price = pricingCalculator.getSellingPrice(product, paymentMethod);
+    
+    // 3. Determine optimal gateway
+    const gateway = pricingCalculator.getOptimalGateway(price, paymentMethod);
+    
+    // 4. Calculate fee
+    const fee = pricingCalculator.calculateFee(price, paymentMethod);
+
+    // 5. Generate order number
+    const orderNumber = 'INV' + Date.now() + Math.random().toString(36).substring(2, 9).toUpperCase();
+
+    // 6. Create order in database
+    const order = await Order.create({
+      order_number: orderNumber,
+      product_id: productId,
+      game_user_id: gameUserId,
+      game_user_tag: gameUserTag,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      customer_name: customerName || 'Customer',
+      amount: price,
+      total_amount: price,
+      payment_method: paymentMethod,
+      payment_gateway: gateway,
+      gateway_fee: fee,
+      order_status: 'pending',
+      payment_status: 'pending',
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+    });
+
+    console.log('Order created:', {
+      orderNumber,
+      productName: product.name,
+      amount: price,
+      paymentMethod,
+      gateway,
+      fee,
+    });
+
+    // 7. Create payment with selected gateway
+    let paymentResult;
+    const paymentData = {
+      orderNumber,
+      amount: price,
+      productName: product.name,
+      customerEmail: customerEmail || 'customer@example.com',
+      customerPhone: customerPhone || '081234567890',
+      customerName: customerName || 'Customer',
+      paymentMethod,
+    };
+
+    if (gateway === 'midtrans') {
+      paymentResult = await midtransService.createTransaction(paymentData);
+    } else {
+      paymentResult = await xenditService.createInvoice(paymentData);
+    }
+
+    if (!paymentResult.success) {
+      // Update order status
+      await order.update({
+        order_status: 'failed',
+        payment_status: 'failed',
+        notes: paymentResult.message,
+      });
+
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create payment',
+        error: paymentResult.message,
+      });
+    }
+
+    // 8. Update order with payment info
+    await order.update({
+      payment_url: paymentResult.data.redirectUrl,
+      payment_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    });
+
+    // 9. Return response
+    return res.json({
+      success: true,
+      data: {
+        order: {
+          orderNumber: order.order_number,
+          productName: product.name,
+          amount: price,
+          paymentMethod,
+          gateway,
+          status: order.order_status,
+        },
+        payment: {
+          redirectUrl: paymentResult.data.redirectUrl,
+          token: paymentResult.data.token,
+          expiresAt: order.payment_expires_at,
+        },
+      },
+      message: 'Order created successfully',
+    });
+
+  } catch (error) {
+    console.error('Create Order Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
+ * Get Order Status
+ */
+exports.getOrderStatus = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    const order = await Order.findOne({
+      where: { order_number: orderNumber },
+      include: [{
+        model: Product,
+        include: [Game],
+      }],
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        orderNumber: order.order_number,
+        productName: order.Product.name,
+        amount: order.amount,
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        orderStatus: order.order_status,
+        gameUserId: order.game_user_id,
+        gameUserTag: order.game_user_tag,
+        createdAt: order.created_at,
+        paidAt: order.paid_at,
+        processedAt: order.processed_at,
+      },
+    });
+
+  } catch (error) {
+    console.error('Get Order Status Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Get Order History (for customer)
+ */
+exports.getOrderHistory = async (req, res) => {
+  try {
+    const { email, phone } = req.query;
+
+    if (!email && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email or phone required',
+      });
+    }
+
+    const whereClause = {};
+    if (email) whereClause.customer_email = email;
+    if (phone) whereClause.customer_phone = phone;
+
+    const orders = await Order.findAll({
+      where: whereClause,
+      include: [{
+        model: Product,
+        include: [Game],
+      }],
+      order: [['created_at', 'DESC']],
+      limit: 10,
+    });
+
+    return res.json({
+      success: true,
+      data: orders.map(order => ({
+        orderNumber: order.order_number,
+        productName: order.Product.name,
+        gameName: order.Product.Game.name,
+        amount: order.amount,
+        paymentStatus: order.payment_status,
+        orderStatus: order.order_status,
+        createdAt: order.created_at,
+      })),
+    });
+
+  } catch (error) {
+    console.error('Get Order History Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+/**
+ * Check payment status and update order
+ */
+exports.checkPaymentStatus = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    const order = await Order.findOne({
+      where: { order_number: orderNumber },
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    // Check status with payment gateway
+    let statusResult;
+    if (order.payment_gateway === 'midtrans') {
+      statusResult = await midtransService.checkStatus(orderNumber);
+    } else {
+      statusResult = await xenditService.checkStatus(orderNumber);
+    }
+
+    if (statusResult.success) {
+      // Update order if status changed
+      const paymentStatus = statusResult.data.transactionStatus;
+      
+      if (paymentStatus !== order.payment_status) {
+        await order.update({
+          payment_status: paymentStatus,
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        orderNumber: order.order_number,
+        paymentStatus: order.payment_status,
+        orderStatus: order.order_status,
+      },
+    });
+
+  } catch (error) {
+    console.error('Check Payment Status Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+module.exports = exports;

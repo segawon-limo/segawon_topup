@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-16T10:56:29.189Z",
+  "issue": "Invalid data format",
+  "dataType": "object",
+  "isArray": false,
+  "result": {
+    "success": true,
+    "data": {
+      "rc": "83",
+      "message": "Anda telah mencapai limitasi pengecekan pricelist, silahkan coba beberapa saat lagi"
+    }
+  }
+}

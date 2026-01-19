@@ -1,0 +1,285 @@
+const axios = require('axios');
+const crypto = require('crypto');
+require('dotenv').config();
+
+class VipResellerService {
+  constructor() {
+    this.apiId = process.env.VIPRESELLER_API_ID;
+    this.apiKey = process.env.VIPRESELLER_API_KEY;
+    this.endpoint = process.env.VIPRESELLER_ENDPOINT || 'https://vip-reseller.co.id/api';
+  }
+
+  // Generate signature untuk keamanan
+  generateSignature(data) {
+    const string = this.apiId + this.apiKey + JSON.stringify(data);
+    return crypto.createHash('md5').update(string).digest('hex');
+  }
+
+  // Helper untuk HTTP Request
+  async makeRequest(endpoint, data = {}) {
+    try {
+      // VIP Reseller format: key dan sign HARUS di payload utama
+      const payload = {
+        key: this.apiKey,
+        sign: this.generateSignature(data),
+        ...data,
+      };
+
+      console.log(`VIP Reseller Request to ${endpoint}:`, { ...payload, key: '***', sign: '***' });
+
+      const response = await axios.post(`${this.endpoint}${endpoint}`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('VIP Reseller API Error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  // Cek Saldo
+  async checkBalance() {
+    try {
+      // Profile endpoint tidak perlu parameter tambahan
+      const data = {};
+      const sign = crypto.createHash('md5').update(this.apiId + this.apiKey).digest('hex');
+      
+      const payload = {
+        key: this.apiKey,
+        sign: sign,
+      };
+
+      console.log('VIP Reseller Balance Request:', { key: '***', sign: '***' });
+
+      const response = await axios.post(`${this.endpoint}/profile`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+
+      if (response.data.result) {
+        return {
+          success: true,
+          data: {
+            balance: response.data.data.balance,
+            username: response.data.data.username,
+            level: response.data.data.level,
+          },
+        };
+      } else {
+        return {
+          success: false,
+          message: response.data.message || 'Failed to check balance',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to check balance',
+      };
+    }
+  }
+
+  // Get Price List / Product List
+  async getPriceList(gameCode = null) {
+    try {
+      const requestData = gameCode ? { filter_type: 'game', filter_value: gameCode } : {};
+      const sign = crypto.createHash('md5').update(this.apiId + this.apiKey + JSON.stringify(requestData)).digest('hex');
+
+      const payload = {
+        key: this.apiKey,
+        sign: sign,
+        ...requestData,
+      };
+
+      const response = await axios.post(`${this.endpoint}/game-feature`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+
+      if (response.data.result) {
+        return {
+          success: true,
+          data: response.data.data,
+        };
+      } else {
+        return {
+          success: false,
+          message: response.data.message || 'Failed to get price list',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to get price list',
+      };
+    }
+  }
+
+  // Cek Detail Product
+  async getProductDetail(productCode) {
+    try {
+      const response = await this.makeRequest('/game-feature', {
+        type: 'services',
+        code: productCode,
+      });
+
+      if (response.result) {
+        return {
+          success: true,
+          data: response.data,
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Product not found',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to get product detail',
+      };
+    }
+  }
+
+  // Create Order/Transaction
+  async createTransaction(orderData) {
+    try {
+      const payload = {
+        type: 'order',
+        service: orderData.productCode, // Product code dari VIP Reseller
+        data_no: orderData.userId, // Game User ID
+        server_id: orderData.zoneId || '', // Server/Zone ID (jika ada)
+      };
+
+      console.log('Creating VIP Reseller transaction:', payload);
+
+      const response = await this.makeRequest('/game-feature', payload);
+
+      if (response.result) {
+        const data = response.data;
+
+        return {
+          success: true,
+          data: {
+            transactionId: data.trxid,
+            status: data.status, // waiting, processing, success, failed
+            service: data.service,
+            userId: data.data,
+            zoneId: data.zone || null,
+            price: data.price,
+            balance: data.balance,
+            note: data.note || '',
+            serialNumber: data.sn || null, // Serial number (jika ada)
+            raw: data,
+          },
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to create transaction',
+          code: 'ORDER_FAILED',
+        };
+      }
+    } catch (error) {
+      console.error('VIP Reseller Transaction Error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Failed to process transaction',
+        code: 'API_ERROR',
+      };
+    }
+  }
+
+  // Check Transaction Status
+  async checkTransactionStatus(transactionId) {
+    try {
+      const response = await this.makeRequest('/game-feature', {
+        type: 'status',
+        trxid: transactionId,
+      });
+
+      if (response.result) {
+        return {
+          success: true,
+          data: response.data,
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to check transaction status',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to check transaction status',
+      };
+    }
+  }
+
+  // Mapping product code untuk Valorant
+  // VIP Reseller punya format code sendiri
+  // Harus disesuaikan dengan product list dari VIP Reseller
+  getValorantProductCode(nominalVP) {
+    const productMap = {
+      '125': 'VAL125', // Contoh - harus dicek di VIP Reseller
+      '420': 'VAL420',
+      '700': 'VAL700',
+      '1375': 'VAL1375',
+      '2400': 'VAL2400',
+      '4000': 'VAL4000',
+    };
+
+    return productMap[nominalVP.toString()] || null;
+  }
+
+  // Cek nickname game (untuk validasi)
+  async checkNickname(gameCode, userId, zoneId = null) {
+    try {
+      const payload = {
+        type: 'get-nickname',
+        code: gameCode,
+        target: userId,
+      };
+
+      if (zoneId) {
+        payload.zone = zoneId;
+      }
+
+      const response = await this.makeRequest('/game-feature', payload);
+
+      if (response.result) {
+        return {
+          success: true,
+          data: {
+            nickname: response.data,
+            valid: true,
+          },
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to check nickname',
+          valid: false,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to check nickname',
+        valid: false,
+      };
+    }
+  }
+}
+
+module.exports = new VipResellerService();

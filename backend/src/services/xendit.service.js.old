@@ -1,0 +1,255 @@
+const axios = require('axios');
+require('dotenv').config();
+
+class XenditService {
+  constructor() {
+    this.apiKey = process.env.XENDIT_SECRET_KEY;
+    this.isProduction = process.env.XENDIT_IS_PRODUCTION === 'true';
+    this.apiUrl = 'https://api.xendit.co';
+    this.callbackToken = process.env.XENDIT_CALLBACK_TOKEN;
+  }
+
+  // Generate authorization header (Basic Auth)
+  getAuthHeader() {
+    const auth = Buffer.from(`${this.apiKey}:`).toString('base64');
+    return `Basic ${auth}`;
+  }
+
+  // Create Invoice (Simple & Easy)
+  async createInvoice(orderData) {
+    try {
+      const expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 24); // 24 jam expiry
+
+      const payload = {
+        external_id: orderData.orderNumber,
+        amount: Math.round(orderData.totalAmount),
+        payer_email: orderData.customerEmail || 'customer@example.com',
+        description: `Topup ${orderData.productName}`,
+        invoice_duration: 86400, // 24 jam dalam detik
+        success_redirect_url: `${process.env.FRONTEND_URL}/order/success?order_id=${orderData.orderNumber}`,
+        failure_redirect_url: `${process.env.FRONTEND_URL}/order/failed`,
+        currency: 'IDR',
+        items: [
+          {
+            name: orderData.productName,
+            quantity: 1,
+            price: Math.round(orderData.amount),
+          },
+        ],
+        customer: {
+          given_names: orderData.customerName || 'Customer',
+          email: orderData.customerEmail || 'customer@example.com',
+          mobile_number: orderData.customerPhone || '+62812345678',
+        },
+        fees: [],
+      };
+
+      // Tambah admin fee jika ada
+      if (orderData.adminFee > 0) {
+        payload.items.push({
+          name: 'Biaya Admin',
+          quantity: 1,
+          price: Math.round(orderData.adminFee),
+        });
+      }
+
+      console.log('Creating Xendit invoice:', JSON.stringify(payload, null, 2));
+
+      const response = await axios.post(
+        `${this.apiUrl}/v2/invoices`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: this.getAuthHeader(),
+          },
+        }
+      );
+
+      return {
+        success: true,
+        data: {
+          invoiceId: response.data.id,
+          invoiceUrl: response.data.invoice_url,
+          expiryDate: response.data.expiry_date,
+          status: response.data.status,
+        },
+      };
+    } catch (error) {
+      console.error('Error creating Xendit invoice:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to create payment',
+        error: error.response?.data,
+      };
+    }
+  }
+
+  // Get Invoice Status
+  async getInvoiceStatus(invoiceId) {
+    try {
+      const response = await axios.get(
+        `${this.apiUrl}/v2/invoices/${invoiceId}`,
+        {
+          headers: {
+            Authorization: this.getAuthHeader(),
+          },
+        }
+      );
+
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('Error getting invoice status:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to get invoice status',
+      };
+    }
+  }
+
+  // Expire/Cancel Invoice
+  async expireInvoice(invoiceId) {
+    try {
+      const response = await axios.post(
+        `${this.apiUrl}/v2/invoices/${invoiceId}/expire!`,
+        {},
+        {
+          headers: {
+            Authorization: this.getAuthHeader(),
+          },
+        }
+      );
+
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('Error expiring invoice:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to expire invoice',
+      };
+    }
+  }
+
+  // Verify Callback Token (for webhook security)
+  verifyCallbackToken(receivedToken) {
+    return receivedToken === this.callbackToken;
+  }
+
+  // Handle Webhook/Callback dari Xendit
+  handleWebhook(webhookData) {
+    try {
+      const {
+        id,
+        external_id,
+        status,
+        amount,
+        paid_amount,
+        payment_method,
+        payment_channel,
+      } = webhookData;
+
+      console.log('Received Xendit webhook:', JSON.stringify(webhookData, null, 2));
+
+      // Map Xendit status ke internal status
+      let paymentStatus = 'pending';
+      let orderStatus = 'pending';
+
+      switch (status) {
+        case 'PAID':
+        case 'SETTLED':
+          paymentStatus = 'success';
+          orderStatus = 'processing';
+          break;
+        case 'EXPIRED':
+          paymentStatus = 'expired';
+          orderStatus = 'failed';
+          break;
+        case 'PENDING':
+          paymentStatus = 'pending';
+          orderStatus = 'pending';
+          break;
+        default:
+          paymentStatus = 'failed';
+          orderStatus = 'failed';
+      }
+
+      return {
+        success: true,
+        data: {
+          invoiceId: id,
+          orderId: external_id,
+          paymentStatus,
+          orderStatus,
+          amount: amount,
+          paidAmount: paid_amount,
+          paymentMethod: payment_method || payment_channel,
+          raw: webhookData,
+        },
+      };
+    } catch (error) {
+      console.error('Error handling Xendit webhook:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to process webhook',
+      };
+    }
+  }
+
+  // Create Payment Request (Advanced - untuk custom payment methods)
+  async createPaymentRequest(orderData) {
+    try {
+      const payload = {
+        reference_id: orderData.orderNumber,
+        amount: Math.round(orderData.totalAmount),
+        currency: 'IDR',
+        payment_method: {
+          type: 'EWALLET',
+          ewallet: {
+            channel_code: orderData.paymentChannel || 'OVO', // OVO, DANA, LINKAJA, SHOPEEPAY
+            channel_properties: {
+              success_redirect_url: `${process.env.FRONTEND_URL}/order/success?order_id=${orderData.orderNumber}`,
+              failure_redirect_url: `${process.env.FRONTEND_URL}/order/failed`,
+            },
+          },
+          reusability: 'ONE_TIME_USE',
+        },
+        metadata: {
+          order_number: orderData.orderNumber,
+          product_name: orderData.productName,
+        },
+      };
+
+      const response = await axios.post(
+        `${this.apiUrl}/payment_requests`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: this.getAuthHeader(),
+            'for-user-id': process.env.XENDIT_USER_ID || '', // Optional
+          },
+        }
+      );
+
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('Error creating payment request:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to create payment request',
+      };
+    }
+  }
+}
+
+module.exports = new XenditService();

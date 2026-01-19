@@ -1,0 +1,351 @@
+.payment-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+}
+
+.payment-page .container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.payment-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* Header */
+.payment-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  text-align: center;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.status-badge.pending {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.status-icon {
+  font-size: 18px;
+}
+
+.payment-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 32px;
+}
+
+.order-number {
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* Payment Amount */
+.payment-amount {
+  padding: 30px 40px;
+  text-align: center;
+  background: #f8f9ff;
+  border-bottom: 2px solid #e0e7ff;
+}
+
+.amount-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amount-value {
+  font-size: 42px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* VA Details */
+.va-details {
+  padding: 40px;
+}
+
+.bank-logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.bank-logo img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+
+.bank-logo h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 24px;
+}
+
+/* VA Number Box */
+.va-number-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  color: white;
+}
+
+.va-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.va-number {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+}
+
+.copy-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Instructions */
+.instructions {
+  margin-top: 40px;
+}
+
+.instructions h3 {
+  color: #1f2937;
+  margin-bottom: 24px;
+  font-size: 20px;
+}
+
+.instruction-section {
+  background: #f8f9ff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.instruction-section h4 {
+  margin: 0 0 12px 0;
+  color: #4f46e5;
+  font-size: 16px;
+}
+
+.instruction-section ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.instruction-section li {
+  margin-bottom: 8px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.instruction-section strong {
+  color: #1f2937;
+}
+
+/* Important Notes */
+.important-notes {
+  background: #fef3c7;
+  padding: 24px;
+  border-radius: 12px;
+  margin: 30px 40px;
+}
+
+.important-notes h3 {
+  margin: 0 0 16px 0;
+  color: #92400e;
+  font-size: 18px;
+}
+
+.important-notes ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.important-notes li {
+  margin-bottom: 8px;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+/* Product Info */
+.product-info {
+  padding: 24px 40px;
+  background: #f8f9ff;
+  border-top: 1px solid #e0e7ff;
+}
+
+.product-info h4 {
+  margin: 0 0 16px 0;
+  color: #1f2937;
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e7ff;
+  font-weight: 500;
+}
+
+.game-info {
+  margin-top: 12px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Actions */
+.payment-actions {
+  display: flex;
+  gap: 16px;
+  padding: 24px 40px;
+}
+
+.payment-actions button {
+  flex: 1;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-refresh {
+  background: #4f46e5;
+  color: white;
+}
+
+.btn-refresh:hover {
+  background: #4338ca;
+  transform: translateY(-2px);
+}
+
+.btn-home {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.btn-home:hover {
+  background: #d1d5db;
+}
+
+/* Loading & Error */
+.loading,
+.error-box,
+.pending-info {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.error-box {
+  color: #dc2626;
+}
+
+.error-box button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pending-info .note {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payment-page {
+    padding: 20px 10px;
+  }
+
+  .payment-header {
+    padding: 30px 20px;
+  }
+
+  .payment-header h1 {
+    font-size: 24px;
+  }
+
+  .payment-amount {
+    padding: 20px;
+  }
+
+  .amount-value {
+    font-size: 32px;
+  }
+
+  .va-details {
+    padding: 20px;
+  }
+
+  .va-number {
+    font-size: 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .copy-btn {
+    width: 100%;
+  }
+
+  .important-notes {
+    margin: 20px 20px;
+    padding: 16px;
+  }
+
+  .product-info {
+    padding: 16px 20px;
+  }
+
+  .payment-actions {
+    flex-direction: column;
+    padding: 20px;
+  }
+}

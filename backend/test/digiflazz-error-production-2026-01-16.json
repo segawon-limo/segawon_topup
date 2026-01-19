@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-01-16T11:06:25.679Z",
+  "mode": "production",
+  "error": {
+    "data": null
+  },
+  "message": "Invalid response format",
+  "fullResult": {
+    "success": false,
+    "message": "Invalid response format",
+    "error": {
+      "data": null
+    }
+  }
+}
