@@ -72,7 +72,7 @@ function Footer() {
         <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400 text-sm">
           <p>&copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
           <p className="mt-2">
-            Powered by Digiflazz & Midtrans
+            Powered by Segawon Team.
           </p>
         </div>
       </div>
