@@ -1,15 +1,57 @@
 .order-page {
   min-height: 100vh;
   background: #f5f7fa;
-  padding: 40px 20px;
+  padding: 0;
+  position: relative;
 }
 
+/* Game Header Image */
+.game-header-image {
+  position: fixed;
+  top: 60px; /* Adjust to match your navbar height */
+  left: 0;
+  right: 0;
+  height: 50vh;
+  background: linear-gradient(135deg, #ff4655 0%, #bd3944 50%, #0f1923 100%);
+  /* background-image is set via inline style in JS */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+  z-index: 1; /* Lower z-index so content is clickable */
+  pointer-events: none; /* Make header not block clicks */
+}
+
+/* Gradient Overlay - 15% from bottom */
+.game-header-image::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 15%;
+  background: linear-gradient(to bottom, 
+    rgba(245, 247, 250, 0) 0%, 
+    rgba(245, 247, 250, 0.7) 50%, 
+    rgba(245, 247, 250, 1) 100%
+  );
+  z-index: 1;
+}
+
+/* Container adjustment */
 .order-page .container {
   max-width: 1200px;
   margin: 0 auto;
+  padding-top: calc(60px + 50vh + 40px); /* navbar + header + spacing */
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 40px;
+  position: relative;
+  z-index: 10; /* Higher than header so it's clickable */
 }
 
-.order-page h1 {
+.page-title {
   font-size: 32px;
   font-weight: 700;
   color: #1a202c;
@@ -340,10 +382,22 @@ input:disabled {
 /* Responsive */
 @media (max-width: 768px) {
   .order-page {
-    padding: 20px 10px;
+    padding: 0;
   }
 
-  .order-page h1 {
+  /* Game Header for Mobile */
+  .game-header-image {
+    top: 60px; /* Smaller navbar on mobile */
+    height: 45vh; /* Slightly smaller on mobile */
+  }
+
+  .order-page .container {
+    padding-top: calc(60px + 45vh + 20px);
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .page-title {
     font-size: 24px;
   }
 

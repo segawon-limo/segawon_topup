@@ -36,6 +36,41 @@ function OrderPage() {
     loadProducts();
   }, [gameSlug]);
 
+  // Scroll effect for header fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const headerImage = document.getElementById('game-header-image');
+      if (!headerImage) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const headerHeight = headerImage.offsetHeight;
+      
+      // Calculate opacity based on scroll position
+      // Start fading immediately when scrolling
+      const fadeStart = 0;
+      const fadeEnd = headerHeight * 1.2; // Fade over 120% of header height for smoother effect
+      
+      let opacity = 1;
+      
+      if (scrollTop > fadeStart) {
+        const fadeProgress = Math.min(scrollTop / fadeEnd, 1);
+        opacity = Math.max(0, 1 - fadeProgress);
+      }
+      
+      headerImage.style.opacity = opacity;
+      
+      // Slight scale effect for parallax feel
+      const scale = 1 + (scrollTop / 3000);
+      headerImage.style.transform = `scale(${Math.min(scale, 1.1)})`;
+    };
+
+    // Run once on mount to set initial state
+    handleScroll();
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -226,8 +261,18 @@ function OrderPage() {
 
   return (
     <div className="order-page">
+      {/* Game Header Image */}
+      <div 
+        className="game-header-image" 
+        id="game-header-image"
+        style={{
+          backgroundImage: `url(${process.env.PUBLIC_URL}/images/valorant-header.jpg)`
+        }}
+      >
+      </div>
+
       <div className="container">
-        <h1>Order Valorant Points</h1>
+        <h1 className="page-title">Order Valorant Points</h1>
 
         <div className="order-layout">
           {/* Left Side: Order Form */}
