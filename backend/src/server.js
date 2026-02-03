@@ -17,6 +17,9 @@ const { pool } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// app.js atau server.js
+const duitkuRoutes = require('./routes/duitku.routes');
+
 // Security middleware
 app.use(helmet());
 
@@ -31,6 +34,9 @@ app.use(
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Register routes
+app.use('/api/duitku', duitkuRoutes);
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
