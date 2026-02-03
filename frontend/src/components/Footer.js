@@ -58,7 +58,7 @@ function Footer() {
               </div>
               <div className="flex items-center gap-3">
                 <FaEnvelope className="text-xl" />
-                <span>support@topupgame.id</span>
+                <span>support@segawontopup.net</span>
               </div>
             </div>
 

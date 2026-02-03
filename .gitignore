@@ -6,8 +6,10 @@
 .env
 .env.local
 .env.*.local
+.env.production
 **/.env
 **/.env.local
+**/.env.production
 
 # Dependencies
 node_modules/
