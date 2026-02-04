@@ -1,12 +1,6 @@
 /**
- * Routes - UPDATED VERSION
- * Add these routes to your existing routes/index.js
- * 
- * NEW ROUTES:
- * - POST /api/calculate-price - Calculate price with promo
- * - POST /api/validate-promo - Validate promo code
- * - POST /api/orders/create - Create order (updated with promo)
- * - GET /api/orders/:orderNumber - Get order status
+ * Main Routes - Duitku Only Version
+ * Removed: Midtrans, Xendit
  */
 
 const express = require('express');
@@ -14,88 +8,42 @@ const router = express.Router();
 const orderController = require('../controllers/order.controller');
 
 // ========================================
-// PRICE CALCULATION & PROMO
+// HEALTH CHECK
+// ========================================
+router.get('/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ========================================
+// GAMES & PRODUCTS
 // ========================================
 
-/**
- * Calculate final price with optional promo code
- * POST /api/calculate-price
- * 
- * Body: {
- *   productId: "uuid",
- *   paymentMethod: "qris",
- *   promoCode: "WELCOME10" (optional),
- *   customerEmail: "user@email.com" (optional)
- * }
- */
-router.post('/calculate-price', orderController.calculatePrice);
+// Get all games
+router.get('/games', orderController.getGames);
 
-/**
- * Validate promo code
- * POST /api/validate-promo
- * 
- * Body: {
- *   promoCode: "WELCOME10",
- *   amount: 50000,
- *   customerEmail: "user@email.com" (optional)
- * }
- */
-router.post('/validate-promo', orderController.validatePromo);
+// Get products by game slug
+router.get('/products/:gameSlug', orderController.getProducts);
+
+// ========================================
+// RIOT ID VALIDATION
+// ========================================
+router.post('/validate-riot-id', orderController.validateRiotId);
 
 // ========================================
 // ORDER MANAGEMENT
 // ========================================
 
-/**
- * Create new order with promo support
- * POST /api/orders/create
- * 
- * Body: {
- *   productId: "uuid",
- *   paymentMethod: "qris",
- *   customerEmail: "user@email.com",
- *   customerName: "John Doe",
- *   phoneNumber: "081234567890",
- *   riotId: "PlayerName",
- *   riotTag: "TAG",
- *   promoCode: "WELCOME10" (optional)
- * }
- */
+// Create order (Duitku payment)
 router.post('/orders/create', orderController.createOrder);
 
-/**
- * Get order status
- * GET /api/orders/:orderNumber
- */
+// Get order status
 router.get('/orders/:orderNumber', orderController.getOrderStatus);
 
-/**
- * Get products by game slug
- * GET /api/products/:gameSlug
- */
-router.get('/products/:gameSlug', orderController.getProducts);
-
-/**
- * Validate Riot ID
- * POST /api/validate-riot-id
- * 
- * Body: {
- *   riotId: "PlayerName",
- *   riotTag: "TAG"
- * }
- */
-router.post('/validate-riot-id', orderController.validateRiotId);
-
-// ========================================
-// EXISTING ROUTES (keep your current routes)
-// ========================================
-
-// Health check
-router.get('/health', (req, res) => {
-  res.json({ success: true, message: 'API is running' });
-});
-
-// Games list
-router.get('/games', orderController.getGames);
+// Get order history (optional)
+router.get('/orders/history', orderController.getOrderHistory);
 
 module.exports = router;

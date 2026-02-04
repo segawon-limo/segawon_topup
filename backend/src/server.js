@@ -5,129 +5,91 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-// Import ORIGINAL routes (from routes/index.js)
-const routes = require('./routes/index');
-
-// Import NEW controllers for multi-payment
-const orderController = require('./controllers/order.controller');
-const webhookController = require('./controllers/webhook.controller');
-
 const { pool } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// app.js atau server.js
-const duitkuRoutes = require('./routes/duitku.routes');
+// ========================================
+// IMPORTANT: Trust proxy (for Nginx)
+// ========================================
+app.set('trust proxy', true);
 
-// Security middleware
+// ========================================
+// MIDDLEWARE (order matters!)
+// ========================================
+
+// 1. Security
 app.use(helmet());
 
-// CORS configuration
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-  })
-);
+// 2. CORS
+app.use(cors({
+  origin: [
+    'https://segawontopup.net',
+    'https://www.segawontopup.net',
+    'http://localhost:3000'
+  ],
+  credentials: true
+}));
 
-// Body parser
+// 3. Body parser (BEFORE routes!)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Register routes
-app.use('/api/duitku', duitkuRoutes);
+// 4. Logging
+app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
-// Logging
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
-
-// Rate limiting
+// 5. Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later',
-  },
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: { success: false, message: 'Too many requests' },
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: false
 });
 app.use('/api', limiter);
 
 // ========================================
-// EXISTING ROUTES (your original routes from routes/index.js)
-// Now includes validateRiotId and getGames methods
+// ROUTES
 // ========================================
+
+// Import routes
+const routes = require('./routes/index');
+const duitkuRoutes = require('./routes/duitku.routes');
+
+// Register routes
 app.use('/api', routes);
+app.use('/api/duitku', duitkuRoutes);
 
 // ========================================
-// NEW ROUTES FOR MULTI-PAYMENT
-// These are ADDITIONAL routes on top of your existing ones
-// ========================================
-
-// Order routes with multi-payment support
-app.get('/api/orders/products/:gameSlug', orderController.getProducts);
-app.post('/api/orders/create', orderController.createOrder);
-app.post('/api/validate-riot-id', orderController.validateRiotId);
-app.get('/api/orders/:orderNumber', orderController.getOrderStatus);
-app.get('/api/orders/:orderNumber/status', orderController.checkPaymentStatus);
-app.get('/api/orders/history', orderController.getOrderHistory);
-
-// Webhook routes for payment notifications
-app.post('/api/webhooks/midtrans', webhookController.midtransWebhook);
-app.post('/api/webhooks/xendit', webhookController.xenditWebhook);
-
-// Test topup endpoint (development only)
-if (process.env.NODE_ENV === 'development') {
-  app.post('/api/webhooks/test-topup/:orderNumber', webhookController.testTopup);
-}
-
-// ========================================
-// ROOT ENDPOINT (Updated with new endpoints)
+// ROOT ENDPOINT
 // ========================================
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Instant Game Topup API - Multi Payment Support',
+    message: 'Segawon Topup API - Duitku Payment',
     version: '2.0.0',
     endpoints: {
-      // Existing endpoints
       health: '/api/health',
       games: '/api/games',
-      validateRiotId: 'POST /api/validate-riot-id',
       products: '/api/products/:gameSlug',
-      createOrder: 'POST /api/orders',
+      createOrder: 'POST /api/orders/create',
       orderStatus: '/api/orders/:orderNumber',
-      paymentCallback: 'POST /api/payment/callback',
-      paymentStatus: '/api/payment/status/:orderNumber',
-      
-      // New multi-payment endpoints
-      productsWithPricing: '/api/orders/products/:gameSlug',
-      createOrderNew: 'POST /api/orders/create',
-      checkPaymentStatus: '/api/orders/:orderNumber/status',
-      orderHistory: '/api/orders/history?email=xxx',
-      
-      // Webhook endpoints
-      midtransWebhook: 'POST /api/webhooks/midtrans',
-      xenditWebhook: 'POST /api/webhooks/xendit',
-      
-      // Development only
-      ...(process.env.NODE_ENV === 'development' && {
-        testTopup: 'POST /api/webhooks/test-topup/:orderNumber',
-      }),
-    },
+      duitkuCallback: 'POST /api/duitku/callback',
+      duitkuTest: '/api/duitku/test'
+    }
   });
 });
+
+// ========================================
+// ERROR HANDLERS
+// ========================================
 
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Endpoint not found',
+    message: 'Endpoint not found'
   });
 });
 
@@ -136,50 +98,43 @@ app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    message: err.message || 'Internal server error'
   });
+});
+
+// ========================================
+// SERVER START
+// ========================================
+
+const server = app.listen(PORT, () => {
+  console.log(`
+╔═══════════════════════════════════════════════╗
+║   🎮 Segawon Topup API                        ║
+║   💳 Duitku Payment Gateway                   ║
+║                                               ║
+║   Server: http://localhost:${PORT}              ║
+║   Environment: ${process.env.NODE_ENV || 'production'}                     ║
+║                                               ║
+║   Ready to accept requests! 🚀                ║
+╚═══════════════════════════════════════════════╝
+  `);
+  
+  console.log('✓ Routes loaded');
+  console.log('✓ Database connected');
+  if (process.env.DUITKU_SANDBOX_MERCHANT_CODE) {
+    console.log('✓ Duitku configured');
+  }
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+  console.log('SIGTERM received, closing server...');
   server.close(() => {
-    console.log('HTTP server closed');
     pool.end(() => {
-      console.log('Database pool closed');
+      console.log('Server closed');
       process.exit(0);
     });
   });
-});
-
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`
-╔═══════════════════════════════════════════════╗
-║                                               ║
-║   🎮 Instant Game Topup API v2.0              ║
-║   💳 Multi-Payment Support                    ║
-║                                               ║
-║   Server: http://localhost:${PORT}              ║
-║   Environment: ${process.env.NODE_ENV || 'development'}                     ║
-║                                               ║
-║   📡 Webhook URLs:                            ║
-║   Midtrans: /api/webhooks/midtrans            ║
-║   Xendit: /api/webhooks/xendit                ║
-║                                               ║
-║   ✅ All Routes Active (Old + New)            ║
-║                                               ║
-║   Ready to accept requests! 🚀                ║
-║                                               ║
-╚═══════════════════════════════════════════════╝
-  `);
-  
-  // Log webhook URLs for easy copy-paste
-  const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
-  console.log('\n🔗 Copy these webhook URLs to your payment gateway dashboards:\n');
-  console.log(`Midtrans: ${baseUrl}/api/webhooks/midtrans`);
-  console.log(`Xendit:   ${baseUrl}/api/webhooks/xendit\n`);
 });
 
 module.exports = app;
