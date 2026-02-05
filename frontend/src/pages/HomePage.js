@@ -16,7 +16,7 @@ function HomePage() {
   const fetchGames = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/games`);
-      setGames(response.data.data);
+      setGames(response.data.games);
     } catch (error) {
       console.error('Error fetching games:', error);
     } finally {

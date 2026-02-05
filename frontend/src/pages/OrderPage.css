@@ -136,6 +136,13 @@
   font-weight: 600;
 }
 
+.product-description {
+  font-size: 12px;
+  color: #718096;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 .product-card .badge {
   position: absolute;
   top: 10px;
@@ -379,7 +386,86 @@ input:disabled {
   opacity: 0.7;
 }
 
-/* Responsive */
+/* ========================================
+   PAYMENT METHODS SECTION (NEW - Duitku)
+   ======================================== */
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.payment-category {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-category h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.payment-option:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+  transform: translateX(4px);
+}
+
+.payment-option.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.payment-option input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #667eea;
+  flex-shrink: 0;
+}
+
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.payment-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.payment-note {
+  font-size: 12px;
+  color: #718096;
+  font-weight: 500;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
 @media (max-width: 768px) {
   .order-page {
     padding: 0;
@@ -418,5 +504,13 @@ input:disabled {
   .order-summary {
     position: relative;
     top: 0;
+  }
+
+  .payment-option {
+    padding: 14px 16px;
+  }
+
+  .payment-name {
+    font-size: 14px;
   }
 }
