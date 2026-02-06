@@ -1,7 +1,6 @@
 /**
- * Order Controller - Simplified for Duitku Only
- * No promo code (for now)
- * Fixed pricing from database
+ * Order Controller - UPDATED for Custom Payment Page
+ * Modified to return payment info instead of redirecting to Duitku
  */
 
 const { pool } = require('../config/database');
@@ -140,6 +139,8 @@ exports.validateRiotId = async (req, res) => {
 /**
  * Create order with Duitku payment
  * POST /api/orders/create
+ * 
+ * UPDATED: Return payment info instead of redirecting to Duitku
  */
 exports.createOrder = async (req, res) => {
   const client = await pool.connect();
@@ -243,7 +244,7 @@ exports.createOrder = async (req, res) => {
       phoneNumber: phoneNumber,
       paymentMethod: duitkuMethod,
       callbackUrl: `${process.env.BASE_URL}/api/duitku/callback`,
-      returnUrl: `${process.env.FRONTEND_URL}/order/status/${orderNumber}`,
+      returnUrl: `${process.env.FRONTEND_URL}/payment/${orderNumber}`, // ← UPDATED: Custom payment page
       expiryPeriod: 1440 // 24 hours
     });
 
@@ -263,28 +264,44 @@ exports.createOrder = async (req, res) => {
         payment_url = $1,
         payment_reference = $2,
         payment_expires_at = NOW() + INTERVAL '24 hours',
+        provider_response = $3,
         updated_at = NOW()
-      WHERE id = $3
-    `, [paymentResult.paymentUrl, paymentResult.reference, order.id]);
+      WHERE id = $4
+    `, [
+      paymentResult.paymentUrl, 
+      paymentResult.reference, 
+      JSON.stringify({
+        vaNumber: paymentResult.vaNumber || null,
+        qrString: paymentResult.qrString || null,
+        reference: paymentResult.reference,
+        merchantCode: paymentResult.merchantCode,
+        paymentUrl: paymentResult.paymentUrl,
+        amount: paymentResult.amount
+      }),
+      order.id
+    ]);
 
     await client.query('COMMIT');
 
-    // 7. Return success
+    // 7. Return success WITH PAYMENT INFO (not redirect URL!)
+    // ← CRITICAL CHANGE: Return orderNumber untuk redirect ke custom page
     res.json({
       success: true,
       order: {
         id: order.id,
-        orderNumber: orderNumber,
+        orderNumber: orderNumber, // ← Frontend will use this to redirect
         productName: product.name,
         riotId: `${riotId}#${riotTag}`,
         amount: productPrice,
         paymentFee: paymentFee,
         total: totalAmount,
         payment: {
-          method: paymentMethod,
+          // method: duitkuService.getPaymentMethodCode(paymentMethod), // ← Use Duitku code
+          method: duitkuMethod,
           gateway: 'duitku',
           url: paymentResult.paymentUrl,
           vaNumber: paymentResult.vaNumber || null,
+          qrString: paymentResult.qrString || null,  // ← ADD THIS
           reference: paymentResult.reference,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         }
@@ -330,7 +347,22 @@ exports.getOrderStatus = async (req, res) => {
       });
     }
 
+    // const order = result.rows[0];
+
     const order = result.rows[0];
+
+    // ADD THIS BLOCK:
+    // Parse provider_response if exists
+    let providerData = {};
+    if (order.provider_response) {
+      try {
+        providerData = typeof order.provider_response === 'string' 
+          ? JSON.parse(order.provider_response) 
+          : order.provider_response;
+      } catch (e) {
+        console.error('Error parsing provider_response:', e);
+      }
+    }
 
     res.json({
       success: true,
@@ -338,16 +370,20 @@ exports.getOrderStatus = async (req, res) => {
         orderNumber: order.order_number,
         productName: order.product_name,
         gameName: order.game_name,
-        gameUserId: `${order.game_user_id}#${order.game_user_tag}`,
+        gameUserId: order.game_user_id,
+        gameUserTag: order.game_user_tag,
         amount: parseFloat(order.amount),
         paymentFee: parseFloat(order.payment_fee) || 0,
         total: parseFloat(order.total_amount),
+        customer_email: order.customer_email,
         payment: {
           method: order.payment_method,
           gateway: order.payment_gateway,
           status: order.payment_status,
           url: order.payment_url,
           reference: order.payment_reference,
+          vaNumber: providerData.vaNumber || null,      // ← ADD THIS
+          qrString: providerData.qrString || null,      // ← ADD THIS
           expiresAt: order.payment_expires_at
         },
         orderStatus: order.order_status,

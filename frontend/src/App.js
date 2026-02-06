@@ -26,7 +26,8 @@ function App() {
             <Route path="/order/:gameSlug" element={<OrderPage />} />
             <Route path="/status/:orderNumber" element={<StatusPage />} />
             <Route path="/order/success" element={<SuccessPage />} />
-            <Route path="/order/payment" element={<PaymentPage />} />
+            // <Route path="/order/payment" element={<PaymentPage />} />
+            <Route path="/payment/:orderNumber" element={<PaymentPage />} />
             <Route path="/order/qr" element={<QRPaymentPage />} />
           </Routes>
         </main>

@@ -230,7 +230,9 @@ function OrderPage() {
 
       if (data.success) {
         // Redirect to Duitku payment URL
-        window.location.href = data.order.payment.url;
+        // window.location.href = data.order.payment.url;
+        // Redirect ke custom payment page
+        window.location.href = `/payment/${data.order.orderNumber}`;
       } else {
         alert('Gagal membuat pesanan: ' + data.message);
         setProcessing(false);

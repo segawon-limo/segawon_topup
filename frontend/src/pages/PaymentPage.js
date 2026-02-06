@@ -1,112 +1,162 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import QRCode from 'qrcode';
 import './PaymentPage.css';
 
-const PaymentPage = () => {
-  const [searchParams] = useSearchParams();
+const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
+
+function PaymentPage() {
+  const { orderNumber } = useParams();
   const navigate = useNavigate();
-  const orderId = searchParams.get('order_id');
-
+  
+  const [paymentData, setPaymentData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState(null);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
+  // Load payment info
   useEffect(() => {
-    if (!orderId) {
-      setError('Order ID not found');
-      setLoading(false);
-      return;
-    }
-
-    fetchOrderDetails();
+    loadPaymentInfo();
     
-    // Auto-refresh every 10 seconds to check payment status
-    const interval = setInterval(fetchOrderDetails, 10000);
-    return () => clearInterval(interval);
-  }, [orderId]);
+    const statusInterval = setInterval(() => {
+      checkPaymentStatus();
+    }, 10000);
 
-  const fetchOrderDetails = async () => {
+    return () => clearInterval(statusInterval);
+  }, [orderNumber]);
+
+  // Generate QR Code from qrString
+  useEffect(() => {
+    if (paymentData?.payment?.qrString) {
+      QRCode.toDataURL(paymentData.payment.qrString, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+      .then(url => {
+        setQrCodeDataUrl(url);
+      })
+      .catch(err => {
+        console.error('Error generating QR code:', err);
+      });
+    }
+  }, [paymentData]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!paymentData?.payment?.expiresAt) return;
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(paymentData.payment.expiresAt).getTime();
+      const distance = expiry - now;
+
+      if (distance < 0) {
+        setCountdown('EXPIRED');
+        return;
+      }
+
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      setCountdown(`${hours}j ${minutes}m ${seconds}d`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [paymentData]);
+
+  const loadPaymentInfo = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/orders/status/${orderId}`);
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/orders/${orderNumber}`);
       const data = await response.json();
 
+      console.log('Payment data loaded:', data);
+
       if (data.success) {
-        setOrder(data.data);
+        setPaymentData(data.order);
         
-        // If payment successful, redirect to success page
-        if (data.data.paymentStatus === 'success' || data.data.paymentStatus === 'settlement') {
-          navigate(`/order/success?order_id=${orderId}`);
+        if (data.order.payment.status === 'success') {
+          navigate(`/order/success?order_id=${orderNumber}`);
         }
       } else {
-        setError(data.message || 'Failed to load order');
+        setError(data.message || 'Order tidak ditemukan');
       }
     } catch (err) {
-      console.error('Error fetching order:', err);
-      setError('Failed to load order details');
+      console.error('Error loading payment:', err);
+      setError('Gagal memuat informasi pembayaran');
     } finally {
       setLoading(false);
     }
   };
 
-  const getVAInfo = () => {
-    if (order?.paymentData) {
-      try {
-        const paymentData = typeof order.paymentData === 'string' 
-          ? JSON.parse(order.paymentData) 
-          : order.paymentData;
-        
-        console.log('Payment data:', paymentData);
-        
-        // Method 1: Standard VA (BCA, BNI, BRI, CIMB)
-        if (paymentData.vaNumbers && paymentData.vaNumbers.length > 0) {
-          return paymentData.vaNumbers[0];
-        }
-        
-        // Method 2: Mandiri (different format!)
-        if (paymentData.billKey && paymentData.billerCode) {
-          return {
-            bank: 'mandiri',
-            va_number: paymentData.billKey,
-            company_code: paymentData.billerCode,
-          };
-        }
-        
-        // Method 3: Permata (also different!)
-        if (paymentData.permataVaNumber) {
-          return {
-            bank: 'permata',
-            va_number: paymentData.permataVaNumber,
-          };
-        }
-        
-        console.warn('No VA number found in payment data');
-        return null;
-        
-      } catch (e) {
-        console.error('Error parsing payment data:', e);
-        return null;
+  const checkPaymentStatus = async () => {
+    try {
+      setCheckingStatus(true);
+      const response = await fetch(`${API_URL}/api/duitku/check-transaction/${orderNumber}`);
+      const data = await response.json();
+
+      if (data.success && data.data.statusCode === '00') {
+        navigate(`/order/success?order_id=${orderNumber}`);
       }
+    } catch (err) {
+      console.error('Error checking status:', err);
+    } finally {
+      setCheckingStatus(false);
     }
-    return null;
   };
 
-  const getBankName = (bank) => {
-    const bankNames = {
-      'bca': 'BCA',
-      'bni': 'BNI',
-      'bri': 'BRI',
-      'mandiri': 'Mandiri',
-      'permata': 'Permata',
-      'cimb': 'CIMB Niaga',
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getPaymentMethodName = (method) => {
+    const names = {
+      'BC': 'BCA Virtual Account',
+      'M2': 'Mandiri Virtual Account',
+      'I1': 'BNI Virtual Account',
+      'BR': 'BRI Virtual Account',
+      'BT': 'Permata Virtual Account',
+      'B1': 'CIMB Niaga Virtual Account',
+      'DM': 'Danamon Virtual Account',
+      'BV': 'BSI Virtual Account',
+      'SP': 'QRIS',
+      'OV': 'OVO',
+      'SA': 'ShopeePay',
+      'DA': 'DANA',
+      'va_bca': 'BCA Virtual Account',
+      'va_mandiri': 'Mandiri Virtual Account',
+      'va_bni': 'BNI Virtual Account',
+      'va_bri': 'BRI Virtual Account',
+      'qris': 'QRIS',
+      'ovo': 'OVO',
+      'shopeepay': 'ShopeePay',
+      'dana': 'DANA',
     };
-    return bankNames[bank?.toLowerCase()] || bank?.toUpperCase();
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert('VA Number copied to clipboard!');
+    return names[method] || method;
   };
 
   const formatRupiah = (amount) => {
@@ -121,7 +171,10 @@ const PaymentPage = () => {
     return (
       <div className="payment-page">
         <div className="container">
-          <div className="loading">Loading payment details...</div>
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Memuat informasi pembayaran...</p>
+          </div>
         </div>
       </div>
     );
@@ -131,27 +184,23 @@ const PaymentPage = () => {
     return (
       <div className="payment-page">
         <div className="container">
-          <div className="error-box">
-            <h2>Error</h2>
+          <div className="error-container">
+            <div className="error-icon">⚠️</div>
+            <h2>Terjadi Kesalahan</h2>
             <p>{error}</p>
-            <button onClick={() => navigate('/')}>Back to Home</button>
+            <button onClick={() => navigate('/')} className="btn-back">
+              Kembali ke Beranda
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!order) {
-    return (
-      <div className="payment-page">
-        <div className="container">
-          <div className="error-box">Order not found</div>
-        </div>
-      </div>
-    );
-  }
-
-  const vaInfo = getVAInfo();
+  // Determine payment type
+  const isQRIS = paymentData?.payment?.method === 'SP' || paymentData?.payment?.method === 'qris';
+  const isVA = paymentData?.payment?.vaNumber && !isQRIS;
+  const isEwallet = ['OV', 'SA', 'DA', 'LA', 'ovo', 'shopeepay', 'dana', 'linkaja'].includes(paymentData?.payment?.method);
 
   return (
     <div className="payment-page">
@@ -160,130 +209,213 @@ const PaymentPage = () => {
           
           {/* Header */}
           <div className="payment-header">
-            <div className="status-badge pending">
-              <span className="status-icon">⏳</span>
-              Waiting for Payment
+            <h1>Menunggu Pembayaran</h1>
+            <div className="order-info">
+              <span className="order-number">Order #{paymentData.orderNumber}</span>
+              <span className="separator">•</span>
+              <span className="payment-method">
+                {getPaymentMethodName(paymentData.payment.method)}
+              </span>
             </div>
-            <h1>Complete Your Payment</h1>
-            <p className="order-number">Order: {order.orderNumber}</p>
           </div>
 
-          {/* Payment Amount */}
-          <div className="payment-amount">
-            <div className="amount-label">Total Payment</div>
-            <div className="amount-value">{formatRupiah(order.amount)}</div>
+          {/* Timer */}
+          <div className={`payment-timer ${countdown === 'EXPIRED' ? 'expired' : ''}`}>
+            <div className="timer-icon">⏱️</div>
+            <div className="timer-content">
+              <span className="timer-label">Bayar sebelum:</span>
+              <span className="timer-value">{countdown || 'Memuat...'}</span>
+            </div>
+            {countdown === 'EXPIRED' && (
+              <div className="expired-message">Pembayaran expired. Silakan buat pesanan baru.</div>
+            )}
           </div>
 
-          {/* VA Details */}
-          {vaInfo && (
-            <div className="va-details">
-              <div className="bank-logo">
-                <img 
-                  src={`/images/${vaInfo.bank?.toLowerCase()}-logo.png`} 
-                  alt={getBankName(vaInfo.bank)}
-                  onError={(e) => e.target.style.display = 'none'}
-                />
-                <h3>{getBankName(vaInfo.bank)} Virtual Account</h3>
-              </div>
-
-              <div className="va-number-box">
-                <div className="va-label">Virtual Account Number</div>
-                <div className="va-number">
-                  {vaInfo.va_number}
+          {/* Payment Details */}
+          <div className="payment-details">
+            
+            {/* Virtual Account */}
+            {isVA && (
+              <div className="payment-section va-section">
+                <h2>Nomor Virtual Account</h2>
+                <div className="va-number-container">
+                  <div className="va-number">{paymentData.payment.vaNumber}</div>
                   <button 
-                    className="copy-btn"
-                    onClick={() => copyToClipboard(vaInfo.va_number)}
+                    className={`btn-copy ${copied ? 'copied' : ''}`}
+                    onClick={() => copyToClipboard(paymentData.payment.vaNumber)}
                   >
-                    📋 Copy
+                    {copied ? '✓ Tersalin' : 'Salin'}
                   </button>
                 </div>
-              </div>
-
-              {/* Payment Instructions */}
-              <div className="instructions">
-                <h3>Payment Instructions</h3>
                 
-                <div className="instruction-section">
-                  <h4>🏧 ATM</h4>
-                  <ol>
-                    <li>Select "Other Transaction"</li>
-                    <li>Select "Transfer"</li>
-                    <li>Select "To {getBankName(vaInfo.bank)} Virtual Account"</li>
-                    <li>Enter VA number: <strong>{vaInfo.va_number}</strong></li>
-                    <li>Enter amount: <strong>{formatRupiah(order.amount)}</strong></li>
-                    <li>Verify details and confirm</li>
-                  </ol>
+                <div className="amount-display">
+                  <span className="amount-label">Jumlah yang harus dibayar:</span>
+                  <span className="amount-value">
+                    {formatRupiah(paymentData.total)}
+                  </span>
                 </div>
 
-                <div className="instruction-section">
-                  <h4>📱 Mobile Banking</h4>
+                <div className="payment-instructions">
+                  <h3>Cara Pembayaran:</h3>
                   <ol>
-                    <li>Open your mobile banking app</li>
-                    <li>Select "Transfer" or "Payment"</li>
-                    <li>Select "{getBankName(vaInfo.bank)} Virtual Account"</li>
-                    <li>Enter VA number: <strong>{vaInfo.va_number}</strong></li>
-                    <li>Verify and complete payment</li>
-                  </ol>
-                </div>
-
-                <div className="instruction-section">
-                  <h4>💻 Internet Banking</h4>
-                  <ol>
-                    <li>Login to your internet banking</li>
-                    <li>Go to "Transfer" menu</li>
-                    <li>Select "To {getBankName(vaInfo.bank)} Virtual Account"</li>
-                    <li>Input VA number and confirm</li>
+                    <li>Buka aplikasi mobile banking atau ATM</li>
+                    <li>Pilih menu <strong>Transfer</strong> atau <strong>Bayar</strong></li>
+                    <li>Pilih <strong>{getPaymentMethodName(paymentData.payment.method)}</strong></li>
+                    <li>Masukkan nomor VA: <strong>{paymentData.payment.vaNumber}</strong></li>
+                    <li>Masukkan jumlah: <strong>{formatRupiah(paymentData.total)}</strong></li>
+                    <li>Konfirmasi pembayaran</li>
                   </ol>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Fallback if no VA info */}
-          {!vaInfo && (
-            <div className="pending-info">
-              <p>Processing payment information...</p>
-              <p className="note">Please wait while we prepare your payment details.</p>
-            </div>
-          )}
+            {/* QRIS - Show QR Code if qrString available */}
+            {isQRIS && (
+              <div className="payment-section qris-section">
+                <h2>Pembayaran QRIS</h2>
+                
+                {/* Show QR Code if available */}
+                {qrCodeDataUrl ? (
+                  <div className="qris-container">
+                    <p className="qris-info">Scan QR Code di bawah dengan aplikasi e-wallet Anda</p>
+                    <img src={qrCodeDataUrl} alt="QRIS Code" className="qr-code" />
+                    <div className="qr-note">
+                      <strong>💡 Tip:</strong> Gunakan aplikasi GoPay, OVO, DANA, ShopeePay, atau mobile banking yang support QRIS
+                    </div>
+                  </div>
+                ) : (
+                  /* Fallback to button if no qrString */
+                  <>
+                    <p className="qris-info">
+                      Klik tombol di bawah untuk membuka halaman pembayaran QRIS
+                    </p>
+                    <a 
+                      href={paymentData.payment.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="btn-open-qris"
+                    >
+                      Buka Halaman QRIS
+                    </a>
+                  </>
+                )}
+                
+                <div className="amount-display">
+                  <span className="amount-label">Jumlah yang harus dibayar:</span>
+                  <span className="amount-value">
+                    {formatRupiah(paymentData.total)}
+                  </span>
+                </div>
 
-          {/* Important Notes */}
-          <div className="important-notes">
-            <h3>⚠️ Important Notes</h3>
-            <ul>
-              <li>Payment will be verified automatically (usually within 5-10 minutes)</li>
-              <li>VA number is valid for 24 hours</li>
-              <li>Do not close this page - it will auto-refresh when payment is confirmed</li>
-              <li>Make sure to pay the EXACT amount: {formatRupiah(order.amount)}</li>
-            </ul>
+                <div className="payment-instructions">
+                  <h3>Cara Pembayaran:</h3>
+                  <ol>
+                    <li>Buka aplikasi e-wallet atau mobile banking Anda</li>
+                    <li>Pilih menu <strong>Scan QR</strong> atau <strong>QRIS</strong></li>
+                    <li>Scan QR Code di atas</li>
+                    <li>Periksa detail pembayaran</li>
+                    <li>Konfirmasi pembayaran</li>
+                  </ol>
+                  <div className="note-box">
+                    <strong>💡 Tips:</strong> Jangan tutup halaman ini. Pembayaran akan otomatis terverifikasi setelah Anda scan QR.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* E-Wallet */}
+            {isEwallet && paymentData.payment.url && (
+              <div className="payment-section ewallet-section">
+                <h2>Pembayaran {getPaymentMethodName(paymentData.payment.method)}</h2>
+                <p className="ewallet-info">
+                  Klik tombol di bawah untuk melanjutkan pembayaran
+                </p>
+                <a 
+                  href={paymentData.payment.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn-open-payment"
+                >
+                  Lanjutkan Pembayaran
+                </a>
+                
+                <div className="amount-display">
+                  <span className="amount-label">Jumlah yang harus dibayar:</span>
+                  <span className="amount-value">
+                    {formatRupiah(paymentData.total)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Product Info */}
+            <div className="order-summary">
+              <h3>Detail Pesanan</h3>
+              <div className="summary-row">
+                <span>Produk</span>
+                <span>{paymentData.productName}</span>
+              </div>
+              <div className="summary-row">
+                <span>Riot ID</span>
+                <span>{paymentData.gameUserId}#{paymentData.gameUserTag}</span>
+              </div>
+              <div className="summary-row">
+                <span>Email</span>
+                <span>{paymentData.customer_email}</span>
+              </div>
+              <div className="summary-row">
+                <span>Harga Produk</span>
+                <span>{formatRupiah(paymentData.amount)}</span>
+              </div>
+              <div className="summary-row">
+                <span>Biaya Admin</span>
+                <span>{formatRupiah(paymentData.paymentFee)}</span>
+              </div>
+              <div className="summary-divider"></div>
+              <div className="summary-row total">
+                <span>Total</span>
+                <span className="total-amount">
+                  {formatRupiah(paymentData.total)}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Product Info */}
-          <div className="product-info">
-            <h4>Order Details</h4>
-            <div className="product-item">
-              <span>{order.productName}</span>
-              <span>{formatRupiah(order.amount)}</span>
-            </div>
-            <div className="game-info">
-              <strong>Riot ID:</strong> {order.gameUserId}#{order.gameUserTag}
-            </div>
-          </div>
-
-          {/* Actions */}
+          {/* Check Status Button */}
           <div className="payment-actions">
-            <button className="btn-refresh" onClick={fetchOrderDetails}>
-              🔄 Refresh Status
+            <button 
+              className="btn-check-status"
+              onClick={checkPaymentStatus}
+              disabled={checkingStatus}
+            >
+              {checkingStatus ? 'Mengecek...' : 'Cek Status Pembayaran'}
             </button>
-            <button className="btn-home" onClick={() => navigate('/')}>
-              🏠 Back to Home
-            </button>
+            
+            <div className="help-text">
+              Pembayaran akan otomatis terverifikasi setelah Anda melakukan transfer
+            </div>
+          </div>
+
+          {/* Footer Notes */}
+          <div className="payment-notes">
+            <div className="note-item">
+              <span className="note-icon">ℹ️</span>
+              <span>Pastikan Anda membayar dengan nominal yang <strong>SAMA PERSIS</strong></span>
+            </div>
+            <div className="note-item">
+              <span className="note-icon">🔒</span>
+              <span>Pembayaran Anda aman dan terenkripsi</span>
+            </div>
+            <div className="note-item">
+              <span className="note-icon">⚡</span>
+              <span>Pesanan akan diproses otomatis setelah pembayaran terverifikasi</span>
+            </div>
           </div>
 
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default PaymentPage;

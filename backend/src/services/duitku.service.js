@@ -312,19 +312,19 @@ class DuitkuService {
       'va_mandiri': 'M2',
       'va_bni': 'I1',
       'va_bri': 'BR',
-      'va_permata': 'A1',
+      'va_permata': 'BT',
       'va_cimb': 'B1',
-      'va_danamon': 'DNA',
-      'va_bsi': 'S1',
+      'va_danamon': 'DM',
+      'va_bsi': 'BV',
       
       // QRIS
-      'qris': 'BT',
+      'qris': 'SP',
       
       // E-Wallet
       'gopay': 'OV',
       'shopeepay': 'SA',
       'dana': 'DA',
-      'linkaja': 'LA',
+      'linkaja': 'LF',
       'ovo': 'OV',
       
       // Retail
