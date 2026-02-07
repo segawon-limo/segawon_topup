@@ -85,6 +85,35 @@ function OrderPage() {
     }
   };
 
+  // === ADD THIS BLOCK ===
+  // Calculate payment fee in real-time
+  const calculatePaymentFee = (method, price) => {
+    if (!method || !price) return 0;
+    const amount = parseFloat(price);
+    
+    if (method === 'qris') return Math.round(amount * 0.007);
+    if (method.startsWith('va_')) return 2500;
+    if (['ovo', 'shopeepay', 'dana'].includes(method)) return Math.round(amount * 0.02) + 1000;
+    return 2500;
+  };
+
+  // Calculate totals
+  const paymentFee = selectedPaymentMethod && selectedProduct 
+    ? calculatePaymentFee(selectedPaymentMethod, selectedProduct.price)
+    : 0;
+  
+  const totalAmount = selectedProduct ? selectedProduct.price + paymentFee : 0;
+  
+  // Format currency
+  const formatRupiah = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+  // === END ADD ===
+
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
     setSelectedPaymentMethod('');
@@ -566,17 +595,17 @@ function OrderPage() {
                   <span>{selectedProduct.name}</span>
                 </div>
 
-                <div className="summary-item">
-                  <span>Harga</span>
-                  <span>{selectedProduct.displayPrice}</span>
-                </div>
-
                 {riotIdValidated && (
                   <div className="summary-item">
                     <span>Riot ID</span>
                     <span>{formData.riotId}#{formData.riotTag}</span>
                   </div>
                 )}
+
+                <div className="summary-item">
+                  <span>Harga</span>
+                  <span>{formatRupiah(selectedProduct.price)}</span>
+                </div>
 
                 {selectedPaymentMethod && (
                   <>
@@ -593,13 +622,20 @@ function OrderPage() {
                         {selectedPaymentMethod === 'dana' && 'DANA'}
                       </span>
                     </div>
+ 
+                    <div className="summary-item">
+                      <span>Biaya Layanan</span>
+                      <span style={{ color: '#f59e0b', fontWeight: '700' }}>
+                        {formatRupiah(paymentFee)}
+                      </span>
+                    </div>
 
                     <div className="summary-divider"></div>
 
                     <div className="summary-total">
                       <span>Total Pembayaran</span>
                       <span className="total-price">
-                        {selectedProduct.displayPrice}
+                        {formatRupiah(totalAmount)}
                       </span>
                     </div>
 

@@ -231,6 +231,37 @@
 
 /* Order Summary */
 .order-summary {
+  position: sticky;
+  top: 20px;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-summary::-webkit-scrollbar {
+  width: 6px;
+}
+
+.order-summary::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Sticky header */
+.order-summary h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a202c;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+
+/*
+.order-summary {
   background: white;
   border-radius: 12px;
   padding: 30px;
@@ -246,7 +277,7 @@
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 2px solid #e2e8f0;
-}
+} */
 
 .summary-item {
   display: flex;

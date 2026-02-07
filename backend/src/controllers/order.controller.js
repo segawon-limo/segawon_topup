@@ -177,13 +177,32 @@ exports.createOrder = async (req, res) => {
     const productPrice = parseFloat(product.selling_price);
 
     // 2. Calculate payment fee
+    // 2. Calculate payment fee - Official Duitku Pricing
     let paymentFee = 0;
-    if (paymentMethod.startsWith('va_')) {
-      paymentFee = Math.round(productPrice * 0.007 + 1000); // 0.7% + Rp 1000
-    } else if (paymentMethod === 'qris') {
-      paymentFee = Math.round(productPrice * 0.007); // 0.7%
-    } else {
-      paymentFee = Math.round(productPrice * 0.02); // 2% for e-wallet
+
+    // QRIS - 0.7%
+    if (paymentMethod === 'qris') {
+      paymentFee = Math.round(productPrice * 0.007);
+    }
+    // Virtual Account - Rp 2,500 flat
+    else if (paymentMethod.startsWith('va_')) {
+      paymentFee = 2500;
+    }
+    // E-Wallet - 2% + Rp 1,000
+    else if (['ovo', 'shopeepay', 'dana', 'linkaja'].includes(paymentMethod)) {
+      paymentFee = Math.round(productPrice * 0.02) + 1000;
+    }
+    // Retail - Rp 2,500 flat
+    else if (['alfamart', 'indomaret'].includes(paymentMethod)) {
+      paymentFee = 2500;
+    }
+    // Credit Card - 2.9% (min Rp 2,000)
+    else if (paymentMethod === 'credit_card') {
+      paymentFee = Math.max(Math.round(productPrice * 0.029), 2000);
+    }
+    // Default
+    else {
+      paymentFee = 2500;
     }
 
     const totalAmount = productPrice + paymentFee;
