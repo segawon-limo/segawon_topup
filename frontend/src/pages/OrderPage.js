@@ -4,7 +4,148 @@ import './OrderPage.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
+// Game configurations
+const gameConfigs = {
+  'valorant': {
+    fields: [
+      { name: 'userId', label: 'Riot ID', placeholder: 'Contoh: segawon', type: 'text' },
+      { name: 'zoneId', label: 'Tagline', placeholder: 'Contoh: limo', type: 'text' }
+    ],
+    validation: {
+      endpoint: '/api/validate-riot-id',
+      bodyFormat: (userId, zoneId) => ({ riotId: userId, riotTag: zoneId })
+    },
+    displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
+    headerImage: 'valorant-header.jpg'
+  },
+  
+  'arena-of-valor': {
+    fields: [
+      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 123456789', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId) => userId,
+    headerImage: 'arena-of-valor-header.jpg'
+  },
+
+  'mobile-legends': {
+    fields: [
+      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 123456789', type: 'number' },
+      { name: 'zoneId', label: 'Zone ID', placeholder: 'Contoh: 1234', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
+    headerImage: 'mobile-legends-header.jpg'
+  },
+  
+  'free-fire': {
+    fields: [
+      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 1234567890', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId) => userId,
+    headerImage: 'free-fire-header.jpg'
+  },
+  
+  'pubg-mobile': {
+    fields: [
+      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 5123456789', type: 'number' },
+      { name: 'zoneId', label: 'Zone ID', placeholder: 'Contoh: 1234', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
+    headerImage: 'pubg-mobile-header.jpg'
+  },
+  
+  'genshin-impact': {
+    fields: [
+      { name: 'userId', label: 'UID', placeholder: 'Contoh: 800123456', type: 'number' },
+      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
+    headerImage: 'genshin-impact-header.jpg'
+  },
+  
+  'league-of-legends': {
+    fields: [
+      { name: 'userId', label: 'Riot ID', placeholder: 'Contoh: segawon', type: 'text' },
+      { name: 'zoneId', label: 'Tagline', placeholder: 'Contoh: limo', type: 'text' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
+    headerImage: 'league-of-legends-header.jpg'
+  },
+
+  'honkai-star-rail': {
+    fields: [
+      { name: 'userId', label: 'UID', placeholder: 'Contoh: 800123456', type: 'number' },
+      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
+    headerImage: 'honkai-star-rail-header.jpg'
+  },
+
+  'honor-of-kings': {
+    fields: [
+      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId) => userId,
+    headerImage: 'honor-of-kings-header.jpg'
+  },
+
+  'punishing-gray-raven': {
+    fields: [
+      { name: 'userId', label: 'RoleID', placeholder: 'Contoh: 800123456', type: 'number' },
+      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
+    headerImage: 'punishing-gray-raven-header.jpg'
+  },
+
+  'zenless-zone-zero': {
+    fields: [
+      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 800123456', type: 'number' },
+      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
+    ],
+    validation: null,
+    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
+    headerImage: 'zenless-zone-zero-header.jpg'
+  },
+
+  'marvel-rivals': {
+    fields: [
+      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId) => userId,
+    headerImage: 'marvel-rivals-header.jpg'
+  },
+
+  'haikyu-fly-high': {
+    fields: [
+      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
+    ],
+    validation: null,
+    displayFormat: (userId) => userId,
+    headerImage: 'haikyu-fly-high-header.jpg'
+  },
+
+  'default': {
+    fields: [
+      { name: 'userId', label: 'User ID', placeholder: 'Masukkan ID Anda', type: 'text' }
+    ],
+    validation: null,
+    displayFormat: (userId) => userId,
+    headerImage: 'default-header.jpg'
+  }
+};
+
 function OrderPage() {
+  const currentGameConfig = gameConfigs[gameSlug] || gameConfigs['default'];
   const { gameSlug } = useParams();
 
   const [game, setGame] = useState(null);
@@ -15,14 +156,15 @@ function OrderPage() {
   const [processing, setProcessing] = useState(false);
 
   // Riot ID validation state
-  const [riotIdValidated, setRiotIdValidated] = useState(false);
+  // const [riotIdValidated, setRiotIdValidated] = useState(false);
+  const [userIdValidated, setUserIdValidated] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState('');
 
   // Form data
   const [formData, setFormData] = useState({
-    riotId: '',
-    riotTag: '',
+    userId: '',
+    zoneId: '',
     customerEmail: '',
     customerPhone: '',
     customerName: '',
@@ -138,47 +280,101 @@ function OrderPage() {
       }));
     }
 
-    if (name === 'riotId' || name === 'riotTag') {
-      setRiotIdValidated(false);
+    // if (name === 'riotId' || name === 'riotTag') {
+    //   setRiotIdValidated(false);
+    //   setValidationError('');
+    // }
+
+    if (name === 'userId' || name === 'zoneId') {
+      setUserIdValidated(false);
       setValidationError('');
     }
   };
 
   // Validate Riot ID
-  const validateRiotId = async () => {
-    if (!formData.riotId.trim() || !formData.riotTag.trim()) {
-      setValidationError('Masukkan Riot ID dan Tagline');
+  // const validateRiotId = async () => {
+  //   if (!formData.riotId.trim() || !formData.riotTag.trim()) {
+  //     setValidationError('Masukkan Riot ID dan Tagline');
+  //     return;
+  //   }
+
+  //   try {
+  //     setValidating(true);
+  //     setValidationError('');
+
+  //     const response = await fetch(`${API_URL}/api/validate-riot-id`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         riotId: formData.riotId.trim(),
+  //         riotTag: formData.riotTag.trim(),
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (data.success) {
+  //       setRiotIdValidated(true);
+  //       setValidationError('');
+  //     } else {
+  //       setValidationError(data.message || 'Riot ID tidak valid');
+  //       setRiotIdValidated(false);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error validating Riot ID:', error);
+  //     setValidationError('Gagal memvalidasi Riot ID');
+  //     setRiotIdValidated(false);
+  //   } finally {
+  //     setValidating(false);
+  //   }
+  // };
+
+  const validateUserId = async () => {
+    const { userId, zoneId } = formData;
+    const config = currentGameConfig;
+    
+    // Check required fields
+    const hasUserId = userId.trim();
+    const hasZoneId = config.fields.length > 1 ? zoneId.trim() : true;
+    
+    if (!hasUserId || !hasZoneId) {
+      setValidationError('Mohon lengkapi semua field');
       return;
     }
-
+    
+    // If no validation endpoint, just mark as validated
+    if (!config.validation) {
+      setUserIdValidated(true);
+      setValidationError('');
+      return;
+    }
+    
+    // Call validation API (for Valorant)
     try {
       setValidating(true);
       setValidationError('');
-
-      const response = await fetch(`${API_URL}/api/validate-riot-id`, {
+      
+      const response = await fetch(`${API_URL}${config.validation.endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          riotId: formData.riotId.trim(),
-          riotTag: formData.riotTag.trim(),
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config.validation.bodyFormat(userId, zoneId))
       });
-
+      
       const data = await response.json();
-
+      
       if (data.success) {
-        setRiotIdValidated(true);
+        setUserIdValidated(true);
         setValidationError('');
       } else {
-        setValidationError(data.message || 'Riot ID tidak valid');
-        setRiotIdValidated(false);
+        setValidationError(data.message || 'ID tidak valid');
+        setUserIdValidated(false);
       }
     } catch (error) {
-      console.error('Error validating Riot ID:', error);
-      setValidationError('Gagal memvalidasi Riot ID');
-      setRiotIdValidated(false);
+      console.error('Validation error:', error);
+      setValidationError('Gagal memvalidasi ID');
+      setUserIdValidated(false);
     } finally {
       setValidating(false);
     }
@@ -235,10 +431,20 @@ function OrderPage() {
     try {
       setProcessing(true);
 
+      // const orderData = {
+      //   productId: selectedProduct.id,
+      //   riotId: formData.riotId.trim(),
+      //   riotTag: formData.riotTag.trim(),
+      //   customerEmail: formData.customerEmail.trim(),
+      //   phoneNumber: formData.customerPhone.trim(),
+      //   customerName: formData.customerName.trim(),
+      //   paymentMethod: selectedPaymentMethod,
+      // };
+
       const orderData = {
         productId: selectedProduct.id,
-        riotId: formData.riotId.trim(),
-        riotTag: formData.riotTag.trim(),
+        gameUserId: formData.userId.trim(),
+        gameZoneId: formData.zoneId?.trim() || null,
         customerEmail: formData.customerEmail.trim(),
         phoneNumber: formData.customerPhone.trim(),
         customerName: formData.customerName.trim(),
@@ -285,11 +491,20 @@ function OrderPage() {
   return (
     <div className="order-page">
       {/* Game Header Image */}
-      <div 
+      {/* <div 
         className="game-header-image" 
         id="game-header-image"
         style={{
           backgroundImage: `url(${process.env.PUBLIC_URL}/images/valorant-header.jpg)`
+        }}
+      >
+      </div> */}
+      
+      <div
+        className="game-header-image"
+        id="game-header-image"
+        style={{
+          backgroundImage: `url(${process.env.PUBLIC_URL}/images/header/${currentGameConfig.headerImage})`
         }}
       >
       </div>
@@ -323,7 +538,62 @@ function OrderPage() {
               </div>
 
               {/* Step 2: Game Account Info */}
+              
+              {/* Step 2: Game Account Info - DYNAMIC */}
               {selectedProduct && (
+                <div className="form-section">
+                  <h2>2. Informasi Akun Game</h2>
+                  
+                  {currentGameConfig.fields.map((field) => (
+                    <div className="form-group" key={field.name}>
+                      <label>{field.label} *</label>
+                      <input
+                        type={field.type}
+                        name={field.name}
+                        value={formData[field.name]}
+                        onChange={handleInputChange}
+                        placeholder={field.placeholder}
+                        className={errors[field.name] ? 'error' : ''}
+                        disabled={userIdValidated}
+                      />
+                      {errors[field.name] && (
+                        <div className="error">{errors[field.name]}</div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Validation Button */}
+                  {!userIdValidated && (
+                    <button
+                      type="button"
+                      onClick={validateUserId}
+                      disabled={validating}
+                      className="btn-validate"
+                    >
+                      {validating ? 'Memverifikasi...' : 'Verifikasi ID'}
+                    </button>
+                  )}
+                  
+                  {validationError && (
+                    <div className="error">{validationError}</div>
+                  )}
+                  
+                  {userIdValidated && (
+                    <div className="success">
+                      ✓ ID terverifikasi: {currentGameConfig.displayFormat(formData.userId, formData.zoneId)}
+                      <button
+                        type="button"
+                        onClick={() => setUserIdValidated(false)}
+                        className="btn-change"
+                      >
+                        Ubah
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* {selectedProduct && (
                 <div className="form-section">
                   <h2>2. Informasi Akun Game</h2>
                   
@@ -357,8 +627,7 @@ function OrderPage() {
                     <small>Masukkan tagline tanpa tanda #</small>
                   </div>
 
-                  {/* Validation Button */}
-                  {!riotIdValidated && (
+                  {!userIdValidated&& (
                     <button
                       type="button"
                       onClick={validateRiotId}
@@ -373,7 +642,7 @@ function OrderPage() {
                     <div className="error">{validationError}</div>
                   )}
 
-                  {riotIdValidated && (
+                  {userIdValidated&& (
                     <div className="success">
                       ✓ Riot ID terverifikasi: {formData.riotId}#{formData.riotTag}
                       <button
@@ -388,10 +657,10 @@ function OrderPage() {
 
                   {errors.riotIdValidation && <div className="error">{errors.riotIdValidation}</div>}
                 </div>
-              )}
+              )} */}
 
               {/* Step 3: Contact Info - ONLY SHOW IF RIOT ID VALIDATED */}
-              {selectedProduct && riotIdValidated && (
+              {selectedProduct && userIdValidated&& (
                 <div className="form-section">
                   <h2>3. Informasi Kontak</h2>
                   
@@ -437,7 +706,7 @@ function OrderPage() {
               )}
 
               {/* Step 4: Payment Method - ONLY SHOW IF RIOT ID VALIDATED AND DATA FILLED */}
-              {selectedProduct && riotIdValidated && formData.customerEmail && formData.customerName && (
+              {selectedProduct && userIdValidated&& formData.customerEmail && formData.customerName && (
                 <div className="form-section">
                   <h2>4. Pilih Pembayaran</h2>
                   
@@ -595,10 +864,17 @@ function OrderPage() {
                   <span>{selectedProduct.name}</span>
                 </div>
 
-                {riotIdValidated && (
+                {/* {userIdValidated&& (
                   <div className="summary-item">
                     <span>Riot ID</span>
                     <span>{formData.riotId}#{formData.riotTag}</span>
+                  </div>
+                )} */}
+
+                {userIdValidated && (
+                  <div className="summary-item">
+                    <span>Game ID</span>
+                    <span>{currentGameConfig.displayFormat(formData.userId, formData.zoneId)}</span>
                   </div>
                 )}
 

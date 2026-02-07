@@ -148,18 +148,43 @@ exports.createOrder = async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    // code lama
+    // const {
+    //   productId,
+    //   paymentMethod,
+    //   customerEmail,
+    //   customerName,
+    //   phoneNumber,
+    //   riotId,
+    //   riotTag
+    // } = req.body;
+
+    //code baru
     const {
       productId,
       paymentMethod,
       customerEmail,
-      customerName,
+      // customerName,
       phoneNumber,
+      gameUserId,      // Generic field
+      gameZoneId,      // Generic field (optional)
+      // Legacy support for Valorant
       riotId,
       riotTag
     } = req.body;
 
+    // Use generic fields or fall back to Valorant-specific fields
+    const userId = gameUserId || riotId;
+    const zoneId = gameZoneId || riotTag || null;
+
+    // code lama
     // Validate required fields
-    if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber || !riotId || !riotTag) {
+    // if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber || !riotId || !riotTag) {
+    //   throw new Error('Missing required fields');
+    // }
+
+    // code baryu
+    if (!productId || !paymentMethod || !customerEmail || !phoneNumber || !userId) {
       throw new Error('Missing required fields');
     }
 
@@ -237,8 +262,10 @@ exports.createOrder = async (req, res) => {
       customerEmail,
       customerName,
       phoneNumber,
-      riotId,
-      riotTag,
+      // riotId, code lama
+      // riotTag, code lama
+      userId,
+      zoneId || null,
       productPrice,
       paymentFee,
       totalAmount,
@@ -257,7 +284,8 @@ exports.createOrder = async (req, res) => {
     const paymentResult = await duitkuService.createTransaction({
       merchantOrderId: orderNumber,
       paymentAmount: totalAmount,
-      productDetails: `${product.name} - ${riotId}#${riotTag}`,
+      // productDetails: `${product.name} - ${riotId}#${riotTag}`, code lama
+      productDetails: `${product.name} - ${userId}${zoneId ? ' (' + zoneId + ')' : ''}`, // code baru
       email: customerEmail,
       customerVaName: customerName.substring(0, 20).replace(/[^a-zA-Z0-9 ]/g, ''),
       phoneNumber: phoneNumber,
