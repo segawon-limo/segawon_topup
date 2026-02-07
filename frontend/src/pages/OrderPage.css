@@ -246,6 +246,7 @@
   overflow-y: auto !important;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch; /* Smooth scroll on mobile */
+  overscroll-behavior: contain;
 }
 
 /* Custom scrollbar styling */

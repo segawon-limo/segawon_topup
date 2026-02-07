@@ -204,7 +204,8 @@ function OrderPage() {
 
     handleScroll();
     
-    window.addEventListener('scroll', handleScroll);
+    // window.addEventListener('scroll', handleScroll); dari claude
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -872,13 +873,7 @@ function OrderPage() {
           </div>
 
           {/* Right Side: Order Summary */}
-          <div 
-            className="order-summary" 
-            style={{
-              maxHeight: '600px',
-              overflowY: 'scroll'
-            }}
-          >
+          <div className="order-summary">
             <h3>Ringkasan Pesanan</h3>
 
             {selectedProduct && (
