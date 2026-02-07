@@ -872,7 +872,13 @@ function OrderPage() {
           </div>
 
           {/* Right Side: Order Summary */}
-          <div className="order-summary">
+          <div 
+            className="order-summary" 
+            style={{
+              maxHeight: '600px',
+              overflowY: 'scroll'
+            }}
+          >
             <h3>Ringkasan Pesanan</h3>
 
             {selectedProduct && (
