@@ -278,7 +278,7 @@ function OrderPage() {
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
     setSelectedPaymentMethod('');
-    setRiotIdValidated(false);
+    setUserIdValidated(false);
   };
 
   const handlePaymentMethodChange = (method) => {
@@ -402,16 +402,19 @@ function OrderPage() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.riotId.trim()) {
-      newErrors.riotId = 'Riot ID wajib diisi';
+    // Validate userId (required for all games)
+    if (!formData.userId.trim()) {
+      newErrors.userId = currentGameConfig.fields[0].label + ' wajib diisi';
     }
 
-    if (!formData.riotTag.trim()) {
-      newErrors.riotTag = 'Tagline wajib diisi';
+    // Validate zoneId if required (some games have it, some don't)
+    if (currentGameConfig.fields.length > 1 && !formData.zoneId.trim()) {
+      newErrors.zoneId = currentGameConfig.fields[1].label + ' wajib diisi';
     }
 
-    if (!riotIdValidated) {
-      newErrors.riotIdValidation = 'Verifikasi Riot ID terlebih dahulu';
+    // Check if validation is required and done
+    if (currentGameConfig.validation && !userIdValidated) {
+      newErrors.userIdValidation = 'Verifikasi ID terlebih dahulu';
     }
 
     if (!formData.customerEmail.trim()) {
