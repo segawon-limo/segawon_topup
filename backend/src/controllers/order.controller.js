@@ -164,7 +164,7 @@ exports.createOrder = async (req, res) => {
       productId,
       paymentMethod,
       customerEmail,
-      // customerName,
+      customerName,
       phoneNumber,
       gameUserId,      // Generic field
       gameZoneId,      // Generic field (optional)
@@ -184,7 +184,7 @@ exports.createOrder = async (req, res) => {
     // }
 
     // code baryu
-    if (!productId || !paymentMethod || !customerEmail || !phoneNumber || !userId) {
+    if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber || !userId) {
       throw new Error('Missing required fields');
     }
 

@@ -64,7 +64,7 @@
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 30px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* Order Form */
@@ -228,10 +228,13 @@
 
 .order-summary {
   /* Positioning - CHANGED: from sticky to relative for normal scroll */
-  position: relative;
+  position: relative !important;
+  top: auto !important;
   
-  /* Sizing */
+  /* Sizing - NO max-height so it can scroll naturally */
   min-height: 300px;
+  max-height: none !important;
+  height: auto !important;
   
   /* Appearance */
   background: white;
@@ -239,7 +242,8 @@
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   
-  /* Normal overflow */
+  /* Normal overflow - NO scroll container */
+  overflow-y: visible !important;
   overflow-x: hidden;
 }
 
