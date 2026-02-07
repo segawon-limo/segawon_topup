@@ -224,57 +224,87 @@
 }
 
 /* ===== FIXED: Order Summary ===== */
+/* ===== FIXED: Order Summary - Scrollable Version ===== */
+
 .order-summary {
+  /* Positioning */
   position: sticky;
-  top: 80px; /* Add spacing from top */
+  top: 80px;
   align-self: start;
+  
+  /* Sizing - IMPORTANT */
+  max-height: calc(100vh - 120px);
+  min-height: 300px;
+  
+  /* Appearance */
   background: white;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   
-  /* FIX: Add max-height and overflow */
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  /* Scroll - CRITICAL */
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on mobile */
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar styling */
 .order-summary::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .order-summary::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
   border-radius: 10px;
+  margin: 8px 0;
 }
 
 .order-summary::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
-  transition: background 0.2s;
+  border: 2px solid #f8fafc;
 }
 
 .order-summary::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Sticky header inside summary */
+/* Firefox scrollbar */
+.order-summary {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+/* Summary header - Make it sticky within scroll container */
 .order-summary h3 {
-  margin: 0 0 20px 0;
-  padding: 0 0 16px 0;
+  /* Sticky positioning */
+  position: sticky;
+  top: -24px; /* Negative of parent padding */
+  
+  /* Sizing */
+  margin: -24px -24px 20px -24px; /* Negative of parent padding */
+  padding: 24px 24px 16px 24px;
+  
+  /* Appearance */
   font-size: 20px;
   font-weight: 700;
   color: #1e293b;
+  background: white;
   border-bottom: 2px solid #e2e8f0;
   
-  /* Make header sticky within scrollable container */
-  position: sticky;
-  top: 0;
-  background: white;
+  /* Ensure it's above content */
   z-index: 10;
 }
 
+/* Summary content wrapper - for better scroll control */
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Summary items */
 .summary-item {
   display: flex;
   justify-content: space-between;
@@ -300,39 +330,81 @@
   text-align: right;
 }
 
+/* Fee highlight */
+.summary-item .fee-amount {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* Divider */
 .summary-divider {
   height: 2px;
   background: linear-gradient(to right, #e2e8f0, #cbd5e1, #e2e8f0);
   margin: 16px 0;
 }
 
+/* Total section */
 .summary-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0 0 0;
+  padding: 16px 0 8px 0;
   font-size: 16px;
   font-weight: 700;
   color: #2d3748;
 }
 
 .total-price {
-  font-size: 24px;
-  color: #667eea;
-  font-weight: 800;
+  font-size: 24px !important;
+  color: #667eea !important;
+  font-weight: 800 !important;
 }
 
+/* Note */
 .summary-note {
   text-align: center;
   font-size: 12px;
   color: #718096;
-  margin-top: 10px;
+  margin-top: 8px;
+  padding-bottom: 8px;
 }
 
+/* Placeholder */
 .summary-placeholder {
   text-align: center;
   padding: 40px 20px;
   color: #a0aec0;
+  font-size: 14px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 1024px) {
+  .order-summary {
+    position: relative;
+    top: 0;
+    max-height: 600px;
+    margin-top: 30px;
+  }
+  
+  .order-summary h3 {
+    position: sticky;
+    top: 0;
+    margin: 0 0 20px 0;
+    padding: 0 0 16px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .order-summary {
+    max-height: 500px;
+    padding: 20px;
+  }
+  
+  .order-summary h3 {
+    font-size: 18px;
+    margin: 0 0 16px 0;
+    padding: 0 0 12px 0;
+  }
 }
 
 /* Loading */
