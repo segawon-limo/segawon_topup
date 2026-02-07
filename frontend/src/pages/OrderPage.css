@@ -233,20 +233,21 @@
   align-self: start;
   
   /* Sizing - IMPORTANT */
-  max-height: calc(100vh - 120px);
-  min-height: 300px;
+  /* max-height: calc(100vh - 120px);
+  min-height: 300px; */
   
   /* Appearance */
-  background: white;
+  /* background: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); */
   
   /* Scroll - CRITICAL */
-  overflow-y: auto !important;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; /* Smooth scroll on mobile */
-  overscroll-behavior: contain;
+  /* overflow-y: auto !important;
+  overflow-x: hidden; */
+  /* Smooth scroll on mobile */
+  /* -webkit-overflow-scrolling: touch; 
+  overscroll-behavior: contain; */
 }
 
 /* Custom scrollbar styling */
@@ -280,22 +281,23 @@
 /* Summary header - Make it sticky within scroll container */
 .order-summary h3 {
   /* Sticky positioning */
-  position: sticky;
-  top: -24px; /* Negative of parent padding */
+  /* position: sticky; */
+  /* top: -24px; Negative of parent padding */
   
   /* Sizing */
-  margin: -24px -24px 20px -24px; /* Negative of parent padding */
-  padding: 24px 24px 16px 24px;
+  /* margin: -24px -24px 20px -24px; /* Negative of parent padding */
+  /* padding: 24px 24px 16px 24px; */ 
   
   /* Appearance */
   font-size: 20px;
   font-weight: 700;
+  margin-bottom: 16px;
   color: #1e293b;
   background: white;
   border-bottom: 2px solid #e2e8f0;
   
   /* Ensure it's above content */
-  z-index: 10;
+  /* z-index: 10; */
 }
 
 /* Summary content wrapper - for better scroll control */
