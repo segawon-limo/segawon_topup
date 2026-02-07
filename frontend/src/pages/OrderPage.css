@@ -3,27 +3,27 @@
   background: #f5f7fa;
   padding: 0;
   position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 /* Game Header Image */
 .game-header-image {
   position: fixed;
-  top: 60px; /* Adjust to match your navbar height */
+  top: 60px;
   left: 0;
   right: 0;
   height: 50vh;
   background: linear-gradient(135deg, #ff4655 0%, #bd3944 50%, #0f1923 100%);
-  /* background-image is set via inline style in JS */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   transition: opacity 0.3s ease, transform 0.3s ease;
   overflow: hidden;
-  z-index: 1; /* Lower z-index so content is clickable */
-  pointer-events: none; /* Make header not block clicks */
+  z-index: 1;
+  pointer-events: none;
 }
 
-/* Gradient Overlay - 15% from bottom */
+/* Gradient Overlay */
 .game-header-image::after {
   content: '';
   position: absolute;
@@ -39,16 +39,16 @@
   z-index: 1;
 }
 
-/* Container adjustment */
+/* Container */
 .order-page .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding-top: calc(60px + 50vh + 40px); /* navbar + header + spacing */
+  padding-top: calc(60px + 50vh + 40px);
   padding-left: 20px;
   padding-right: 20px;
   padding-bottom: 40px;
   position: relative;
-  z-index: 10; /* Higher than header so it's clickable */
+  z-index: 10;
 }
 
 .page-title {
@@ -65,12 +65,6 @@
   grid-template-columns: 1fr 400px;
   gap: 30px;
   align-items: start;
-}
-
-@media (max-width: 968px) {
-  .order-layout {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Order Form */
@@ -229,55 +223,57 @@
   transform: none;
 }
 
-/* Order Summary */
+/* ===== FIXED: Order Summary ===== */
 .order-summary {
   position: sticky;
-  top: 20px;
+  top: 80px; /* Add spacing from top */
+  align-self: start;
   background: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  
+  /* FIX: Add max-height and overflow */
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
+/* Custom scrollbar */
 .order-summary::-webkit-scrollbar {
   width: 6px;
+}
+
+.order-summary::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
 }
 
 .order-summary::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+  transition: background 0.2s;
 }
 
-/* Sticky header */
+.order-summary::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Sticky header inside summary */
 .order-summary h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
+  margin: 0 0 20px 0;
+  padding: 0 0 16px 0;
   font-size: 20px;
-  font-weight: 600;
-  color: #1a202c;
-  padding-bottom: 10px;
+  font-weight: 700;
+  color: #1e293b;
   border-bottom: 2px solid #e2e8f0;
-}
-
-
-/*
-.order-summary {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  /* Make header sticky within scrollable container */
   position: sticky;
-  top: 20px;
+  top: 0;
+  background: white;
+  z-index: 10;
 }
-
-.order-summary h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #e2e8f0;
-} */
 
 .summary-item {
   display: flex;
@@ -285,33 +281,45 @@
   align-items: center;
   padding: 12px 0;
   font-size: 14px;
-  color: #4a5568;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.summary-item:last-of-type {
+  border-bottom: none;
+}
+
+.summary-item span:first-child {
+  color: #64748b;
+  font-weight: 500;
 }
 
 .summary-item span:last-child {
   font-weight: 600;
   color: #2d3748;
+  text-align: right;
 }
 
 .summary-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 20px 0;
+  height: 2px;
+  background: linear-gradient(to right, #e2e8f0, #cbd5e1, #e2e8f0);
+  margin: 16px 0;
 }
 
 .summary-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 16px 0 0 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: #2d3748;
 }
 
 .total-price {
   font-size: 24px;
   color: #667eea;
+  font-weight: 800;
 }
 
 .summary-note {
@@ -377,7 +385,6 @@
   box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
 }
 
-/* Ubah Button */
 .btn-change {
   background: white;
   color: #28a745;
@@ -409,7 +416,6 @@
   font-weight: 500;
 }
 
-/* Disabled Input */
 input:disabled {
   background-color: #f0f2f5;
   color: #6c757d;
@@ -417,10 +423,7 @@ input:disabled {
   opacity: 0.7;
 }
 
-/* ========================================
-   PAYMENT METHODS SECTION (NEW - Duitku)
-   ======================================== */
-
+/* Payment Methods */
 .payment-methods {
   display: flex;
   flex-direction: column;
@@ -493,19 +496,29 @@ input:disabled {
   font-weight: 500;
 }
 
-/* ========================================
-   RESPONSIVE
-   ======================================== */
+/* Responsive */
+@media (max-width: 1024px) {
+  .order-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .order-summary {
+    position: relative;
+    top: 0;
+    max-height: 600px;
+    order: 2;
+    margin-top: 30px;
+  }
+}
 
 @media (max-width: 768px) {
   .order-page {
     padding: 0;
   }
 
-  /* Game Header for Mobile */
   .game-header-image {
-    top: 60px; /* Smaller navbar on mobile */
-    height: 45vh; /* Slightly smaller on mobile */
+    top: 60px;
+    height: 45vh;
   }
 
   .order-page .container {
@@ -533,8 +546,7 @@ input:disabled {
   }
 
   .order-summary {
-    position: relative;
-    top: 0;
+    max-height: 500px;
   }
 
   .payment-option {

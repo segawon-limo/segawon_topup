@@ -145,8 +145,8 @@ const gameConfigs = {
 };
 
 function OrderPage() {
-  const currentGameConfig = gameConfigs[gameSlug] || gameConfigs['default'];
   const { gameSlug } = useParams();
+  const currentGameConfig = gameConfigs[gameSlug] || gameConfigs['default'];
 
   const [game, setGame] = useState(null);
   const [products, setProducts] = useState([]);
@@ -207,6 +207,24 @@ function OrderPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Prevent auto-scroll on page load
+  useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
+    // Prevent browser from restoring scroll position
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    
+    return () => {
+      // Reset to automatic when component unmounts
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, [gameSlug]); // Re-run when game changes
 
   const loadProducts = async () => {
     try {
