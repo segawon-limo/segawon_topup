@@ -858,17 +858,6 @@ function OrderPage() {
                   {errors.payment && <div className="error">{errors.payment}</div>}
                 </div>
               )}
-
-              {/* Submit Button */}
-              {selectedProduct && selectedPaymentMethod && (
-                <button
-                  type="submit"
-                  className="btn-submit"
-                  disabled={processing}
-                >
-                  {processing ? 'Memproses...' : 'Bayar Sekarang'}
-                </button>
-              )}
             </form>
           </div>
 
@@ -937,6 +926,15 @@ function OrderPage() {
                     <div className="summary-note">
                       *Biaya admin sudah termasuk
                     </div>
+
+                    {/* Submit Button */}
+                    <button
+                      onClick={handleSubmit}
+                      className="btn-submit"
+                      disabled={processing}
+                    >
+                      {processing ? 'Memproses...' : 'Bayar Sekarang'}
+                    </button>
                   </>
                 )}
               </>

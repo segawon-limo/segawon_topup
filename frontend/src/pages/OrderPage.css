@@ -224,16 +224,13 @@
 }
 
 /* ===== FIXED: Order Summary ===== */
-/* ===== FIXED: Order Summary - Scrollable Version ===== */
+/* ===== Order Summary - Normal Scrollable Version ===== */
 
 .order-summary {
-  /* Positioning */
-  position: sticky;
-  top: 80px;
-  align-self: start;
+  /* Positioning - CHANGED: from sticky to relative for normal scroll */
+  position: relative;
   
-  /* Sizing - IMPORTANT */
-  max-height: calc(100vh - 120px);
+  /* Sizing */
   min-height: 300px;
   
   /* Appearance */
@@ -242,68 +239,21 @@
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   
-  /* Scroll - CRITICAL */
-  overflow-y: auto !important;
+  /* Normal overflow */
   overflow-x: hidden;
-  /* Smooth scroll on mobile */
-  -webkit-overflow-scrolling: touch;
-  /* overscroll-behavior: contain; */
 }
 
-/* Custom scrollbar styling */
-.order-summary::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.order-summary::-webkit-scrollbar-track {
-  background: #f8fafc;
-  border-radius: 10px;
-  margin: 8px 0;
-}
-
-.order-summary::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-  border: 2px solid #f8fafc;
-}
-
-.order-summary::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Firefox scrollbar */
-.order-summary {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f8fafc;
-}
-
-/* Summary header - Make it sticky within scroll container */
+/* Summary header */
 .order-summary h3 {
-  /* Sticky positioning */
-  position: sticky;
-  top: -24px; /* Negative of parent padding*/
-  
   /* Sizing */
-  margin: -24px -24px 20px -24px; /* Negative of parent padding */
-  padding: 24px 24px 16px 24px; 
+  margin: 0 0 20px 0;
+  padding: 0 0 16px 0; 
   
   /* Appearance */
   font-size: 20px;
   font-weight: 700;
   color: #1e293b;
-  background: white;
   border-bottom: 2px solid #e2e8f0;
-  
-  /* Ensure it's above content */
-  z-index: 10;
-}
-
-/* Summary content wrapper - for better scroll control */
-.summary-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
 }
 
 /* Summary items */
@@ -368,7 +318,34 @@
   font-size: 12px;
   color: #718096;
   margin-top: 8px;
-  padding-bottom: 8px;
+  padding-bottom: 16px;
+}
+
+/* Submit Button in Summary */
+.order-summary .btn-submit {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  margin-top: 8px;
+}
+
+.order-summary .btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.order-summary .btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Placeholder */
@@ -382,23 +359,12 @@
 /* Mobile adjustments */
 @media (max-width: 1024px) {
   .order-summary {
-    position: relative;
-    top: 0;
-    max-height: 600px;
     margin-top: 30px;
-  }
-  
-  .order-summary h3 {
-    position: sticky;
-    top: 0;
-    margin: 0 0 20px 0;
-    padding: 0 0 16px 0;
   }
 }
 
 @media (max-width: 768px) {
   .order-summary {
-    max-height: 500px;
     padding: 20px;
   }
   
