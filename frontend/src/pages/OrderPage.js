@@ -499,6 +499,13 @@ function OrderPage() {
     }
   };
 
+  // Handler untuk tombol bayar di summary (di luar form)
+  const handlePaymentClick = () => {
+    // Buat event palsu untuk kompatibilitas dengan handleSubmit
+    const fakeEvent = { preventDefault: () => {} };
+    handleSubmit(fakeEvent);
+  };
+
   if (loading) {
     return (
       <div className="order-page">
@@ -929,7 +936,7 @@ function OrderPage() {
 
                     {/* Submit Button */}
                     <button
-                      onClick={handleSubmit}
+                      onClick={handlePaymentClick}
                       className="btn-submit"
                       disabled={processing}
                     >
