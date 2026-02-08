@@ -4,6 +4,7 @@
  */
 
 const duitkuService = require('../services/duitku.service');
+const digiflazzService = require('../services/digiflazz.service');
 const { pool } = require('../config/database');
 
 /**
@@ -254,9 +255,12 @@ exports.duitkuCallback = async (req, res) => {
 
     console.log('✓ Signature valid');
 
-    // 2. Get order from database
+    // 2. Get order from database with product info
     const orderResult = await pool.query(
-      'SELECT * FROM orders WHERE order_number = $1',
+      `SELECT o.*, p.sku, p.name as product_name
+       FROM orders o
+       JOIN products p ON o.product_id = p.id
+       WHERE o.order_number = $1`,
       [merchantOrderId]
     );
 
@@ -337,14 +341,11 @@ exports.duitkuCallback = async (req, res) => {
         JSON.stringify(req.body)
       ]);
 
-      // TODO: Process Digiflazz topup
-      try {
-        // await processDigiflazzTopup(order);
-        console.log('TODO: Process Digiflazz topup for order:', order.id);
-      } catch (error) {
-        console.error('Digiflazz processing error:', error);
+      // Process Digiflazz topup in background
+      processDigiflazzTopup(order).catch(error => {
+        console.error('❌ Digiflazz processing error:', error);
         // Jangan throw error, biar callback tetap return success
-      }
+      });
 
       // TODO: Send notification to customer
       try {
@@ -462,6 +463,146 @@ exports.testDuitku = async (req, res) => {
     });
   }
 };
+
+/**
+ * Process Digiflazz topup (async background job)
+ * Called after payment is confirmed
+ */
+async function processDigiflazzTopup(order) {
+  try {
+    console.log('=== 🎮 Processing Digiflazz Topup ===');
+    console.log('Order Number:', order.order_number);
+    console.log('Product SKU:', order.sku);
+    console.log('Customer:', order.game_user_id + (order.game_user_tag ? '#' + order.game_user_tag : ''));
+
+    // Get product details untuk validasi
+    const productResult = await pool.query(
+      'SELECT * FROM products WHERE id = $1',
+      [order.product_id]
+    );
+
+    if (productResult.rows.length === 0) {
+      throw new Error('Product not found');
+    }
+
+    const product = productResult.rows[0];
+
+    // Update status ke processing
+    await pool.query(
+      `UPDATE orders 
+       SET order_status = 'processing', updated_at = CURRENT_TIMESTAMP
+       WHERE order_number = $1`,
+      [order.order_number]
+    );
+
+    console.log('📞 Calling Digiflazz API...');
+
+    // Format customer_no berdasarkan tipe game
+    let customerNo = order.game_user_id;
+    
+    // Untuk game yang butuh tag (Valorant, LOL, dll)
+    if (order.game_user_tag) {
+      customerNo = `${order.game_user_id}#${order.game_user_tag}`;
+    }
+    
+    // Untuk game yang butuh zone_id (Mobile Legends, Free Fire, dll)
+    if (order.game_zone_id) {
+      customerNo = `${order.game_user_id}|${order.game_zone_id}`;
+    }
+
+    // Call Digiflazz API
+    const digiflazzResult = await digiflazzService.createTransaction({
+      sku: product.sku,
+      customerNo: customerNo,
+      orderNumber: order.order_number,
+    });
+
+    console.log('📦 Digiflazz Response:', {
+      success: digiflazzResult.success,
+      status: digiflazzResult.data?.status,
+      message: digiflazzResult.data?.message,
+    });
+
+    if (digiflazzResult.success) {
+      // ✅ Topup berhasil
+      console.log('✅ Digiflazz topup SUCCESS!');
+
+      await pool.query(
+        `UPDATE orders 
+         SET 
+           order_status = $1,
+           provider_order_id = $2,
+           provider_serial_number = $3,
+           provider_response = $4,
+           processed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE order_number = $5`,
+        [
+          digiflazzResult.data.order_status || 'completed',
+          digiflazzResult.data.ref_id || null,
+          digiflazzResult.data.sn || null,
+          JSON.stringify(digiflazzResult.data),
+          order.order_number,
+        ]
+      );
+
+      console.log('✅ Order completed successfully!');
+      console.log('Serial Number:', digiflazzResult.data.sn || 'N/A');
+
+      // TODO: Send success notification to customer
+      // await sendSuccessEmail(order, digiflazzResult.data);
+
+    } else {
+      // ❌ Topup gagal
+      console.error('❌ Digiflazz topup FAILED:', digiflazzResult.message);
+
+      await pool.query(
+        `UPDATE orders 
+         SET 
+           order_status = 'failed',
+           provider_response = $1,
+           notes = $2,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE order_number = $3`,
+        [
+          JSON.stringify(digiflazzResult),
+          digiflazzResult.message || 'Topup failed',
+          order.order_number,
+        ]
+      );
+
+      // TODO: Send failure notification to customer
+      // await sendFailureEmail(order, digiflazzResult.message);
+
+      // TODO: Process refund jika diperlukan
+      console.log('⚠️  Consider processing refund for order:', order.order_number);
+    }
+
+  } catch (error) {
+    console.error('❌ Critical Error in processDigiflazzTopup:', error);
+
+    // Update order dengan error
+    try {
+      await pool.query(
+        `UPDATE orders 
+         SET 
+           order_status = 'failed',
+           notes = $1,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE order_number = $2`,
+        [
+          `System error: ${error.message}`,
+          order.order_number,
+        ]
+      );
+    } catch (updateError) {
+      console.error('Failed to update order status:', updateError);
+    }
+
+    // TODO: Alert admin tentang critical error
+    // await notifyAdminError(order, error);
+  }
+}
 
 /**
  * Helper: Log callback errors
