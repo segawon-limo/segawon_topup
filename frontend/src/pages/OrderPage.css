@@ -114,7 +114,7 @@ body {
 
 /* Hover */
 .product-card:hover {
-  background: #ff4655;
+  background: #ec3a49;
   border-color: #ff4655;
   color: #ffffff;
   transform: translateY(-2px);
@@ -123,8 +123,8 @@ body {
 
 /* Selected (tetap merah) */
 .product-card.selected {
-  background: #ff4655;
-  border-color: #ff4655;
+  background: #a82732;
+  border-color: #ec3a49;
   color: #ffffff;
   box-shadow: 0 0 0 3px rgba(255, 70, 85, 0.35);
 }
