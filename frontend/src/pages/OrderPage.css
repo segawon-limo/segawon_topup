@@ -107,6 +107,50 @@ body {
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
+  transition: all 0.25s ease;
+  background: white;
+  color: #2d3748;
+}
+
+/* Hover */
+.product-card:hover {
+  background: #ff4655;
+  border-color: #ff4655;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 70, 85, 0.35);
+}
+
+/* Selected (tetap merah) */
+.product-card.selected {
+  background: #ff4655;
+  border-color: #ff4655;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 70, 85, 0.35);
+}
+
+/* Text di dalam card ikut putih */
+.product-card:hover .product-name,
+.product-card:hover .product-price,
+.product-card:hover .product-description,
+.product-card.selected .product-name,
+.product-card.selected .product-price,
+.product-card.selected .product-description {
+  color: #ffffff;
+}
+
+/* Price lebih stand out */
+.product-card.selected .product-price,
+.product-card:hover .product-price {
+  font-weight: 700;
+}
+
+/* .product-card {
+  position: relative;
+  padding: 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
   transition: all 0.3s ease;
   background: white;
 }
@@ -121,7 +165,7 @@ body {
   border-color: #667eea;
   background: #f0f4ff;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
+} */
 
 .product-name {
   font-size: 16px;
