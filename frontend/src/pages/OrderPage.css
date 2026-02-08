@@ -1,9 +1,15 @@
+/* Prevent horizontal scroll - applied to body instead of .order-page */
+/* This way it won't break position: sticky */
+body {
+  overflow-x: hidden;
+}
+
 .order-page {
   min-height: 100vh;
   background: #f5f7fa;
   padding: 0;
   position: relative;
-  overflow-x: hidden;
+  /* overflow-x removed - it breaks position: sticky! */
 }
 
 /* Game Header Image */
