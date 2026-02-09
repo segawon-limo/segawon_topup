@@ -264,6 +264,28 @@ function OrderPage() {
     }));
   };
 
+  // === END Name Validation ===
+
+  // === Email Validation with Debounce ===
+
+  const [touched, setTouched] = useState({
+    customerEmail: false,
+    customerName: false,
+    customerPhone: false
+  });
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
+    if (name === "customerEmail") {
+      validateEmail(formData.customerEmail);
+    }
+  };
 
 
   // email validation debounce
@@ -282,18 +304,29 @@ function OrderPage() {
   };
 
   // Debounced email validation
+  // useEffect(() => {
+  //   if (emailTimer) clearTimeout(emailTimer);
+
+  //   const timer = setTimeout(() => {
+  //     validateEmail(formData.customerEmail);
+  //   }, 1500); // 1.5 detik
+
+  //   setEmailTimer(timer);
+
+  //   return () => clearTimeout(timer);
+  // }, [formData.customerEmail]);
+
   useEffect(() => {
-    if (emailTimer) clearTimeout(emailTimer);
+    if (!touched.customerEmail) return;
+    if (!formData.customerEmail) return;
 
     const timer = setTimeout(() => {
       validateEmail(formData.customerEmail);
-    }, 1500); // 1.5 detik
-
-    setEmailTimer(timer);
+    }, 1200);
 
     return () => clearTimeout(timer);
-  }, [formData.customerEmail]);
-
+  }, [formData.customerEmail, touched.customerEmail]);
+  // === END Email Validation ===
 
   // Load products
   useEffect(() => {
@@ -923,11 +956,16 @@ function OrderPage() {
                       name="customerEmail"
                       value={formData.customerEmail}
                       onChange={handleInputChange}
-                      onBlur={() => validateEmail(formData.customerEmail)}
+                      // onBlur={() => validateEmail(formData.customerEmail)}
+                      onBlur={handleBlur}
                       placeholder="email@example.com"
-                      className={errors.customerEmail ? 'error' : ''}
+                      // className={errors.customerEmail ? 'error' : ''}
+                      className={touched.customerEmail && errors.customerEmail ? 'error' : ''}
                     />
-                    {errors.customerEmail && <div className="error">{errors.customerEmail}</div>}
+                    {/* {errors.customerEmail && <div className="error">{errors.customerEmail}</div>} */}
+                    {touched.customerEmail && errors.customerEmail && (
+                      <div className="error">{errors.customerEmail}</div>
+                    )}
                   </div>
 
                   <div className="form-group">
