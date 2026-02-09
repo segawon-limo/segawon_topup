@@ -340,6 +340,7 @@ function OrderPage() {
         body: JSON.stringify({
           code: voucherCode.trim(),
           orderAmount: selectedProduct.price,
+          productId: selectedProduct.id,
         }),
       });
 
