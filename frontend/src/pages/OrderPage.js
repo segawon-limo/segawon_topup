@@ -409,7 +409,11 @@ function OrderPage() {
     const amount = parseFloat(price);
     
     if (method === 'qris') return Math.round(amount * 0.007);
-    if (method.startsWith('va_')) return 2500;
+    if (method.startsWith('va_')) {
+      if (method === 'va_bca') return 5000;
+      if (method === 'va_mandiri') return 4000;
+      return 3000;
+    }
     if (['ovo', 'shopeepay', 'dana'].includes(method)) return Math.round(amount * 0.02) + 1000;
     return 2500;
   };
@@ -1005,7 +1009,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">QRIS (Semua E-Wallet)</span>
-                          <span className="payment-note">Fee 0.7%</span>
+                          {/* <span className="payment-note">Fee 0.7%</span> */}
                         </div>
                       </label>
                     </div>
@@ -1023,7 +1027,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">BCA Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
 
@@ -1037,7 +1041,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">Mandiri Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
 
@@ -1051,7 +1055,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">BNI Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
 
@@ -1065,7 +1069,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">BRI Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
                     </div>
@@ -1083,7 +1087,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">OVO</span>
-                          <span className="payment-note">Fee 2%</span>
+                          {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
                       </label>
 
@@ -1097,7 +1101,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">ShopeePay</span>
-                          <span className="payment-note">Fee 2%</span>
+                          {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
                       </label>
 
@@ -1111,7 +1115,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">DANA</span>
-                          <span className="payment-note">Fee 2%</span>
+                          {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
                       </label>
                     </div>
