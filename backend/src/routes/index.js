@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/order.controller');
+const voucherController = require('../controllers/voucher.controller');
 
 // ========================================
 // HEALTH CHECK
@@ -32,6 +33,16 @@ router.get('/products/:gameSlug', orderController.getProducts);
 // RIOT ID VALIDATION
 // ========================================
 router.post('/validate-riot-id', orderController.validateRiotId);
+
+// ========================================
+// VOUCHER MANAGEMENT
+// ========================================
+
+// Validate voucher code
+router.post('/vouchers/validate', voucherController.validateVoucher);
+
+// Get active vouchers (optional)
+router.get('/vouchers/active', voucherController.getActiveVouchers);
 
 // ========================================
 // ORDER MANAGEMENT

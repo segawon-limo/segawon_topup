@@ -170,13 +170,6 @@ function OrderPage() {
     customerName: '',
   });
 
-  // NEW: Voucher state
-  const [voucherCode, setVoucherCode] = useState('');
-  const [voucherDiscount, setVoucherDiscount] = useState(0);
-  const [voucherApplied, setVoucherApplied] = useState(false);
-  const [voucherValidating, setVoucherValidating] = useState(false);
-  const [voucherError, setVoucherError] = useState('');
-
   const [errors, setErrors] = useState({});
 
   // Load products
@@ -265,18 +258,12 @@ function OrderPage() {
     return 2500;
   };
 
-  // NEW: Calculate totals with voucher discount
-  // Price after voucher discount
-  const priceAfterDiscount = selectedProduct 
-    ? selectedProduct.price - (voucherApplied ? voucherDiscount : 0)
-    : 0;
-
-  // Payment fee is calculated based on price AFTER voucher discount
+  // Calculate totals
   const paymentFee = selectedPaymentMethod && selectedProduct 
-    ? calculatePaymentFee(selectedPaymentMethod, priceAfterDiscount)
+    ? calculatePaymentFee(selectedPaymentMethod, selectedProduct.price)
     : 0;
   
-  const totalAmount = priceAfterDiscount + paymentFee;
+  const totalAmount = selectedProduct ? selectedProduct.price + paymentFee : 0;
   
   // Format currency
   const formatRupiah = (amount) => {
@@ -292,84 +279,10 @@ function OrderPage() {
     setSelectedProduct(product);
     setSelectedPaymentMethod('');
     setUserIdValidated(false);
-    // Reset voucher when product changes
-    setVoucherCode('');
-    setVoucherDiscount(0);
-    setVoucherApplied(false);
-    setVoucherError('');
   };
 
   const handlePaymentMethodChange = (method) => {
     setSelectedPaymentMethod(method);
-  };
-
-  // NEW: Handle voucher code input
-  const handleVoucherChange = (e) => {
-    const code = e.target.value.toUpperCase();
-    setVoucherCode(code);
-    
-    // Reset voucher state when user changes the code
-    if (voucherApplied) {
-      setVoucherApplied(false);
-      setVoucherDiscount(0);
-      setVoucherError('');
-    }
-  };
-
-  // NEW: Validate and apply voucher
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) {
-      setVoucherError('Masukkan kode voucher');
-      return;
-    }
-
-    if (!selectedProduct) {
-      setVoucherError('Pilih produk terlebih dahulu');
-      return;
-    }
-
-    try {
-      setVoucherValidating(true);
-      setVoucherError('');
-
-      const response = await fetch(`${API_URL}/api/vouchers/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: voucherCode.trim(),
-          orderAmount: selectedProduct.price,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setVoucherApplied(true);
-        setVoucherDiscount(data.discount);
-        setVoucherError('');
-      } else {
-        setVoucherApplied(false);
-        setVoucherDiscount(0);
-        setVoucherError(data.message || 'Kode voucher tidak valid');
-      }
-    } catch (error) {
-      console.error('Error validating voucher:', error);
-      setVoucherError('Gagal memvalidasi voucher');
-      setVoucherApplied(false);
-      setVoucherDiscount(0);
-    } finally {
-      setVoucherValidating(false);
-    }
-  };
-
-  // NEW: Remove applied voucher
-  const handleRemoveVoucher = () => {
-    setVoucherCode('');
-    setVoucherDiscount(0);
-    setVoucherApplied(false);
-    setVoucherError('');
   };
 
   const handleInputChange = (e) => {
@@ -558,7 +471,6 @@ function OrderPage() {
         phoneNumber: formData.customerPhone.trim(),
         customerName: formData.customerName.trim(),
         paymentMethod: selectedPaymentMethod,
-        voucherCode: voucherApplied ? voucherCode.trim() : null, // NEW: Include voucher if applied
       };
 
       console.log('Creating order:', orderData);
@@ -956,56 +868,6 @@ function OrderPage() {
                   {errors.payment && <div className="error">{errors.payment}</div>}
                 </div>
               )}
-
-              {/* NEW: Step 5: Voucher Code - OPTIONAL */}
-              {selectedProduct && userIdValidated && selectedPaymentMethod && (
-                <div className="form-section voucher-section">
-                  <h2>5. Kode Voucher (Opsional)</h2>
-                  
-                  <div className="voucher-input-group">
-                    <input
-                      type="text"
-                      value={voucherCode}
-                      onChange={handleVoucherChange}
-                      placeholder="Masukkan kode voucher"
-                      className={voucherError ? 'error' : voucherApplied ? 'success' : ''}
-                      disabled={voucherApplied}
-                      maxLength={50}
-                    />
-                    
-                    {!voucherApplied ? (
-                      <button
-                        type="button"
-                        onClick={handleApplyVoucher}
-                        disabled={voucherValidating || !voucherCode.trim()}
-                        className="btn-apply-voucher"
-                      >
-                        {voucherValidating ? 'Memvalidasi...' : 'Pakai'}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleRemoveVoucher}
-                        className="btn-remove-voucher"
-                      >
-                        Hapus
-                      </button>
-                    )}
-                  </div>
-
-                  {voucherError && (
-                    <div className="voucher-error">
-                      ❌ {voucherError}
-                    </div>
-                  )}
-
-                  {voucherApplied && (
-                    <div className="voucher-success">
-                      ✓ Voucher berhasil diterapkan! Hemat {formatRupiah(voucherDiscount)}
-                    </div>
-                  )}
-                </div>
-              )}
             </form>
           </div>
 
@@ -1038,16 +900,6 @@ function OrderPage() {
                   <span>Harga</span>
                   <span>{formatRupiah(selectedProduct.price)}</span>
                 </div>
-
-                {/* NEW: Show voucher discount if applied */}
-                {voucherApplied && voucherDiscount > 0 && (
-                  <div className="summary-item voucher-discount">
-                    <span>Diskon Voucher ({voucherCode})</span>
-                    <span style={{ color: '#10b981', fontWeight: '700' }}>
-                      - {formatRupiah(voucherDiscount)}
-                    </span>
-                  </div>
-                )}
 
                 {selectedPaymentMethod && (
                   <>
