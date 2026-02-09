@@ -179,6 +179,122 @@ function OrderPage() {
 
   const [errors, setErrors] = useState({});
 
+  // Inputphone
+  const allowPhoneInput = (e) => {
+    const { key, target } = e;
+
+    const allowedControlKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+    ];
+
+    // Allow control keys
+    if (allowedControlKeys.includes(key)) return;
+
+    // Allow number
+    if (/[0-9]/.test(key)) return;
+
+    // Allow + ONLY if:
+    // - cursor di posisi 0
+    // - belum ada +
+    if (key === "+" && target.selectionStart === 0 && !target.value.includes("+")) {
+      return;
+    }
+
+    // Block others
+    e.preventDefault();
+  };
+
+  // Handle paste event for phone input
+  const handlePastePhone = (e) => {
+    let pasteData = e.clipboardData.getData("text");
+
+    pasteData = pasteData.replace(/[^\d+]/g, "");
+
+    if (pasteData.startsWith("08")) {
+      pasteData = "+62" + pasteData.slice(1);
+    }
+
+    if (pasteData.includes("+")) {
+      pasteData = "+" + pasteData.replace(/\+/g, "").replace(/[^\d]/g, "");
+    }
+
+    e.preventDefault();
+
+    setFormData(prev => ({
+      ...prev,
+      customerPhone: pasteData,
+    }));
+  };
+
+  // === Name Validation ===
+  const allowOnlyAlphabet = (e) => {
+    const allowedControlKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab"
+    ];
+
+    if (allowedControlKeys.includes(e.key)) return;
+
+    // Allow space
+    if (e.key === " ") return;
+
+    // Allow unicode letters
+    if (/^\p{L}$/u.test(e.key)) return;
+
+    e.preventDefault();
+  };
+
+  const handlePasteAlphabet = (e) => {
+    let pasteData = e.clipboardData.getData("text");
+
+    pasteData = pasteData.replace(/[^\p{L}\s]/gu, "");
+
+    e.preventDefault();
+
+    setFormData(prev => ({
+      ...prev,
+      customerName: pasteData,
+    }));
+  };
+
+
+
+  // email validation debounce
+  const [emailTimer, setEmailTimer] = useState(null);
+
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) {
+      setErrors(prev => ({ ...prev, customerEmail: "Email wajib diisi" }));
+    } else if (!regex.test(email)) {
+      setErrors(prev => ({ ...prev, customerEmail: "Format email tidak valid" }));
+    } else {
+      setErrors(prev => ({ ...prev, customerEmail: "" }));
+    }
+  };
+
+  // Debounced email validation
+  useEffect(() => {
+    if (emailTimer) clearTimeout(emailTimer);
+
+    const timer = setTimeout(() => {
+      validateEmail(formData.customerEmail);
+    }, 1500); // 1.5 detik
+
+    setEmailTimer(timer);
+
+    return () => clearTimeout(timer);
+  }, [formData.customerEmail]);
+
+
   // Load products
   useEffect(() => {
     loadProducts();
@@ -387,6 +503,9 @@ function OrderPage() {
       }));
     }
 
+    if (name === "customerName") {
+      value = value.replace(/[^\p{L}\s]/gu, "");
+    }
     // if (name === 'riotId' || name === 'riotTag') {
     //   setRiotIdValidated(false);
     //   setValidationError('');
@@ -789,6 +908,8 @@ function OrderPage() {
                       name="customerName"
                       value={formData.customerName}
                       onChange={handleInputChange}
+                      onKeyDown={allowOnlyAlphabet}
+                      onPaste={handlePasteAlphabet}
                       placeholder="Nama Lengkap"
                       className={errors.customerName ? 'error' : ''}
                     />
@@ -802,6 +923,7 @@ function OrderPage() {
                       name="customerEmail"
                       value={formData.customerEmail}
                       onChange={handleInputChange}
+                      onBlur={() => validateEmail(formData.customerEmail)}
                       placeholder="email@example.com"
                       className={errors.customerEmail ? 'error' : ''}
                     />
@@ -815,6 +937,9 @@ function OrderPage() {
                       name="customerPhone"
                       value={formData.customerPhone}
                       onChange={handleInputChange}
+                      onKeyDown={allowPhoneInput}
+                      onPaste={handlePastePhone}
+                      inputMode="numeric"
                       placeholder="081234567890"
                       className={errors.customerPhone ? 'error' : ''}
                     />
@@ -824,7 +949,7 @@ function OrderPage() {
               )}
 
               {/* Step 4: Payment Method - ONLY SHOW IF RIOT ID VALIDATED AND DATA FILLED */}
-              {selectedProduct && userIdValidated&& formData.customerEmail && formData.customerName && (
+              {selectedProduct && userIdValidated && formData.customerEmail && formData.customerName && formData.customerPhone && (
                 <div className="form-section">
                   <h2>4. Pilih Pembayaran</h2>
                   
