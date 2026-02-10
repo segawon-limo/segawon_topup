@@ -754,6 +754,35 @@ function OrderPage() {
     handleSubmit(fakeEvent);
   };
 
+  // NEW: Check if form is valid and button should be enabled
+  const isFormValid = () => {
+    // Check if there are any errors
+    if (Object.keys(errors).length > 0) {
+      return false;
+    }
+
+    // Check required fields
+    if (!selectedProduct) return false;
+    if (!selectedPaymentMethod) return false;
+    if (!formData.userId.trim()) return false;
+    if (!formData.customerEmail.trim()) return false;
+    if (!formData.customerPhone.trim()) return false;
+    if (!formData.customerName.trim()) return false;
+
+    // Check if zoneId is required for this game
+    if (currentGameConfig.fields.length > 1 && !formData.zoneId.trim()) {
+      return false;
+    }
+
+    // Check if userId validation is required and completed
+    if (currentGameConfig.validation && !userIdValidated) {
+      return false;
+    }
+
+    // All checks passed
+    return true;
+  };
+
   if (loading) {
     return (
       <div className="order-page">
@@ -1257,7 +1286,7 @@ function OrderPage() {
                     <button
                       onClick={handlePaymentClick}
                       className="btn-submit"
-                      disabled={processing}
+                      disabled={processing || !isFormValid()}
                     >
                       {processing ? 'Memproses...' : 'Bayar Sekarang'}
                     </button>
