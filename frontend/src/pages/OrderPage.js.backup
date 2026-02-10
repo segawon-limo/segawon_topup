@@ -170,7 +170,163 @@ function OrderPage() {
     customerName: '',
   });
 
+  // NEW: Voucher state
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherApplied, setVoucherApplied] = useState(false);
+  const [voucherValidating, setVoucherValidating] = useState(false);
+  const [voucherError, setVoucherError] = useState('');
+
   const [errors, setErrors] = useState({});
+
+  // Inputphone
+  const allowPhoneInput = (e) => {
+    const { key, target } = e;
+
+    const allowedControlKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+    ];
+
+    // Allow control keys
+    if (allowedControlKeys.includes(key)) return;
+
+    // Allow number
+    if (/[0-9]/.test(key)) return;
+
+    // Allow + ONLY if:
+    // - cursor di posisi 0
+    // - belum ada +
+    if (key === "+" && target.selectionStart === 0 && !target.value.includes("+")) {
+      return;
+    }
+
+    // Block others
+    e.preventDefault();
+  };
+
+  // Handle paste event for phone input
+  const handlePastePhone = (e) => {
+    let pasteData = e.clipboardData.getData("text");
+
+    pasteData = pasteData.replace(/[^\d+]/g, "");
+
+    if (pasteData.startsWith("08")) {
+      pasteData = "+62" + pasteData.slice(1);
+    }
+
+    if (pasteData.includes("+")) {
+      pasteData = "+" + pasteData.replace(/\+/g, "").replace(/[^\d]/g, "");
+    }
+
+    e.preventDefault();
+
+    setFormData(prev => ({
+      ...prev,
+      customerPhone: pasteData,
+    }));
+  };
+
+  // === Name Validation ===
+  const allowOnlyAlphabet = (e) => {
+    const allowedControlKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab"
+    ];
+
+    if (allowedControlKeys.includes(e.key)) return;
+
+    // Allow space
+    if (e.key === " ") return;
+
+    // Allow unicode letters
+    if (/^\p{L}$/u.test(e.key)) return;
+
+    e.preventDefault();
+  };
+
+  const handlePasteAlphabet = (e) => {
+    let pasteData = e.clipboardData.getData("text");
+
+    pasteData = pasteData.replace(/[^\p{L}\s]/gu, "");
+
+    e.preventDefault();
+
+    setFormData(prev => ({
+      ...prev,
+      customerName: pasteData,
+    }));
+  };
+
+  // === END Name Validation ===
+
+  // === Email Validation with Debounce ===
+
+  const [touched, setTouched] = useState({
+    customerEmail: false,
+    customerName: false,
+    customerPhone: false
+  });
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
+    if (name === "customerEmail") {
+      validateEmail(formData.customerEmail);
+    }
+  };
+
+
+  // email validation debounce
+  const [emailTimer, setEmailTimer] = useState(null);
+
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) {
+      setErrors(prev => ({ ...prev, customerEmail: "Email wajib diisi" }));
+    } else if (!regex.test(email)) {
+      setErrors(prev => ({ ...prev, customerEmail: "Format email tidak valid" }));
+    } else {
+      setErrors(prev => ({ ...prev, customerEmail: "" }));
+    }
+  };
+
+  // Debounced email validation
+  // useEffect(() => {
+  //   if (emailTimer) clearTimeout(emailTimer);
+
+  //   const timer = setTimeout(() => {
+  //     validateEmail(formData.customerEmail);
+  //   }, 1500); // 1.5 detik
+
+  //   setEmailTimer(timer);
+
+  //   return () => clearTimeout(timer);
+  // }, [formData.customerEmail]);
+
+  useEffect(() => {
+    if (!touched.customerEmail) return;
+    if (!formData.customerEmail) return;
+
+    const timer = setTimeout(() => {
+      validateEmail(formData.customerEmail);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [formData.customerEmail, touched.customerEmail]);
+  // === END Email Validation ===
 
   // Load products
   useEffect(() => {
@@ -253,17 +409,27 @@ function OrderPage() {
     const amount = parseFloat(price);
     
     if (method === 'qris') return Math.round(amount * 0.007);
-    if (method.startsWith('va_')) return 2500;
+    if (method.startsWith('va_')) {
+      if (method === 'va_bca') return 5000;
+      if (method === 'va_mandiri') return 4000;
+      return 3000;
+    }
     if (['ovo', 'shopeepay', 'dana'].includes(method)) return Math.round(amount * 0.02) + 1000;
     return 2500;
   };
 
-  // Calculate totals
+  // NEW: Calculate totals with voucher discount
+  // Price after voucher discount
+  const priceAfterDiscount = selectedProduct 
+    ? selectedProduct.price - (voucherApplied ? voucherDiscount : 0)
+    : 0;
+
+  // Payment fee is calculated based on price AFTER voucher discount
   const paymentFee = selectedPaymentMethod && selectedProduct 
-    ? calculatePaymentFee(selectedPaymentMethod, selectedProduct.price)
+    ? calculatePaymentFee(selectedPaymentMethod, priceAfterDiscount)
     : 0;
   
-  const totalAmount = selectedProduct ? selectedProduct.price + paymentFee : 0;
+  const totalAmount = priceAfterDiscount + paymentFee;
   
   // Format currency
   const formatRupiah = (amount) => {
@@ -279,10 +445,85 @@ function OrderPage() {
     setSelectedProduct(product);
     setSelectedPaymentMethod('');
     setUserIdValidated(false);
+    // Reset voucher when product changes
+    setVoucherCode('');
+    setVoucherDiscount(0);
+    setVoucherApplied(false);
+    setVoucherError('');
   };
 
   const handlePaymentMethodChange = (method) => {
     setSelectedPaymentMethod(method);
+  };
+
+  // NEW: Handle voucher code input
+  const handleVoucherChange = (e) => {
+    const code = e.target.value.toUpperCase();
+    setVoucherCode(code);
+    
+    // Reset voucher state when user changes the code
+    if (voucherApplied) {
+      setVoucherApplied(false);
+      setVoucherDiscount(0);
+      setVoucherError('');
+    }
+  };
+
+  // NEW: Validate and apply voucher
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) {
+      setVoucherError('Masukkan kode voucher');
+      return;
+    }
+
+    if (!selectedProduct) {
+      setVoucherError('Pilih produk terlebih dahulu');
+      return;
+    }
+
+    try {
+      setVoucherValidating(true);
+      setVoucherError('');
+
+      const response = await fetch(`${API_URL}/api/vouchers/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: voucherCode.trim(),
+          orderAmount: selectedProduct.price,
+          productId: selectedProduct.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setVoucherApplied(true);
+        setVoucherDiscount(data.discount);
+        setVoucherError('');
+      } else {
+        setVoucherApplied(false);
+        setVoucherDiscount(0);
+        setVoucherError(data.message || 'Kode voucher tidak valid');
+      }
+    } catch (error) {
+      console.error('Error validating voucher:', error);
+      setVoucherError('Gagal memvalidasi voucher');
+      setVoucherApplied(false);
+      setVoucherDiscount(0);
+    } finally {
+      setVoucherValidating(false);
+    }
+  };
+
+  // NEW: Remove applied voucher
+  const handleRemoveVoucher = () => {
+    setVoucherCode('');
+    setVoucherDiscount(0);
+    setVoucherApplied(false);
+    setVoucherError('');
   };
 
   const handleInputChange = (e) => {
@@ -299,6 +540,9 @@ function OrderPage() {
       }));
     }
 
+    if (name === "customerName") {
+      value = value.replace(/[^\p{L}\s]/gu, "");
+    }
     // if (name === 'riotId' || name === 'riotTag') {
     //   setRiotIdValidated(false);
     //   setValidationError('');
@@ -471,6 +715,7 @@ function OrderPage() {
         phoneNumber: formData.customerPhone.trim(),
         customerName: formData.customerName.trim(),
         paymentMethod: selectedPaymentMethod,
+        voucherCode: voucherApplied ? voucherCode.trim() : null, // NEW: Include voucher if applied
       };
 
       console.log('Creating order:', orderData);
@@ -507,6 +752,35 @@ function OrderPage() {
     // Buat event palsu untuk kompatibilitas dengan handleSubmit
     const fakeEvent = { preventDefault: () => {} };
     handleSubmit(fakeEvent);
+  };
+
+  // NEW: Check if form is valid and button should be enabled
+  const isFormValid = () => {
+    // Check if there are any errors
+    if (Object.keys(errors).length > 0) {
+      return false;
+    }
+
+    // Check required fields
+    if (!selectedProduct) return false;
+    if (!selectedPaymentMethod) return false;
+    if (!formData.userId.trim()) return false;
+    if (!formData.customerEmail.trim()) return false;
+    if (!formData.customerPhone.trim()) return false;
+    if (!formData.customerName.trim()) return false;
+
+    // Check if zoneId is required for this game
+    if (currentGameConfig.fields.length > 1 && !formData.zoneId.trim()) {
+      return false;
+    }
+
+    // Check if userId validation is required and completed
+    if (currentGameConfig.validation && !userIdValidated) {
+      return false;
+    }
+
+    // All checks passed
+    return true;
   };
 
   if (loading) {
@@ -700,6 +974,8 @@ function OrderPage() {
                       name="customerName"
                       value={formData.customerName}
                       onChange={handleInputChange}
+                      onKeyDown={allowOnlyAlphabet}
+                      onPaste={handlePasteAlphabet}
                       placeholder="Nama Lengkap"
                       className={errors.customerName ? 'error' : ''}
                     />
@@ -713,10 +989,16 @@ function OrderPage() {
                       name="customerEmail"
                       value={formData.customerEmail}
                       onChange={handleInputChange}
+                      // onBlur={() => validateEmail(formData.customerEmail)}
+                      onBlur={handleBlur}
                       placeholder="email@example.com"
-                      className={errors.customerEmail ? 'error' : ''}
+                      // className={errors.customerEmail ? 'error' : ''}
+                      className={touched.customerEmail && errors.customerEmail ? 'error' : ''}
                     />
-                    {errors.customerEmail && <div className="error">{errors.customerEmail}</div>}
+                    {/* {errors.customerEmail && <div className="error">{errors.customerEmail}</div>} */}
+                    {touched.customerEmail && errors.customerEmail && (
+                      <div className="error">{errors.customerEmail}</div>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -726,6 +1008,9 @@ function OrderPage() {
                       name="customerPhone"
                       value={formData.customerPhone}
                       onChange={handleInputChange}
+                      onKeyDown={allowPhoneInput}
+                      onPaste={handlePastePhone}
+                      inputMode="numeric"
                       placeholder="081234567890"
                       className={errors.customerPhone ? 'error' : ''}
                     />
@@ -735,7 +1020,7 @@ function OrderPage() {
               )}
 
               {/* Step 4: Payment Method - ONLY SHOW IF RIOT ID VALIDATED AND DATA FILLED */}
-              {selectedProduct && userIdValidated&& formData.customerEmail && formData.customerName && (
+              {selectedProduct && userIdValidated && formData.customerEmail && formData.customerName && formData.customerPhone && (
                 <div className="form-section">
                   <h2>4. Pilih Pembayaran</h2>
                   
@@ -753,7 +1038,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">QRIS (Semua E-Wallet)</span>
-                          <span className="payment-note">Fee 0.7%</span>
+                          {/* <span className="payment-note">Fee 0.7%</span> */}
                         </div>
                       </label>
                     </div>
@@ -771,7 +1056,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">BCA Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
 
@@ -785,7 +1070,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">Mandiri Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
 
@@ -799,7 +1084,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">BNI Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
 
@@ -813,7 +1098,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">BRI Virtual Account</span>
-                          <span className="payment-note">Fee 0.7% + Rp 1.000</span>
+                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
                       </label>
                     </div>
@@ -831,7 +1116,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">OVO</span>
-                          <span className="payment-note">Fee 2%</span>
+                          {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
                       </label>
 
@@ -845,7 +1130,7 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">ShopeePay</span>
-                          <span className="payment-note">Fee 2%</span>
+                          {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
                       </label>
 
@@ -859,13 +1144,63 @@ function OrderPage() {
                         />
                         <div className="payment-info">
                           <span className="payment-name">DANA</span>
-                          <span className="payment-note">Fee 2%</span>
+                          {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
                       </label>
                     </div>
                   </div>
 
                   {errors.payment && <div className="error">{errors.payment}</div>}
+                </div>
+              )}
+
+              {/* NEW: Step 5: Voucher Code - OPTIONAL */}
+              {selectedProduct && userIdValidated && selectedPaymentMethod && (
+                <div className="form-section voucher-section">
+                  <h2>5. Kode Voucher (Opsional)</h2>
+                  
+                  <div className="voucher-input-group">
+                    <input
+                      type="text"
+                      value={voucherCode}
+                      onChange={handleVoucherChange}
+                      placeholder="Masukkan kode voucher"
+                      className={voucherError ? 'error' : voucherApplied ? 'success' : ''}
+                      disabled={voucherApplied}
+                      maxLength={50}
+                    />
+                    
+                    {!voucherApplied ? (
+                      <button
+                        type="button"
+                        onClick={handleApplyVoucher}
+                        disabled={voucherValidating || !voucherCode.trim()}
+                        className="btn-apply-voucher"
+                      >
+                        {voucherValidating ? 'Memvalidasi...' : 'Pakai'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleRemoveVoucher}
+                        className="btn-remove-voucher"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+
+                  {voucherError && (
+                    <div className="voucher-error">
+                      ❌ {voucherError}
+                    </div>
+                  )}
+
+                  {voucherApplied && (
+                    <div className="voucher-success">
+                      ✓ Voucher berhasil diterapkan! Hemat {formatRupiah(voucherDiscount)}
+                    </div>
+                  )}
                 </div>
               )}
             </form>
@@ -900,6 +1235,16 @@ function OrderPage() {
                   <span>Harga</span>
                   <span>{formatRupiah(selectedProduct.price)}</span>
                 </div>
+
+                {/* NEW: Show voucher discount if applied */}
+                {voucherApplied && voucherDiscount > 0 && (
+                  <div className="summary-item voucher-discount">
+                    <span>Diskon Voucher ({voucherCode})</span>
+                    <span style={{ color: '#10b981', fontWeight: '700' }}>
+                      - {formatRupiah(voucherDiscount)}
+                    </span>
+                  </div>
+                )}
 
                 {selectedPaymentMethod && (
                   <>
@@ -941,7 +1286,7 @@ function OrderPage() {
                     <button
                       onClick={handlePaymentClick}
                       className="btn-submit"
-                      disabled={processing}
+                      disabled={processing || !isFormValid()}
                     >
                       {processing ? 'Memproses...' : 'Bayar Sekarang'}
                     </button>
