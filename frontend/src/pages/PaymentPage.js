@@ -367,6 +367,17 @@ function PaymentPage() {
                 <span>Harga Produk</span>
                 <span>{formatRupiah(paymentData.amount)}</span>
               </div>
+              
+              {/* Voucher Discount - Show only if voucher was used */}
+              {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
+                <div className="summary-row voucher-discount">
+                  <span>Diskon Voucher ({paymentData.voucherCode})</span>
+                  <span style={{ color: '#10b981', fontWeight: '600' }}>
+                    - {formatRupiah(paymentData.voucherDiscount)}
+                  </span>
+                </div>
+              )}
+              
               <div className="summary-row">
                 <span>Biaya Admin</span>
                 <span>{formatRupiah(paymentData.paymentFee)}</span>

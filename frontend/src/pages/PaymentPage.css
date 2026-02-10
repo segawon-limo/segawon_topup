@@ -517,3 +517,152 @@
   margin: 20px auto;
   display: block;
 }
+
+/**
+ * CSS Additions for PaymentPage.css
+ * Add this to your existing PaymentPage.css file
+ */
+
+/* ========================================
+   VOUCHER DISCOUNT STYLING
+   ======================================== */
+
+/* Voucher discount row - highlighted style */
+.summary-row.voucher-discount {
+  background-color: #f0fdf4;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.summary-row.voucher-discount:hover {
+  background-color: #dcfce7;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+/* Voucher label (left side) */
+.summary-row.voucher-discount span:first-child {
+  color: #059669;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+/* Voucher amount (right side) */
+.summary-row.voucher-discount span:last-child {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.05em;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .summary-row.voucher-discount {
+    padding: 10px 12px;
+    margin: 6px 0;
+  }
+  
+  .summary-row.voucher-discount span:first-child {
+    font-size: 0.9em;
+  }
+  
+  .summary-row.voucher-discount span:last-child {
+    font-size: 1em;
+  }
+}
+
+/* ========================================
+   ALTERNATIVE STYLES (Choose One)
+   ======================================== */
+
+/* Option 1: Minimal style (just green text, no background) */
+/*
+.summary-row.voucher-discount span:first-child {
+  color: #059669;
+  font-weight: 600;
+}
+
+.summary-row.voucher-discount span:last-child {
+  color: #10b981;
+  font-weight: 700;
+}
+*/
+
+/* Option 2: Bordered left accent */
+/*
+.summary-row.voucher-discount {
+  border-left: 4px solid #10b981;
+  padding-left: 12px;
+  background-color: #f9fafb;
+}
+
+.summary-row.voucher-discount span:first-child {
+  color: #059669;
+}
+
+.summary-row.voucher-discount span:last-child {
+  color: #10b981;
+  font-weight: 700;
+}
+*/
+
+/* Option 3: Subtle background with badge */
+/*
+.summary-row.voucher-discount {
+  background: linear-gradient(to right, #f0fdf4, #ffffff);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.summary-row.voucher-discount span:first-child::before {
+  content: "🎟️";
+  margin-right: 6px;
+}
+
+.summary-row.voucher-discount span:first-child {
+  color: #059669;
+  font-weight: 600;
+}
+
+.summary-row.voucher-discount span:last-child {
+  color: #10b981;
+  font-weight: 700;
+}
+*/
+
+/* ========================================
+   ANIMATION (Optional)
+   ======================================== */
+
+/* Fade in animation when voucher row appears */
+@keyframes fadeInVoucher {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.summary-row.voucher-discount {
+  animation: fadeInVoucher 0.4s ease-out;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .summary-row.voucher-discount {
+    background-color: transparent;
+    border: 1px solid #000;
+  }
+  
+  .summary-row.voucher-discount span {
+    color: #000 !important;
+  }
+}
