@@ -1,10 +1,12 @@
 /**
  * Order Controller - UPDATED for Custom Payment Page
  * Modified to return payment info instead of redirecting to Duitku
+ * UPDATED: Added support for base_price voucher type (admin voucher)
  */
 
 const { pool } = require('../config/database');
 const duitkuService = require('../services/duitku.service');
+const voucherService = require('../services/voucher.service');
 
 /**
  * Get all games
@@ -141,6 +143,7 @@ exports.validateRiotId = async (req, res) => {
  * POST /api/orders/create
  * 
  * UPDATED: Return payment info instead of redirecting to Duitku
+ * UPDATED: Support for base_price voucher type (admin voucher 19JAGADRAYA13)
  */
 exports.createOrder = async (req, res) => {
   const client = await pool.connect();
@@ -148,18 +151,6 @@ exports.createOrder = async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // code lama
-    // const {
-    //   productId,
-    //   paymentMethod,
-    //   customerEmail,
-    //   customerName,
-    //   phoneNumber,
-    //   riotId,
-    //   riotTag
-    // } = req.body;
-
-    //code baru
     const {
       productId,
       paymentMethod,
@@ -168,6 +159,7 @@ exports.createOrder = async (req, res) => {
       phoneNumber,
       gameUserId,      // Generic field
       gameZoneId,      // Generic field (optional)
+      voucherCode,     // Voucher code
       // Legacy support for Valorant
       riotId,
       riotTag
@@ -177,20 +169,14 @@ exports.createOrder = async (req, res) => {
     const userId = gameUserId || riotId;
     const zoneId = gameZoneId || riotTag || null;
 
-    // code lama
     // Validate required fields
-    // if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber || !riotId || !riotTag) {
-    //   throw new Error('Missing required fields');
-    // }
-
-    // code baryu
     if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber || !userId) {
       throw new Error('Missing required fields');
     }
 
-    // 1. Get product
+    // 1. Get product - UPDATED: Fetch BOTH selling_price AND base_price
     const productResult = await client.query(
-      'SELECT * FROM products WHERE id = $1 AND is_active = true',
+      'SELECT id, name, sku, selling_price, base_price FROM products WHERE id = $1 AND is_active = true',
       [productId]
     );
 
@@ -200,14 +186,55 @@ exports.createOrder = async (req, res) => {
 
     const product = productResult.rows[0];
     const productPrice = parseFloat(product.selling_price);
+    const basePrice = parseFloat(product.base_price); // NEW: Get base price for admin voucher
 
-    // 2. Calculate payment fee
-    // 2. Calculate payment fee - Official Duitku Pricing
+    // NEW: Validate voucher if provided - NOW WITH BASE PRICE SUPPORT
+    let voucherDiscount = 0;
+    let validatedVoucherCode = null;
+    
+    if (voucherCode && voucherCode.trim()) {
+      // Pass basePrice as third parameter for admin voucher support
+      const voucherResult = await voucherService.validateVoucher(
+        voucherCode.trim(), 
+        productPrice,
+        basePrice  // NEW: Pass base price for base_price type vouchers
+      );
+      
+      if (voucherResult.valid) {
+        voucherDiscount = voucherResult.discount;
+        validatedVoucherCode = voucherCode.trim();
+        
+        // Log admin voucher usage
+        if (voucherResult.voucher && voucherResult.voucher.discount_type === 'base_price') {
+          console.log(`[ADMIN VOUCHER USED]`);
+          console.log(`  Code: ${voucherCode}`);
+          console.log(`  Product: ${product.name} (ID: ${product.id})`);
+          console.log(`  Customer: ${customerEmail}`);
+          console.log(`  Base Price: Rp ${basePrice.toLocaleString('id-ID')}`);
+          console.log(`  Selling Price: Rp ${productPrice.toLocaleString('id-ID')}`);
+          console.log(`  Discount: Rp ${voucherDiscount.toLocaleString('id-ID')}`);
+          console.log(`  Final Price: Rp ${(productPrice - voucherDiscount).toLocaleString('id-ID')}`);
+          console.log(`  Timestamp: ${new Date().toISOString()}`);
+        }
+      } else {
+        // Return error if invalid voucher is provided
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          message: voucherResult.message
+        });
+      }
+    }
+
+    // Calculate price after voucher discount
+    const priceAfterDiscount = productPrice - voucherDiscount;
+
+    // 2. Calculate payment fee - UPDATED: Based on price AFTER voucher discount
     let paymentFee = 0;
 
     // QRIS - 0.7%
     if (paymentMethod === 'qris') {
-      paymentFee = Math.round(productPrice * 0.007);
+      paymentFee = Math.round(priceAfterDiscount * 0.007);
     }
     // Virtual Account - Rp 2,500 flat
     else if (paymentMethod.startsWith('va_')) {
@@ -215,7 +242,7 @@ exports.createOrder = async (req, res) => {
     }
     // E-Wallet - 2% + Rp 1,000
     else if (['ovo', 'shopeepay', 'dana', 'linkaja'].includes(paymentMethod)) {
-      paymentFee = Math.round(productPrice * 0.02) + 1000;
+      paymentFee = Math.round(priceAfterDiscount * 0.02) + 1000;
     }
     // Retail - Rp 2,500 flat
     else if (['alfamart', 'indomaret'].includes(paymentMethod)) {
@@ -223,14 +250,14 @@ exports.createOrder = async (req, res) => {
     }
     // Credit Card - 2.9% (min Rp 2,000)
     else if (paymentMethod === 'credit_card') {
-      paymentFee = Math.max(Math.round(productPrice * 0.029), 2000);
+      paymentFee = Math.max(Math.round(priceAfterDiscount * 0.029), 2000);
     }
     // Default
     else {
       paymentFee = 2500;
     }
 
-    const totalAmount = productPrice + paymentFee;
+    const totalAmount = priceAfterDiscount + paymentFee;
 
     // 3. Generate order number
     const orderNumber = 'INV' + Date.now();
@@ -253,8 +280,10 @@ exports.createOrder = async (req, res) => {
         payment_gateway,
         payment_status,
         order_status,
+        voucher_code,
+        voucher_discount,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
       RETURNING *
     `, [
       orderNumber,
@@ -262,21 +291,26 @@ exports.createOrder = async (req, res) => {
       customerEmail,
       customerName,
       phoneNumber,
-      // riotId, code lama
-      // riotTag, code lama
       userId,
       zoneId || null,
-      productPrice,
+      productPrice,           // Original selling price
       paymentFee,
-      totalAmount,
+      priceAfterDiscount,     // Subtotal after voucher discount
       totalAmount,
       paymentMethod,
       'duitku',
       'pending',
-      'pending'
+      'pending',
+      validatedVoucherCode,
+      voucherDiscount
     ]);
 
     const order = orderResult.rows[0];
+
+    // NEW: Increment voucher usage if voucher was used
+    if (validatedVoucherCode) {
+      await voucherService.incrementVoucherUsage(validatedVoucherCode);
+    }
 
     // 5. Create Duitku payment
     const duitkuMethod = duitkuService.getPaymentMethodCode(paymentMethod);
@@ -284,14 +318,13 @@ exports.createOrder = async (req, res) => {
     const paymentResult = await duitkuService.createTransaction({
       merchantOrderId: orderNumber,
       paymentAmount: totalAmount,
-      // productDetails: `${product.name} - ${riotId}#${riotTag}`, code lama
-      productDetails: `${product.name} - ${userId}${zoneId ? ' (' + zoneId + ')' : ''}`, // code baru
+      productDetails: `${product.name} - ${userId}${zoneId ? ' (' + zoneId + ')' : ''}`,
       email: customerEmail,
       customerVaName: customerName.substring(0, 20).replace(/[^a-zA-Z0-9 ]/g, ''),
       phoneNumber: phoneNumber,
       paymentMethod: duitkuMethod,
       callbackUrl: `${process.env.BASE_URL}/api/duitku/callback`,
-      returnUrl: `${process.env.FRONTEND_URL}/payment/${orderNumber}`, // ← UPDATED: Custom payment page
+      returnUrl: `${process.env.FRONTEND_URL}/payment/${orderNumber}`,
       expiryPeriod: 1440 // 24 hours
     });
 
@@ -330,25 +363,26 @@ exports.createOrder = async (req, res) => {
 
     await client.query('COMMIT');
 
-    // 7. Return success WITH PAYMENT INFO (not redirect URL!)
-    // ← CRITICAL CHANGE: Return orderNumber untuk redirect ke custom page
+    // 7. Return success WITH PAYMENT INFO
     res.json({
       success: true,
       order: {
         id: order.id,
-        orderNumber: orderNumber, // ← Frontend will use this to redirect
+        orderNumber: orderNumber,
         productName: product.name,
-        riotId: `${riotId}#${riotTag}`,
+        riotId: `${userId}#${zoneId || ''}`,
         amount: productPrice,
+        voucherDiscount: voucherDiscount,        // NEW: Include voucher info
+        voucherCode: validatedVoucherCode,       // NEW: Include voucher code
+        subtotal: priceAfterDiscount,            // NEW: Price after discount
         paymentFee: paymentFee,
         total: totalAmount,
         payment: {
-          // method: duitkuService.getPaymentMethodCode(paymentMethod), // ← Use Duitku code
           method: duitkuMethod,
           gateway: 'duitku',
           url: paymentResult.paymentUrl,
           vaNumber: paymentResult.vaNumber || null,
-          qrString: paymentResult.qrString || null,  // ← ADD THIS
+          qrString: paymentResult.qrString || null,
           reference: paymentResult.reference,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         }
@@ -394,11 +428,8 @@ exports.getOrderStatus = async (req, res) => {
       });
     }
 
-    // const order = result.rows[0];
-
     const order = result.rows[0];
 
-    // ADD THIS BLOCK:
     // Parse provider_response if exists
     let providerData = {};
     if (order.provider_response) {
@@ -420,6 +451,9 @@ exports.getOrderStatus = async (req, res) => {
         gameUserId: order.game_user_id,
         gameUserTag: order.game_user_tag,
         amount: parseFloat(order.amount),
+        voucherCode: order.voucher_code,              // NEW: Include voucher info
+        voucherDiscount: parseFloat(order.voucher_discount) || 0,  // NEW
+        subtotal: parseFloat(order.subtotal),         // NEW: Subtotal after discount
         paymentFee: parseFloat(order.payment_fee) || 0,
         total: parseFloat(order.total_amount),
         customer_email: order.customer_email,
@@ -429,8 +463,8 @@ exports.getOrderStatus = async (req, res) => {
           status: order.payment_status,
           url: order.payment_url,
           reference: order.payment_reference,
-          vaNumber: providerData.vaNumber || null,      // ← ADD THIS
-          qrString: providerData.qrString || null,      // ← ADD THIS
+          vaNumber: providerData.vaNumber || null,
+          qrString: providerData.qrString || null,
           expiresAt: order.payment_expires_at
         },
         orderStatus: order.order_status,
@@ -470,6 +504,8 @@ exports.getOrderHistory = async (req, res) => {
         o.total_amount,
         o.payment_status,
         o.order_status,
+        o.voucher_code,          -- NEW: Include voucher info in history
+        o.voucher_discount,      -- NEW
         p.name as product_name,
         g.name as game_name
       FROM orders o
@@ -482,7 +518,17 @@ exports.getOrderHistory = async (req, res) => {
 
     res.json({
       success: true,
-      orders: result.rows
+      orders: result.rows.map(order => ({
+        orderNumber: order.order_number,
+        createdAt: order.created_at,
+        totalAmount: parseFloat(order.total_amount),
+        voucherCode: order.voucher_code,                    // NEW
+        voucherDiscount: parseFloat(order.voucher_discount) || 0,  // NEW
+        paymentStatus: order.payment_status,
+        orderStatus: order.order_status,
+        productName: order.product_name,
+        gameName: order.game_name
+      }))
     });
 
   } catch (error) {

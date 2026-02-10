@@ -1,7 +1,7 @@
 /**
  * Voucher Service
  * Handles voucher validation and discount calculation
- * UPDATED: Support for base_price voucher type (admin voucher)
+ * UPDATED: Use profit_price for admin voucher (simpler & more flexible)
  */
 
 const { pool } = require('../config/database');
@@ -10,10 +10,10 @@ const { pool } = require('../config/database');
  * Validate voucher code and calculate discount
  * @param {string} code - Voucher code
  * @param {number} orderAmount - Order amount before discount (selling_price)
- * @param {number} basePrice - Base price of product (for base_price voucher type)
+ * @param {number} profitPrice - Profit price of product (for admin voucher)
  * @returns {Object} - Validation result with discount info
  */
-exports.validateVoucher = async (code, orderAmount, basePrice = null) => {
+exports.validateVoucher = async (code, orderAmount, profitPrice = null) => {
   try {
     // Get voucher from database
     const result = await pool.query(`
@@ -78,16 +78,16 @@ exports.validateVoucher = async (code, orderAmount, basePrice = null) => {
       discountAmount = parseFloat(voucher.discount_value);
     }
     else if (voucher.discount_type === 'base_price') {
-      // SPECIAL: Admin voucher - calculate discount to reach base price
-      if (!basePrice) {
+      // UPDATED: Admin voucher - use profit_price directly as discount
+      if (profitPrice === null || profitPrice === undefined) {
         return {
           valid: false,
-          message: 'Voucher admin hanya dapat digunakan untuk produk dengan harga dasar'
+          message: 'Harga Profit tidak ditemukan.'
         };
       }
       
-      // Discount = selling_price - base_price
-      discountAmount = orderAmount - basePrice;
+      // Discount = profit_price (sudah dihitung di database)
+      discountAmount = profitPrice;
       
       // Ensure discount is not negative
       if (discountAmount < 0) {

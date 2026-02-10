@@ -1,7 +1,7 @@
 /**
  * Voucher Controller
  * Handles voucher validation endpoints
- * UPDATED: Support for base_price voucher type
+ * UPDATED: Use profit_price for admin voucher
  */
 
 const voucherService = require('../services/voucher.service');
@@ -12,7 +12,7 @@ const { pool } = require('../config/database');
  * POST /api/vouchers/validate
  * Body: { code: string, orderAmount: number, productId: number }
  * 
- * UPDATED: Now fetches product's base_price for admin vouchers
+ * UPDATED: Now fetches product's profit_price for admin vouchers
  */
 exports.validateVoucher = async (req, res) => {
   try {
@@ -25,24 +25,24 @@ exports.validateVoucher = async (req, res) => {
       });
     }
 
-    // NEW: Fetch base_price if productId is provided
-    let basePrice = null;
+    // UPDATED: Fetch profit_price instead of base_price
+    let profitPrice = null;
     if (productId) {
       const productResult = await pool.query(
-        'SELECT base_price FROM products WHERE id = $1',
+        'SELECT profit_price FROM products WHERE id = $1',
         [productId]
       );
       
       if (productResult.rows.length > 0) {
-        basePrice = parseFloat(productResult.rows[0].base_price);
+        profitPrice = parseFloat(productResult.rows[0].profit_price);
       }
     }
 
-    // Validate voucher with base price
+    // Validate voucher with profit price
     const result = await voucherService.validateVoucher(
       code, 
       parseFloat(orderAmount),
-      basePrice
+      profitPrice  // Pass profit_price instead of base_price
     );
 
     if (result.valid) {

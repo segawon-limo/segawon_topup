@@ -1,7 +1,7 @@
 /**
  * Order Controller - UPDATED for Custom Payment Page
  * Modified to return payment info instead of redirecting to Duitku
- * UPDATED: Added support for base_price voucher type (admin voucher)
+ * UPDATED: Use profit_price for admin voucher (simpler & more flexible)
  */
 
 const { pool } = require('../config/database');
@@ -62,7 +62,7 @@ exports.getProducts = async (req, res) => {
     const productsResult = await pool.query(`
       SELECT 
         id, name, description, sku,
-        base_price, selling_price,
+        base_price, selling_price, profit_price,
         is_active, sort_order
       FROM products
       WHERE game_id = $1 AND is_active = true
@@ -143,7 +143,7 @@ exports.validateRiotId = async (req, res) => {
  * POST /api/orders/create
  * 
  * UPDATED: Return payment info instead of redirecting to Duitku
- * UPDATED: Support for base_price voucher type (admin voucher 19JAGADRAYA13)
+ * UPDATED: Use profit_price for admin voucher (simpler than base_price calculation)
  */
 exports.createOrder = async (req, res) => {
   const client = await pool.connect();
@@ -174,9 +174,9 @@ exports.createOrder = async (req, res) => {
       throw new Error('Missing required fields');
     }
 
-    // 1. Get product - UPDATED: Fetch BOTH selling_price AND base_price
+    // 1. Get product - UPDATED: Fetch profit_price
     const productResult = await client.query(
-      'SELECT id, name, sku, selling_price, base_price FROM products WHERE id = $1 AND is_active = true',
+      'SELECT id, name, sku, selling_price, profit_price FROM products WHERE id = $1 AND is_active = true',
       [productId]
     );
 
@@ -186,18 +186,18 @@ exports.createOrder = async (req, res) => {
 
     const product = productResult.rows[0];
     const productPrice = parseFloat(product.selling_price);
-    const basePrice = parseFloat(product.base_price); // NEW: Get base price for admin voucher
+    const profitPrice = parseFloat(product.profit_price); // NEW: Get profit price
 
-    // NEW: Validate voucher if provided - NOW WITH BASE PRICE SUPPORT
+    // NEW: Validate voucher if provided - WITH PROFIT PRICE
     let voucherDiscount = 0;
     let validatedVoucherCode = null;
     
     if (voucherCode && voucherCode.trim()) {
-      // Pass basePrice as third parameter for admin voucher support
+      // Pass profitPrice for admin voucher support
       const voucherResult = await voucherService.validateVoucher(
         voucherCode.trim(), 
         productPrice,
-        basePrice  // NEW: Pass base price for base_price type vouchers
+        profitPrice  // NEW: Pass profit_price for admin voucher
       );
       
       if (voucherResult.valid) {
@@ -210,9 +210,9 @@ exports.createOrder = async (req, res) => {
           console.log(`  Code: ${voucherCode}`);
           console.log(`  Product: ${product.name} (ID: ${product.id})`);
           console.log(`  Customer: ${customerEmail}`);
-          console.log(`  Base Price: Rp ${basePrice.toLocaleString('id-ID')}`);
           console.log(`  Selling Price: Rp ${productPrice.toLocaleString('id-ID')}`);
-          console.log(`  Discount: Rp ${voucherDiscount.toLocaleString('id-ID')}`);
+          console.log(`  Profit Price: Rp ${profitPrice.toLocaleString('id-ID')}`);
+          console.log(`  Discount (= Profit): Rp ${voucherDiscount.toLocaleString('id-ID')}`);
           console.log(`  Final Price: Rp ${(productPrice - voucherDiscount).toLocaleString('id-ID')}`);
           console.log(`  Timestamp: ${new Date().toISOString()}`);
         }
@@ -229,7 +229,7 @@ exports.createOrder = async (req, res) => {
     // Calculate price after voucher discount
     const priceAfterDiscount = productPrice - voucherDiscount;
 
-    // 2. Calculate payment fee - UPDATED: Based on price AFTER voucher discount
+    // 2. Calculate payment fee - Based on price AFTER voucher discount
     let paymentFee = 0;
 
     // QRIS - 0.7%
@@ -372,9 +372,9 @@ exports.createOrder = async (req, res) => {
         productName: product.name,
         riotId: `${userId}#${zoneId || ''}`,
         amount: productPrice,
-        voucherDiscount: voucherDiscount,        // NEW: Include voucher info
-        voucherCode: validatedVoucherCode,       // NEW: Include voucher code
-        subtotal: priceAfterDiscount,            // NEW: Price after discount
+        voucherDiscount: voucherDiscount,
+        voucherCode: validatedVoucherCode,
+        subtotal: priceAfterDiscount,
         paymentFee: paymentFee,
         total: totalAmount,
         payment: {
@@ -451,9 +451,9 @@ exports.getOrderStatus = async (req, res) => {
         gameUserId: order.game_user_id,
         gameUserTag: order.game_user_tag,
         amount: parseFloat(order.amount),
-        voucherCode: order.voucher_code,              // NEW: Include voucher info
-        voucherDiscount: parseFloat(order.voucher_discount) || 0,  // NEW
-        subtotal: parseFloat(order.subtotal),         // NEW: Subtotal after discount
+        voucherCode: order.voucher_code,
+        voucherDiscount: parseFloat(order.voucher_discount) || 0,
+        subtotal: parseFloat(order.subtotal),
         paymentFee: parseFloat(order.payment_fee) || 0,
         total: parseFloat(order.total_amount),
         customer_email: order.customer_email,
@@ -504,8 +504,8 @@ exports.getOrderHistory = async (req, res) => {
         o.total_amount,
         o.payment_status,
         o.order_status,
-        o.voucher_code,          -- NEW: Include voucher info in history
-        o.voucher_discount,      -- NEW
+        o.voucher_code,
+        o.voucher_discount,
         p.name as product_name,
         g.name as game_name
       FROM orders o
@@ -522,8 +522,8 @@ exports.getOrderHistory = async (req, res) => {
         orderNumber: order.order_number,
         createdAt: order.created_at,
         totalAmount: parseFloat(order.total_amount),
-        voucherCode: order.voucher_code,                    // NEW
-        voucherDiscount: parseFloat(order.voucher_discount) || 0,  // NEW
+        voucherCode: order.voucher_code,
+        voucherDiscount: parseFloat(order.voucher_discount) || 0,
         paymentStatus: order.payment_status,
         orderStatus: order.order_status,
         productName: order.product_name,
