@@ -74,16 +74,29 @@ const generateInvoiceHTML = async (orderData) => {
   //   `;
   // }
 
-  const QRCode = require('qrcode');
+  let qrImageTag = '';
 
-  // Generate QR as data URL
-  const qrDataUrl = await QRCode.toDataURL(qrUrl);
+  // Hanya generate QR jika qrUrl ada
+  console.log('QR URL:', qrUrl);
+  if (qrUrl) {
+    try {
+      const QRCode = require('qrcode');
+      const qrDataUrl = await QRCode.toDataURL(qrUrl);
+      
+      console.log('QR Data URL:', qrDataUrl.substring(0, 50) + '...');
 
-  qrImageTag = `
-    <div style="background: white; padding: 15px;">
-      <img src="${qrDataUrl}" alt="QR Code" style="max-width: 200px;" />
-    </div>
-  `;
+      qrImageTag = `
+        <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+          <img src="${qrDataUrl}" alt="QR Code" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+        </div>
+      `;
+      
+      console.log('✅ QR Code generated successfully');
+    } catch (error) {
+      console.error('❌ QR Code generation failed:', error);
+      qrImageTag = '';
+    }
+  }
 
   return `
 <!DOCTYPE html>
