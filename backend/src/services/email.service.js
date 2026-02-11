@@ -78,24 +78,18 @@ const generateInvoiceHTML = async (orderData) => {
 
   // Hanya generate QR jika qrUrl ada
   console.log('QR URL:', qrUrl);
-  if (qrUrl) {
-    try {
-      const QRCode = require('qrcode');
-      const qrDataUrl = await QRCode.toDataURL(qrUrl);
-      
-      console.log('QR Data URL:', qrDataUrl.substring(0, 50) + '...');
-
-      qrImageTag = `
-        <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
-          <img src="${qrDataUrl}" alt="QR Code" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+  if (qrUrl && qrUrl.length > 50) {
+    // Gunakan QR Server API (free, no key needed, still maintained)
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`;
+    
+    qrImageTag = `
+      <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center;">
+        <img src="${qrImageUrl}" alt="QR Code" style="max-width: 250px; height: auto; display: block; margin: 0 auto;" />
+        <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+          Scan QR Code untuk membayar
         </div>
-      `;
-      
-      console.log('✅ QR Code generated successfully');
-    } catch (error) {
-      console.error('❌ QR Code generation failed:', error);
-      qrImageTag = '';
-    }
+      </div>
+    `;
   }
 
   return `
