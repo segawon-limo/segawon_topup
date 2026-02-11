@@ -557,6 +557,77 @@
   font-size: 1.05em;
 }
 
+/* Payment Instructions Styles */
+.payment-instructions {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.payment-instructions h3 {
+  color: #1a2332;
+  font-size: 16px;
+  margin: 0 0 15px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #FF6B35;
+}
+
+.instruction-section {
+  margin: 20px 0;
+}
+
+.instruction-divider {
+  padding-top: 15px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.instruction-section strong {
+  display: block;
+  color: #1a2332;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.payment-instructions ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.payment-instructions li {
+  margin: 8px 0;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.payment-instructions li strong {
+  display: inline;
+  color: #FF6B35;
+  font-weight: 600;
+}
+
+.note-box {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  padding: 12px 15px;
+  margin-top: 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.qr-note {
+  background: #f0f9ff;
+  border-left: 4px solid #0ea5e9;
+  padding: 12px 15px;
+  margin-top: 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #0c4a6e;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .summary-row.voucher-discount {

@@ -276,20 +276,20 @@ function PaymentPage() {
                 <div className="payment-instructions">
                   <h3>🏦 Cara Pembayaran {getVABankName(paymentData.payment.method)} Virtual Account:</h3>
                   
-                  <div style="margin: 20px 0;">
+                  <div className="instruction-section">
                     <strong>📱 Via Mobile Banking:</strong>
                     <ol>
                       <li>Buka aplikasi {getVABankName(paymentData.payment.method)} Mobile</li>
                       <li>Pilih menu <strong>"Transfer"</strong> atau <strong>"Pembayaran"</strong></li>
                       <li>Pilih <strong>"Virtual Account"</strong> atau <strong>"VA {getVABankName(paymentData.payment.method)}"</strong></li>
                       <li>Masukkan nomor VA: <strong>{paymentData.payment.vaNumber}</strong></li>
-                      <li>Periksa detail pembayaran (Rp {formatRupiah(paymentData.total)})</li>
+                      <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
                       <li>Konfirmasi dengan PIN/password</li>
                       <li>Simpan bukti transfer</li>
                     </ol>
                   </div>
                   
-                  <div style="margin: 20px 0; padding-top: 15px; border-top: 1px dashed #e5e7eb;">
+                  <div className="instruction-section instruction-divider">
                     <strong>🏧 Via ATM {getVABankName(paymentData.payment.method)}:</strong>
                     <ol>
                       <li>Masukkan kartu ATM dan PIN</li>
@@ -297,13 +297,13 @@ function PaymentPage() {
                       <li>Pilih <strong>"Transfer"</strong></li>
                       <li>Pilih <strong>"Ke Rek {getVABankName(paymentData.payment.method)} Virtual Account"</strong></li>
                       <li>Masukkan nomor VA: <strong>{paymentData.payment.vaNumber}</strong></li>
-                      <li>Masukkan nominal: <strong>Rp {formatRupiah(paymentData.total)}</strong></li>
+                      <li>Masukkan nominal: <strong>{formatRupiah(paymentData.total)}</strong></li>
                       <li>Konfirmasi dan selesaikan transaksi</li>
                       <li>Simpan struk sebagai bukti</li>
                     </ol>
                   </div>
                   
-                  <div style="margin: 20px 0; padding-top: 15px; border-top: 1px dashed #e5e7eb;">
+                  <div className="instruction-section instruction-divider">
                     <strong>💻 Via Internet Banking:</strong>
                     <ol>
                       <li>Login ke {getVABankName(paymentData.payment.method)} Internet Banking</li>
@@ -324,7 +324,6 @@ function PaymentPage() {
               <div className="payment-section qris-section">
                 <h2>Pembayaran QRIS</h2>
                 
-                {/* Show QR Code if available */}
                 {qrCodeDataUrl ? (
                   <div className="qris-container">
                     <p className="qris-info">Scan QR Code di bawah dengan aplikasi e-wallet Anda</p>
@@ -334,7 +333,6 @@ function PaymentPage() {
                     </div>
                   </div>
                 ) : (
-                  /* Fallback to button if no qrString */
                   <>
                     <p className="qris-info">
                       Klik tombol di bawah untuk membuka halaman pembayaran QRIS
@@ -359,14 +357,14 @@ function PaymentPage() {
 
                 <div className="payment-instructions">
                   <h3>📱 Cara Pembayaran QRIS:</h3>
-                    <ol>
-                      <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
-                      <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
-                      <li>Scan QR Code yang tertera di atas</li>
-                      <li>Periksa detail pembayaran</li>
-                      <li>Konfirmasi pembayaran dengan PIN Anda</li>
-                      <li>Simpan bukti pembayaran</li>
-                    </ol>
+                  <ol>
+                    <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
+                    <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
+                    <li>Scan QR Code yang tertera di atas</li>
+                    <li>Periksa detail pembayaran</li>
+                    <li>Konfirmasi pembayaran dengan PIN Anda</li>
+                    <li>Simpan bukti pembayaran</li>
+                  </ol>
                   <div className="note-box">
                     <strong>💡 Tips:</strong> Jangan tutup halaman ini. Pembayaran akan otomatis terverifikasi setelah Anda scan QR.
                   </div>
