@@ -1,6 +1,7 @@
 /**
- * Email Service - UPDATED (tanpa gameName)
- * Brevo API - Simplified Version
+ * Email Service - FIXED VERSION
+ * - QR Code image fix (convert data URI to image)
+ * - Better spacing for readability
  */
 
 const brevo = require('@getbrevo/brevo');
@@ -18,7 +19,6 @@ const generateInvoiceHTML = (orderData) => {
     customerName,
     customerEmail,
     productName,
-    // gameName - DIHAPUS, tidak perlu!
     userId,
     zoneId,
     amount,
@@ -49,6 +49,30 @@ const generateInvoiceHTML = (orderData) => {
   };
 
   const paymentMethodDisplay = paymentMethodNames[paymentMethod] || paymentMethod;
+
+  // FIX: Convert QR string to proper image URL for email clients
+  // Duitku returns base64-like string, need to format properly
+  let qrImageTag = '';
+  if (qrUrl && qrUrl.length > 50) {
+    // If it's EMV QR string (long text), show as text + link to generate QR
+    qrImageTag = `
+      <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+        <div style="font-size: 10px; color: #1a2332; word-break: break-all; font-family: monospace; line-height: 1.4;">
+          ${qrUrl}
+        </div>
+        <div style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+          Gunakan aplikasi e-wallet untuk scan QR di atas
+        </div>
+      </div>
+    `;
+  } else if (qrUrl && (qrUrl.startsWith('http://') || qrUrl.startsWith('https://'))) {
+    // If it's a URL to QR image
+    qrImageTag = `
+      <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+        <img src="${qrUrl}" alt="QR Code" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+      </div>
+    `;
+  }
 
   return `
 <!DOCTYPE html>
@@ -117,40 +141,50 @@ const generateInvoiceHTML = (orderData) => {
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
+      display: table;
+      width: 100%;
+      padding: 10px 0;
       border-bottom: 1px solid #f3f4f6;
     }
     .info-label {
+      display: table-cell;
       color: #6b7280;
       font-size: 14px;
+      width: 40%;
+      padding-right: 20px;
     }
     .info-value {
+      display: table-cell;
       color: #1f2937;
       font-weight: 500;
       font-size: 14px;
       text-align: right;
+      width: 60%;
     }
     .price-row {
-      display: flex;
-      justify-content: space-between;
+      display: table;
+      width: 100%;
       padding: 12px 0;
     }
     .price-label {
+      display: table-cell;
       color: #1f2937;
       font-size: 15px;
+      width: 60%;
     }
     .price-value {
+      display: table-cell;
       font-weight: 500;
       font-size: 15px;
+      text-align: right;
+      width: 40%;
     }
     .total-row {
-      display: flex;
-      justify-content: space-between;
+      display: table;
+      width: 100%;
       padding: 15px 0;
       margin-top: 10px;
       border-top: 2px solid #e5e7eb;
@@ -158,15 +192,20 @@ const generateInvoiceHTML = (orderData) => {
       font-weight: bold;
     }
     .total-label {
+      display: table-cell;
       color: #1f2937;
+      width: 60%;
     }
     .total-value {
+      display: table-cell;
       color: #FF6B35;
+      text-align: right;
+      width: 40%;
     }
     .payment-box {
       background: linear-gradient(135deg, #1a2332 0%, #2d3e50 100%);
       color: white;
-      padding: 20px;
+      padding: 25px;
       border-radius: 8px;
       margin: 20px 0;
       text-align: center;
@@ -174,7 +213,7 @@ const generateInvoiceHTML = (orderData) => {
     }
     .payment-method {
       font-size: 16px;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     .va-number {
       font-size: 24px;
@@ -184,16 +223,6 @@ const generateInvoiceHTML = (orderData) => {
       padding: 15px;
       background: rgba(255,107,53,0.2);
       border-radius: 6px;
-    }
-    .qr-code {
-      margin: 15px 0;
-      padding: 15px;
-      background: white;
-      border-radius: 8px;
-    }
-    .qr-code img {
-      max-width: 200px;
-      height: auto;
     }
     .payment-button {
       display: inline-block;
@@ -299,11 +328,12 @@ const generateInvoiceHTML = (orderData) => {
       <div style="font-size: 12px; margin-top: 10px;">Nomor Virtual Account</div>
       ` : ''}
       
-      ${qrUrl ? `
-      <div class="qr-code">
-        <img src="${qrUrl}" alt="QR Code" />
+      ${qrImageTag}
+      
+      ${qrImageTag && !vaNumber ? `
+      <div style="font-size: 12px; margin-top: 10px; color: rgba(255,255,255,0.8);">
+        Scan QR Code untuk membayar
       </div>
-      <div style="font-size: 12px; margin-top: 10px;">Scan QR Code untuk membayar</div>
       ` : ''}
       
       ${paymentUrl ? `
@@ -388,7 +418,6 @@ const sendInvoiceEmail = async (orderData) => {
 };
 
 const sendPaymentSuccessEmail = async (orderData) => {
-  // Simplified version - same pattern
   try {
     const apiInstance = getBrevoClient();
     const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
@@ -440,7 +469,6 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
 };
 
 const sendOrderCompleteEmail = async (orderData) => {
-  // Similar simplified version
   try {
     const apiInstance = getBrevoClient();
     const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';

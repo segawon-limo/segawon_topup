@@ -177,7 +177,7 @@ exports.createOrder = async (req, res) => {
 
     // 1. Get product - UPDATED: Fetch profit_price
     const productResult = await client.query(
-      'SELECT id, name, sku, selling_price, profit_price FROM products WHERE id = $1 AND is_active = true',
+      'SELECT id, name, sku, selling_price, profit_price, description FROM products WHERE id = $1 AND is_active = true',
       [productId]
     );
 
