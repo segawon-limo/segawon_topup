@@ -7,6 +7,7 @@
 const { pool } = require('../config/database');
 const duitkuService = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
+const emailService = require('../services/email.service');
 
 /**
  * Get all games
@@ -362,6 +363,31 @@ exports.createOrder = async (req, res) => {
     ]);
 
     await client.query('COMMIT');
+
+    // Kirim Invoice Email otomatis via Brevo
+    const emailData = {
+      orderNumber: orderNumber,
+      customerName: customerName,
+      customerEmail: customerEmail,
+      productName: product.name,
+      gameName: game.name,
+      userId: userId,
+      zoneId: zoneId || null,
+      amount: productPrice,
+      voucherDiscount: voucherDiscount,
+      paymentFee: paymentFee,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      paymentUrl: paymentResult.paymentUrl,
+      qrUrl: paymentResult.qrString || null,
+      vaNumber: paymentResult.vaNumber || null,
+      expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
+
+    // Kirim email secara async (tidak menunggu)
+    emailService.sendInvoiceEmail(emailData).catch(err => {
+      console.error('Email sending error (non-blocking):', err);
+    });
 
     // 7. Return success WITH PAYMENT INFO
     res.json({
