@@ -13,7 +13,7 @@ const getBrevoClient = () => {
   return apiInstance;
 };
 
-const generateInvoiceHTML = (orderData) => {
+const generateInvoiceHTML = async (orderData) => {
   const {
     orderNumber,
     customerName,
@@ -52,27 +52,38 @@ const generateInvoiceHTML = (orderData) => {
 
   // FIX: Convert QR string to proper image URL for email clients
   // Duitku returns base64-like string, need to format properly
-  let qrImageTag = '';
-  if (qrUrl && qrUrl.length > 50) {
-    // If it's EMV QR string (long text), show as text + link to generate QR
-    qrImageTag = `
-      <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
-        <div style="font-size: 10px; color: #1a2332; word-break: break-all; font-family: monospace; line-height: 1.4;">
-          ${qrUrl}
-        </div>
-        <div style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-          Gunakan aplikasi e-wallet untuk scan QR di atas
-        </div>
-      </div>
-    `;
-  } else if (qrUrl && (qrUrl.startsWith('http://') || qrUrl.startsWith('https://'))) {
-    // If it's a URL to QR image
-    qrImageTag = `
-      <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
-        <img src="${qrUrl}" alt="QR Code" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
-      </div>
-    `;
-  }
+  // let qrImageTag = '';
+  // if (qrUrl && qrUrl.length > 50) {
+  //   // If it's EMV QR string (long text), show as text + link to generate QR
+  //   qrImageTag = `
+  //     <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+  //       <div style="font-size: 10px; color: #1a2332; word-break: break-all; font-family: monospace; line-height: 1.4;">
+  //         ${qrUrl}
+  //       </div>
+  //       <div style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+  //         Gunakan aplikasi e-wallet untuk scan QR di atas
+  //       </div>
+  //     </div>
+  //   `;
+  // } else if (qrUrl && (qrUrl.startsWith('http://') || qrUrl.startsWith('https://'))) {
+  //   // If it's a URL to QR image
+  //   qrImageTag = `
+  //     <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+  //       <img src="${qrUrl}" alt="QR Code" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+  //     </div>
+  //   `;
+  // }
+
+  const QRCode = require('qrcode');
+
+  // Generate QR as data URL
+  const qrDataUrl = await QRCode.toDataURL(qrUrl);
+
+  qrImageTag = `
+    <div style="background: white; padding: 15px;">
+      <img src="${qrDataUrl}" alt="QR Code" style="max-width: 200px;" />
+    </div>
+  `;
 
   return `
 <!DOCTYPE html>
@@ -387,7 +398,7 @@ const sendInvoiceEmail = async (orderData) => {
     }];
     
     sendSmtpEmail.subject = `🎮 Invoice Pembayaran - ${orderData.orderNumber}`;
-    sendSmtpEmail.htmlContent = generateInvoiceHTML(orderData);
+    sendSmtpEmail.htmlContent = await generateInvoiceHTML(orderData);
     sendSmtpEmail.tags = ['invoice', 'order', orderData.paymentMethod];
     
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
