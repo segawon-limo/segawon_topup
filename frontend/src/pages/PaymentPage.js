@@ -251,7 +251,59 @@ function PaymentPage() {
 
           {/* Payment Details */}
           <div className="payment-details">
+
+            {/* Product Info */}
+            <div className="order-summary">
+              <h3>Detail Pesanan</h3>
+              <div className="summary-row">
+                <span>Produk</span>
+                <span>{paymentData.productName}</span>
+              </div>
+              <div className="summary-row">
+                <span>Riot ID</span>
+                <span>{paymentData.gameUserId}#{paymentData.gameUserTag}</span>
+              </div>
+              <div className="summary-row">
+                <span>Email</span>
+                <span>{paymentData.customer_email}</span>
+              </div>
+              <div className="summary-row">
+                <span>Harga Produk</span>
+                <span>{formatRupiah(paymentData.amount)}</span>
+              </div>
+              
+              {/* Voucher Discount - Show only if voucher was used */}
+              {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
+                <div className="summary-row voucher-discount">
+                  <span>Diskon Voucher ({paymentData.voucherCode})</span>
+                  <span style={{ color: '#10b981', fontWeight: '600' }}>
+                    - {formatRupiah(paymentData.voucherDiscount)}
+                  </span>
+                </div>
+              )}
+              
+              <div className="summary-row">
+                <span>Biaya Admin</span>
+                <span>{formatRupiah(paymentData.paymentFee)}</span>
+              </div>
+              <div className="summary-divider"></div>
+              <div className="summary-row total">
+                <span>Total</span>
+                <span className="total-amount">
+                  {formatRupiah(paymentData.total)}
+                </span>
+              </div>
+            </div>
+
             
+            {/* Jumlah yang harus dibayar */}
+            <div className="amount-display">
+              <span className="amount-label">Jumlah yang harus dibayar:</span>
+              <span className="amount-value">
+                {formatRupiah(paymentData.total)}
+              </span>
+            </div>
+
             {/* Virtual Account */}
             {isVA && (
               <div className="payment-section va-section">
@@ -264,13 +316,6 @@ function PaymentPage() {
                   >
                     {copied ? '✓ Tersalin' : 'Salin'}
                   </button>
-                </div>
-                
-                <div className="amount-display">
-                  <span className="amount-label">Jumlah yang harus dibayar:</span>
-                  <span className="amount-value">
-                    {formatRupiah(paymentData.total)}
-                  </span>
                 </div>
 
                 <div className="payment-instructions">
@@ -347,13 +392,6 @@ function PaymentPage() {
                     </a>
                   </>
                 )}
-                
-                <div className="amount-display">
-                  <span className="amount-label">Jumlah yang harus dibayar:</span>
-                  <span className="amount-value">
-                    {formatRupiah(paymentData.total)}
-                  </span>
-                </div>
 
                 <div className="payment-instructions">
                   <h3>📱 Cara Pembayaran QRIS:</h3>
@@ -387,58 +425,8 @@ function PaymentPage() {
                 >
                   Lanjutkan Pembayaran
                 </a>
-                
-                <div className="amount-display">
-                  <span className="amount-label">Jumlah yang harus dibayar:</span>
-                  <span className="amount-value">
-                    {formatRupiah(paymentData.total)}
-                  </span>
-                </div>
               </div>
             )}
-
-            {/* Product Info */}
-            <div className="order-summary">
-              <h3>Detail Pesanan</h3>
-              <div className="summary-row">
-                <span>Produk</span>
-                <span>{paymentData.productName}</span>
-              </div>
-              <div className="summary-row">
-                <span>Riot ID</span>
-                <span>{paymentData.gameUserId}#{paymentData.gameUserTag}</span>
-              </div>
-              <div className="summary-row">
-                <span>Email</span>
-                <span>{paymentData.customer_email}</span>
-              </div>
-              <div className="summary-row">
-                <span>Harga Produk</span>
-                <span>{formatRupiah(paymentData.amount)}</span>
-              </div>
-              
-              {/* Voucher Discount - Show only if voucher was used */}
-              {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
-                <div className="summary-row voucher-discount">
-                  <span>Diskon Voucher ({paymentData.voucherCode})</span>
-                  <span style={{ color: '#10b981', fontWeight: '600' }}>
-                    - {formatRupiah(paymentData.voucherDiscount)}
-                  </span>
-                </div>
-              )}
-              
-              <div className="summary-row">
-                <span>Biaya Admin</span>
-                <span>{formatRupiah(paymentData.paymentFee)}</span>
-              </div>
-              <div className="summary-divider"></div>
-              <div className="summary-row total">
-                <span>Total</span>
-                <span className="total-amount">
-                  {formatRupiah(paymentData.total)}
-                </span>
-              </div>
-            </div>
           </div>
 
           {/* Check Status Button */}
