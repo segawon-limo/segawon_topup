@@ -43,12 +43,137 @@ const generateInvoiceHTML = async (orderData) => {
     'I1': 'Indomaret',
     'A1': 'Alfamart',
     'BT': 'BCA Virtual Account',
+    'va_bca': 'BCA Virtual Account',
     'M2': 'Mandiri Virtual Account',
+    'va_mandiri': 'Mandiri Virtual Account',
     'B1': 'BRI Virtual Account',
+    'va_bri': 'BRI Virtual Account',
     'VA': 'BNI Virtual Account',
   };
 
   const paymentMethodDisplay = paymentMethodNames[paymentMethod] || paymentMethod;
+
+  // PAYMENT INSTRUCTIONS BERDASARKAN METODE
+  const getPaymentInstructions = (method) => {
+    const methodUpper = method.toUpperCase();
+    
+    // QRIS
+    if (methodUpper === 'QRIS') {
+      return `
+        <div class="instructions">
+          <h3>📱 Cara Pembayaran QRIS:</h3>
+          <ol>
+            <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
+            <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
+            <li>Scan QR Code yang tertera di atas</li>
+            <li>Periksa detail pembayaran</li>
+            <li>Konfirmasi pembayaran dengan PIN Anda</li>
+            <li>Simpan bukti pembayaran</li>
+          </ol>
+        </div>
+      `;
+    }
+    
+    // E-Wallet (ShopeePay, OVO, DANA, LinkAja)
+    if (['SP', 'OV', 'DA', 'LA'].includes(methodUpper)) {
+      const walletName = paymentMethodNames[method];
+      return `
+        <div class="instructions">
+          <h3>📱 Cara Pembayaran ${walletName}:</h3>
+          <ol>
+            <li>Klik tombol <strong>"Bayar Sekarang"</strong> di atas</li>
+            <li>Anda akan diarahkan ke aplikasi ${walletName}</li>
+            <li>Login ke akun ${walletName} Anda</li>
+            <li>Periksa detail pembayaran (Rp ${totalAmount.toLocaleString('id-ID')})</li>
+            <li>Konfirmasi pembayaran dengan PIN</li>
+            <li>Tunggu notifikasi pembayaran berhasil</li>
+          </ol>
+          ${qrUrl ? `
+          <p style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+            <strong>Alternatif:</strong> Anda juga bisa scan QR Code di atas menggunakan aplikasi ${walletName}
+          </p>
+          ` : ''}
+        </div>
+      `;
+    }
+    
+    // Virtual Account (BCA, Mandiri, BRI, BNI)
+    if (['BT', 'VA_BCA', 'M2', 'VA_MANDIRI', 'B1', 'VA_BRI', 'VA', 'VA_BNI'].includes(methodUpper)) {
+      let bankName = 'BCA';
+      if (methodUpper.includes('MANDIRI') || methodUpper === 'M2') bankName = 'Mandiri';
+      if (methodUpper.includes('BRI') || methodUpper === 'B1') bankName = 'BRI';
+      if (methodUpper.includes('BNI') || methodUpper === 'VA') bankName = 'BNI';
+      
+      return `
+        <div class="instructions">
+          <h3>🏦 Cara Pembayaran ${bankName} Virtual Account:</h3>
+          
+          <div style="margin: 20px 0;">
+            <strong>📱 Via Mobile Banking:</strong>
+            <ol>
+              <li>Buka aplikasi ${bankName} Mobile</li>
+              <li>Pilih menu <strong>"Transfer"</strong> atau <strong>"Pembayaran"</strong></li>
+              <li>Pilih <strong>"Virtual Account"</strong> atau <strong>"VA ${bankName}"</strong></li>
+              <li>Masukkan nomor VA: <strong>${vaNumber}</strong></li>
+              <li>Periksa detail pembayaran (Rp ${totalAmount.toLocaleString('id-ID')})</li>
+              <li>Konfirmasi dengan PIN/password</li>
+              <li>Simpan bukti transfer</li>
+            </ol>
+          </div>
+          
+          <div style="margin: 20px 0; padding-top: 15px; border-top: 1px dashed #e5e7eb;">
+            <strong>🏧 Via ATM ${bankName}:</strong>
+            <ol>
+              <li>Masukkan kartu ATM dan PIN</li>
+              <li>Pilih menu <strong>"Transaksi Lainnya"</strong></li>
+              <li>Pilih <strong>"Transfer"</strong></li>
+              <li>Pilih <strong>"Ke Rek ${bankName} Virtual Account"</strong></li>
+              <li>Masukkan nomor VA: <strong>${vaNumber}</strong></li>
+              <li>Masukkan nominal: <strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong></li>
+              <li>Konfirmasi dan selesaikan transaksi</li>
+              <li>Simpan struk sebagai bukti</li>
+            </ol>
+          </div>
+          
+          <div style="margin: 20px 0; padding-top: 15px; border-top: 1px dashed #e5e7eb;">
+            <strong>💻 Via Internet Banking:</strong>
+            <ol>
+              <li>Login ke ${bankName} Internet Banking</li>
+              <li>Pilih menu <strong>"Transfer"</strong></li>
+              <li>Pilih <strong>"Transfer ke ${bankName} Virtual Account"</strong></li>
+              <li>Masukkan nomor VA: <strong>${vaNumber}</strong></li>
+              <li>Nominal akan terisi otomatis</li>
+              <li>Konfirmasi transaksi</li>
+              <li>Download bukti transfer</li>
+            </ol>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Retail (Indomaret, Alfamart)
+    if (['I1', 'A1'].includes(methodUpper)) {
+      const storeName = methodUpper === 'I1' ? 'Indomaret' : 'Alfamart';
+      return `
+        <div class="instructions">
+          <h3>🏪 Cara Pembayaran di ${storeName}:</h3>
+          <ol>
+            <li>Kunjungi <strong>gerai ${storeName}</strong> terdekat</li>
+            <li>Tunjukkan kode pembayaran ke kasir</li>
+            <li>Kasir akan memproses pembayaran</li>
+            <li>Bayar sejumlah <strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong></li>
+            <li>Simpan struk pembayaran sebagai bukti</li>
+            <li>Pembayaran akan otomatis terkonfirmasi</li>
+          </ol>
+          <p style="margin-top: 15px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; font-size: 13px;">
+            💡 <strong>Tips:</strong> Pastikan kasir sudah mengkonfirmasi pembayaran berhasil sebelum meninggalkan kasir.
+          </p>
+        </div>
+      `;
+    }
+    
+    return '';
+  };
 
   // FIX: Convert QR string to proper image URL for email clients
   // Duitku returns base64-like string, need to format properly
@@ -354,10 +479,13 @@ const generateInvoiceHTML = async (orderData) => {
       </div>
       ` : ''}
       
-      ${paymentUrl ? `
-      <a href="${paymentUrl}" class="payment-button">💳 Bayar Sekarang</a>
-      ` : ''}
+      // ${paymentUrl ? `
+      // <a href="${paymentUrl}" class="payment-button">💳 Bayar Sekarang</a>
+      // ` : ''}
     </div>
+    
+    <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->
+    ${getPaymentInstructions(paymentMethod)}
 
     <!-- Expiry Notice -->
     ${expiryTime ? `
