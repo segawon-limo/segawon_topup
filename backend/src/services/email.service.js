@@ -478,10 +478,6 @@ const generateInvoiceHTML = async (orderData) => {
         Scan QR Code untuk membayar
       </div>
       ` : ''}
-      
-      // ${paymentUrl ? `
-      // <a href="${paymentUrl}" class="payment-button">💳 Bayar Sekarang</a>
-      // ` : ''}
     </div>
     
     <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->
@@ -515,6 +511,11 @@ const generateInvoiceHTML = async (orderData) => {
 </html>
   `;
 };
+
+// after ${qrImageTag && !vaNumber ? `
+// ${paymentUrl ? `
+// <a href="${paymentUrl}" class="payment-button">💳 Bayar Sekarang</a>
+// ` : ''}
 
 const sendInvoiceEmail = async (orderData) => {
   try {
