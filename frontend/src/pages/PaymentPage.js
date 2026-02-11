@@ -16,6 +16,9 @@ function PaymentPage() {
   const [copied, setCopied] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [showDetails, setShowDetails] = useState(false); // ← STATE BARU UNTUK TOGGLE
+
+  // ... semua useEffect dan function lainnya tetap sama ...
 
   // Load payment info
   useEffect(() => {
@@ -251,63 +254,68 @@ function PaymentPage() {
 
           {/* Payment Details */}
           <div className="payment-details">
-
-            {/* Product Info */}
-            <div className="order-summary">
-              <h3>Detail Pesanan</h3>
-              <div className="summary-row">
-                <span>Produk</span>
-                <span>{paymentData.productName}</span>
-              </div>
-              <div className="summary-row">
-                <span>Riot ID</span>
-                <span>{paymentData.gameUserId}#{paymentData.gameUserTag}</span>
-              </div>
-              <div className="summary-row">
-                <span>Email</span>
-                <span>{paymentData.customer_email}</span>
-              </div>
-              <div className="summary-row">
-                <span>Harga Produk</span>
-                <span>{formatRupiah(paymentData.amount)}</span>
-              </div>
-              
-              {/* Voucher Discount - Show only if voucher was used */}
-              {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
-                <div className="summary-row voucher-discount">
-                  <span>Diskon Voucher ({paymentData.voucherCode})</span>
-                  <span style={{ color: '#10b981', fontWeight: '600' }}>
-                    - {formatRupiah(paymentData.voucherDiscount)}
-                  </span>
-                </div>
-              )}
-              
-              <div className="summary-row">
-                <span>Biaya Admin</span>
-                <span>{formatRupiah(paymentData.paymentFee)}</span>
-              </div>
-              <div className="summary-divider"></div>
-              <div className="summary-row total">
-                <span>Total</span>
-                <span className="total-amount">
+            
+            {/* AMOUNT DISPLAY WITH COLLAPSIBLE ORDER SUMMARY */}
+            <div className="amount-display-collapsible">
+              <div className="amount-header">
+                <span className="amount-label">Jumlah yang harus dibayar</span>
+                <span className="amount-value-large">
                   {formatRupiah(paymentData.total)}
                 </span>
               </div>
-            </div>
+              
+              <button 
+                className={`toggle-details-btn ${showDetails ? 'active' : ''}`}
+                onClick={() => setShowDetails(!showDetails)}
+              >
+                <span>{showDetails ? '▼' : '▶'} Lihat Detail Pesanan</span>
+              </button>
 
-            
-            {/* Jumlah yang harus dibayar */}
-            <div className="amount-display">
-              <span className="amount-label">Jumlah yang harus dibayar:</span>
-              <span className="amount-value">
-                {formatRupiah(paymentData.total)}
-              </span>
+              {/* COLLAPSIBLE DETAIL PESANAN */}
+              {showDetails && (
+                <div className="order-details-collapse">
+                  <div className="detail-row">
+                    <span className="detail-label">Produk</span>
+                    <span className="detail-value">{paymentData.productName}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Riot ID</span>
+                    <span className="detail-value">{paymentData.gameUserId}#{paymentData.gameUserTag}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Email</span>
+                    <span className="detail-value">{paymentData.customer_email}</span>
+                  </div>
+                  <div className="detail-divider"></div>
+                  <div className="detail-row">
+                    <span className="detail-label">Harga Produk</span>
+                    <span className="detail-value">{formatRupiah(paymentData.amount)}</span>
+                  </div>
+                  
+                  {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
+                    <div className="detail-row voucher">
+                      <span className="detail-label">Diskon Voucher ({paymentData.voucherCode})</span>
+                      <span className="detail-value discount">- {formatRupiah(paymentData.voucherDiscount)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Biaya Admin</span>
+                    <span className="detail-value">{formatRupiah(paymentData.paymentFee)}</span>
+                  </div>
+                  <div className="detail-divider"></div>
+                  <div className="detail-row total-row">
+                    <span className="detail-label">Total</span>
+                    <span className="detail-value total">{formatRupiah(paymentData.total)}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Virtual Account */}
             {isVA && (
               <div className="payment-section va-section">
-                <h2>Nomor Virtual Account</h2>
+                <h2>Nomor Virtual Account {getVABankName(paymentData.payment.method)}</h2>
                 <div className="va-number-container">
                   <div className="va-number">{paymentData.payment.vaNumber}</div>
                   <button 
@@ -364,7 +372,7 @@ function PaymentPage() {
               </div>
             )}
 
-            {/* QRIS - Show QR Code if qrString available */}
+            {/* QRIS */}
             {isQRIS && (
               <div className="payment-section qris-section">
                 <h2>Pembayaran QRIS</h2>
@@ -425,6 +433,21 @@ function PaymentPage() {
                 >
                   Lanjutkan Pembayaran
                 </a>
+                
+                <div className="payment-instructions">
+                  <h3>📱 Cara Pembayaran {getPaymentMethodName(paymentData.payment.method)}:</h3>
+                  <ol>
+                    <li>Klik tombol <strong>"Lanjutkan Pembayaran"</strong> di atas</li>
+                    <li>Anda akan diarahkan ke aplikasi {getPaymentMethodName(paymentData.payment.method)}</li>
+                    <li>Login ke akun Anda</li>
+                    <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
+                    <li>Konfirmasi pembayaran dengan PIN</li>
+                    <li>Tunggu notifikasi pembayaran berhasil</li>
+                  </ol>
+                  <div className="note-box">
+                    <strong>💡 Tips:</strong> Jangan tutup halaman ini. Kembali ke sini setelah pembayaran selesai.
+                  </div>
+                </div>
               </div>
             )}
           </div>
