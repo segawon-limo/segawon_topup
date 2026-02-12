@@ -1,26 +1,11 @@
 /**
- * Email Service - Untuk mengirim invoice dan notifikasi
- * Menggunakan Brevo (formerly Sendinblue) API
- * 
- * KEUNTUNGAN BREVO:
- * - Free tier: 300 email/hari gratis! (3x lebih banyak dari SendGrid)
- * - Tidak perlu SMTP/IMAP
- * - Dashboard analytics lengkap
- * - SMS integration (untuk future)
- * - WhatsApp integration (untuk future)
- * - Marketing automation
- * 
- * CARA PAKAI:
- * 1. Copy file ini ke: backend/src/services/email.service.js
- * 2. Install Brevo: npm install @getbrevo/brevo
- * 3. Setup API Key di .env (lihat panduan)
+ * Email Service - FIXED VERSION
+ * - QR Code image fix (convert data URI to image)
+ * - Better spacing for readability
  */
 
 const brevo = require('@getbrevo/brevo');
 
-/**
- * Initialize Brevo API Client
- */
 const getBrevoClient = () => {
   const apiInstance = new brevo.TransactionalEmailsApi();
   const apiKey = apiInstance.authentications['apiKey'];
@@ -28,16 +13,12 @@ const getBrevoClient = () => {
   return apiInstance;
 };
 
-/**
- * Generate HTML Invoice Email
- */
-const generateInvoiceHTML = (orderData) => {
+const generateInvoiceHTML = async (orderData) => {
   const {
     orderNumber,
     customerName,
     customerEmail,
     productName,
-    gameName,
     userId,
     zoneId,
     amount,
@@ -51,26 +32,190 @@ const generateInvoiceHTML = (orderData) => {
     expiryTime
   } = orderData;
 
-  // Format payment method name
+  const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
+
   const paymentMethodNames = {
     'qris': 'QRIS',
-    'va_bca': 'Virtual Account BCA',
-    'va_mandiri': 'Virtual Account Mandiri',
-    'va_bri': 'Virtual Account BRI',
-    'va_bni': 'Virtual Account BNI',
-    'va_permata': 'Virtual Account Permata',
-    'va_cimb': 'Virtual Account CIMB',
-    'ovo': 'OVO',
-    'dana': 'DANA',
-    'shopeepay': 'ShopeePay',
-    'linkaja': 'LinkAja',
-    'gopay': 'GoPay',
-    'alfamart': 'Alfamart',
-    'indomaret': 'Indomaret',
-    'credit_card': 'Kartu Kredit'
+    'SP': 'ShopeePay',
+    'OV': 'OVO',
+    'DA': 'DANA',
+    'LA': 'LinkAja',
+    'I1': 'Indomaret',
+    'A1': 'Alfamart',
+    'BT': 'BCA Virtual Account',
+    'va_bca': 'BCA Virtual Account',
+    'M2': 'Mandiri Virtual Account',
+    'va_mandiri': 'Mandiri Virtual Account',
+    'B1': 'BRI Virtual Account',
+    'va_bri': 'BRI Virtual Account',
+    'VA': 'BNI Virtual Account',
   };
 
   const paymentMethodDisplay = paymentMethodNames[paymentMethod] || paymentMethod;
+
+  // PAYMENT INSTRUCTIONS BERDASARKAN METODE
+  const getPaymentInstructions = (method) => {
+    const methodUpper = method.toUpperCase();
+    
+    // QRIS
+    if (methodUpper === 'QRIS') {
+      return `
+        <div class="instructions">
+          <h3>📱 Cara Pembayaran QRIS:</h3>
+          <ol>
+            <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
+            <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
+            <li>Scan QR Code yang tertera di atas</li>
+            <li>Periksa detail pembayaran</li>
+            <li>Konfirmasi pembayaran dengan PIN Anda</li>
+            <li>Simpan bukti pembayaran</li>
+          </ol>
+        </div>
+      `;
+    }
+    
+    // E-Wallet (ShopeePay, OVO, DANA, LinkAja)
+    if (['SP', 'OV', 'DA', 'LA'].includes(methodUpper)) {
+      const walletName = paymentMethodNames[method];
+      return `
+        <div class="instructions">
+          <h3>📱 Cara Pembayaran ${walletName}:</h3>
+          <ol>
+            <li>Klik tombol <strong>"Bayar Sekarang"</strong> di atas</li>
+            <li>Anda akan diarahkan ke aplikasi ${walletName}</li>
+            <li>Login ke akun ${walletName} Anda</li>
+            <li>Periksa detail pembayaran (Rp ${totalAmount.toLocaleString('id-ID')})</li>
+            <li>Konfirmasi pembayaran dengan PIN</li>
+            <li>Tunggu notifikasi pembayaran berhasil</li>
+          </ol>
+          ${qrUrl ? `
+          <p style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+            <strong>Alternatif:</strong> Anda juga bisa scan QR Code di atas menggunakan aplikasi ${walletName}
+          </p>
+          ` : ''}
+        </div>
+      `;
+    }
+    
+    // Virtual Account (BCA, Mandiri, BRI, BNI)
+    if (['BT', 'VA_BCA', 'M2', 'VA_MANDIRI', 'B1', 'VA_BRI', 'VA', 'VA_BNI'].includes(methodUpper)) {
+      let bankName = 'BCA';
+      if (methodUpper.includes('MANDIRI') || methodUpper === 'M2') bankName = 'Mandiri';
+      if (methodUpper.includes('BRI') || methodUpper === 'B1') bankName = 'BRI';
+      if (methodUpper.includes('BNI') || methodUpper === 'VA') bankName = 'BNI';
+      
+      return `
+        <div class="instructions">
+          <h3>🏦 Cara Pembayaran ${bankName} Virtual Account:</h3>
+          
+          <div style="margin: 20px 0;">
+            <strong>📱 Via Mobile Banking:</strong>
+            <ol>
+              <li>Buka aplikasi ${bankName} Mobile</li>
+              <li>Pilih menu <strong>"Transfer"</strong> atau <strong>"Pembayaran"</strong></li>
+              <li>Pilih <strong>"Virtual Account"</strong> atau <strong>"VA ${bankName}"</strong></li>
+              <li>Masukkan nomor VA: <strong>${vaNumber}</strong></li>
+              <li>Periksa detail pembayaran (Rp ${totalAmount.toLocaleString('id-ID')})</li>
+              <li>Konfirmasi dengan PIN/password</li>
+              <li>Simpan bukti transfer</li>
+            </ol>
+          </div>
+          
+          <div style="margin: 20px 0; padding-top: 15px; border-top: 1px dashed #e5e7eb;">
+            <strong>🏧 Via ATM ${bankName}:</strong>
+            <ol>
+              <li>Masukkan kartu ATM dan PIN</li>
+              <li>Pilih menu <strong>"Transaksi Lainnya"</strong></li>
+              <li>Pilih <strong>"Transfer"</strong></li>
+              <li>Pilih <strong>"Ke Rek ${bankName} Virtual Account"</strong></li>
+              <li>Masukkan nomor VA: <strong>${vaNumber}</strong></li>
+              <li>Masukkan nominal: <strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong></li>
+              <li>Konfirmasi dan selesaikan transaksi</li>
+              <li>Simpan struk sebagai bukti</li>
+            </ol>
+          </div>
+          
+          <div style="margin: 20px 0; padding-top: 15px; border-top: 1px dashed #e5e7eb;">
+            <strong>💻 Via Internet Banking:</strong>
+            <ol>
+              <li>Login ke ${bankName} Internet Banking</li>
+              <li>Pilih menu <strong>"Transfer"</strong></li>
+              <li>Pilih <strong>"Transfer ke ${bankName} Virtual Account"</strong></li>
+              <li>Masukkan nomor VA: <strong>${vaNumber}</strong></li>
+              <li>Nominal akan terisi otomatis</li>
+              <li>Konfirmasi transaksi</li>
+              <li>Download bukti transfer</li>
+            </ol>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Retail (Indomaret, Alfamart)
+    if (['I1', 'A1'].includes(methodUpper)) {
+      const storeName = methodUpper === 'I1' ? 'Indomaret' : 'Alfamart';
+      return `
+        <div class="instructions">
+          <h3>🏪 Cara Pembayaran di ${storeName}:</h3>
+          <ol>
+            <li>Kunjungi <strong>gerai ${storeName}</strong> terdekat</li>
+            <li>Tunjukkan kode pembayaran ke kasir</li>
+            <li>Kasir akan memproses pembayaran</li>
+            <li>Bayar sejumlah <strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong></li>
+            <li>Simpan struk pembayaran sebagai bukti</li>
+            <li>Pembayaran akan otomatis terkonfirmasi</li>
+          </ol>
+          <p style="margin-top: 15px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; font-size: 13px;">
+            💡 <strong>Tips:</strong> Pastikan kasir sudah mengkonfirmasi pembayaran berhasil sebelum meninggalkan kasir.
+          </p>
+        </div>
+      `;
+    }
+    
+    return '';
+  };
+
+  // FIX: Convert QR string to proper image URL for email clients
+  // Duitku returns base64-like string, need to format properly
+  // let qrImageTag = '';
+  // if (qrUrl && qrUrl.length > 50) {
+  //   // If it's EMV QR string (long text), show as text + link to generate QR
+  //   qrImageTag = `
+  //     <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+  //       <div style="font-size: 10px; color: #1a2332; word-break: break-all; font-family: monospace; line-height: 1.4;">
+  //         ${qrUrl}
+  //       </div>
+  //       <div style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+  //         Gunakan aplikasi e-wallet untuk scan QR di atas
+  //       </div>
+  //     </div>
+  //   `;
+  // } else if (qrUrl && (qrUrl.startsWith('http://') || qrUrl.startsWith('https://'))) {
+  //   // If it's a URL to QR image
+  //   qrImageTag = `
+  //     <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+  //       <img src="${qrUrl}" alt="QR Code" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
+  //     </div>
+  //   `;
+  // }
+
+  let qrImageTag = '';
+
+  // Hanya generate QR jika qrUrl ada
+  console.log('QR URL:', qrUrl);
+  if (qrUrl && qrUrl.length > 50) {
+    // Gunakan QR Server API (free, no key needed, still maintained)
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`;
+    
+    qrImageTag = `
+      <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center;">
+        <img src="${qrImageUrl}" alt="QR Code" style="max-width: 250px; height: auto; display: block; margin: 0 auto;" />
+        <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+          Scan QR Code untuk membayar
+        </div>
+      </div>
+    `;
+  }
 
   return `
 <!DOCTYPE html>
@@ -81,7 +226,7 @@ const generateInvoiceHTML = (orderData) => {
   <title>Invoice - ${orderNumber}</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       line-height: 1.6;
       color: #333;
       max-width: 600px;
@@ -98,18 +243,32 @@ const generateInvoiceHTML = (orderData) => {
     .header {
       text-align: center;
       padding-bottom: 20px;
-      border-bottom: 2px solid #4f46e5;
+      border-bottom: 2px solid #FF6B35;
       margin-bottom: 30px;
     }
+    .logo-container {
+      margin-bottom: 15px;
+    }
     .logo {
-      font-size: 24px;
+      width: 120px;
+      height: 120px;
+      display: inline-block;
+    }
+    .brand-name {
+      font-size: 28px;
       font-weight: bold;
-      color: #4f46e5;
+      color: #1a2332;
+      margin: 10px 0 5px 0;
+    }
+    .tagline {
+      font-size: 14px;
+      color: #FF6B35;
+      font-weight: 600;
     }
     .invoice-title {
       font-size: 20px;
       color: #1f2937;
-      margin-top: 10px;
+      margin-top: 15px;
     }
     .order-number {
       color: #6b7280;
@@ -125,40 +284,50 @@ const generateInvoiceHTML = (orderData) => {
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
+      display: table;
+      width: 100%;
+      padding: 10px 0;
       border-bottom: 1px solid #f3f4f6;
     }
     .info-label {
+      display: table-cell;
       color: #6b7280;
       font-size: 14px;
+      width: 40%;
+      padding-right: 20px;
     }
     .info-value {
+      display: table-cell;
       color: #1f2937;
       font-weight: 500;
       font-size: 14px;
       text-align: right;
+      width: 60%;
     }
     .price-row {
-      display: flex;
-      justify-content: space-between;
+      display: table;
+      width: 100%;
       padding: 12px 0;
     }
     .price-label {
+      display: table-cell;
       color: #1f2937;
       font-size: 15px;
+      width: 60%;
     }
     .price-value {
+      display: table-cell;
       font-weight: 500;
       font-size: 15px;
+      text-align: right;
+      width: 40%;
     }
     .total-row {
-      display: flex;
-      justify-content: space-between;
+      display: table;
+      width: 100%;
       padding: 15px 0;
       margin-top: 10px;
       border-top: 2px solid #e5e7eb;
@@ -166,22 +335,28 @@ const generateInvoiceHTML = (orderData) => {
       font-weight: bold;
     }
     .total-label {
+      display: table-cell;
       color: #1f2937;
+      width: 60%;
     }
     .total-value {
-      color: #4f46e5;
+      display: table-cell;
+      color: #FF6B35;
+      text-align: right;
+      width: 40%;
     }
     .payment-box {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1a2332 0%, #2d3e50 100%);
       color: white;
-      padding: 20px;
+      padding: 25px;
       border-radius: 8px;
       margin: 20px 0;
       text-align: center;
+      border: 3px solid #FF6B35;
     }
     .payment-method {
       font-size: 16px;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     .va-number {
       font-size: 24px;
@@ -189,23 +364,13 @@ const generateInvoiceHTML = (orderData) => {
       letter-spacing: 2px;
       margin: 15px 0;
       padding: 15px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,107,53,0.2);
       border-radius: 6px;
-    }
-    .qr-code {
-      margin: 15px 0;
-      padding: 15px;
-      background: white;
-      border-radius: 8px;
-    }
-    .qr-code img {
-      max-width: 200px;
-      height: auto;
     }
     .payment-button {
       display: inline-block;
-      background: white;
-      color: #4f46e5;
+      background: #FF6B35;
+      color: white;
       padding: 12px 30px;
       border-radius: 6px;
       text-decoration: none;
@@ -230,16 +395,20 @@ const generateInvoiceHTML = (orderData) => {
       font-size: 13px;
     }
     .footer a {
-      color: #4f46e5;
+      color: #FF6B35;
       text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
+    <!-- Header with Logo -->
     <div class="header">
-      <div class="logo">⚡ SEGAWON TOPUP</div>
+      <div class="logo-container">
+        <img src="${logoUrl}" alt="SEGAWON TOPUP Logo" class="logo">
+      </div>
+      <div class="brand-name">SEGAWON TOPUP</div>
+      <div class="tagline">⚡ Instant Gaming Topup</div>
       <div class="invoice-title">Invoice Pembayaran</div>
       <div class="order-number">${orderNumber}</div>
     </div>
@@ -263,10 +432,6 @@ const generateInvoiceHTML = (orderData) => {
       <div class="info-row">
         <span class="info-label">Produk</span>
         <span class="info-value">${productName}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Game</span>
-        <span class="info-value">${gameName}</span>
       </div>
       <div class="info-row">
         <span class="info-label">User ID</span>
@@ -306,17 +471,17 @@ const generateInvoiceHTML = (orderData) => {
       <div style="font-size: 12px; margin-top: 10px;">Nomor Virtual Account</div>
       ` : ''}
       
-      ${qrUrl ? `
-      <div class="qr-code">
-        <img src="${qrUrl}" alt="QR Code" />
-      </div>
-      <div style="font-size: 12px; margin-top: 10px;">Scan QR Code untuk membayar</div>
-      ` : ''}
+      ${qrImageTag}
       
-      ${paymentUrl ? `
-      <a href="${paymentUrl}" class="payment-button">Bayar Sekarang</a>
+      ${qrImageTag && !vaNumber ? `
+      <div style="font-size: 12px; margin-top: 10px; color: rgba(255,255,255,0.8);">
+        Scan QR Code untuk membayar
+      </div>
       ` : ''}
     </div>
+    
+    <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->
+    ${getPaymentInstructions(paymentMethod)}
 
     <!-- Expiry Notice -->
     ${expiryTime ? `
@@ -332,6 +497,7 @@ const generateInvoiceHTML = (orderData) => {
     <!-- Footer -->
     <div class="footer">
       <p>Terima kasih telah berbelanja di <strong>SEGAWON TOPUP</strong></p>
+      <p>🎮 Your Trusted Gaming Partner</p>
       <p>
         Butuh bantuan? Hubungi kami di 
         <a href="mailto:support@segawontopup.net">support@segawontopup.net</a>
@@ -346,9 +512,11 @@ const generateInvoiceHTML = (orderData) => {
   `;
 };
 
-/**
- * Kirim Invoice Email menggunakan Brevo
- */
+// after ${qrImageTag && !vaNumber ? `
+// ${paymentUrl ? `
+// <a href="${paymentUrl}" class="payment-button">💳 Bayar Sekarang</a>
+// ` : ''}
+
 const sendInvoiceEmail = async (orderData) => {
   try {
     const apiInstance = getBrevoClient();
@@ -365,10 +533,8 @@ const sendInvoiceEmail = async (orderData) => {
       name: orderData.customerName
     }];
     
-    sendSmtpEmail.subject = `Invoice Pembayaran - ${orderData.orderNumber}`;
-    sendSmtpEmail.htmlContent = generateInvoiceHTML(orderData);
-    
-    // Optional: Add tags for tracking
+    sendSmtpEmail.subject = `🎮 Invoice Pembayaran - ${orderData.orderNumber}`;
+    sendSmtpEmail.htmlContent = await generateInvoiceHTML(orderData);
     sendSmtpEmail.tags = ['invoice', 'order', orderData.paymentMethod];
     
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
@@ -386,7 +552,6 @@ const sendInvoiceEmail = async (orderData) => {
   } catch (error) {
     console.error('❌ Failed to send invoice email:', error);
     
-    // Brevo specific error handling
     if (error.response) {
       console.error('  Brevo Error:', error.response.text);
     }
@@ -399,191 +564,105 @@ const sendInvoiceEmail = async (orderData) => {
   }
 };
 
-/**
- * Kirim Email Pembayaran Berhasil
- */
 const sendPaymentSuccessEmail = async (orderData) => {
   try {
     const apiInstance = getBrevoClient();
+    const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
     
     const html = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .success-box {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 8px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .info-box {
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 6px;
-      margin: 20px 0;
-    }
-  </style>
-</head>
+<head><meta charset="UTF-8"><style>
+body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
+.success-box{background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:white;padding:30px;border-radius:8px;text-align:center;margin-bottom:20px}
+.logo{width:80px;height:80px;margin-bottom:10px}
+.info-box{background:#f9fafb;padding:20px;border-radius:6px;margin:20px 0}
+</style></head>
 <body>
   <div class="success-box">
-    <h1 style="margin: 0;">✅ Pembayaran Berhasil!</h1>
-    <p style="font-size: 16px; margin-top: 10px;">Order ${orderData.orderNumber}</p>
+    <img src="${logoUrl}" alt="Logo" class="logo">
+    <h1 style="margin:0">✅ Pembayaran Berhasil!</h1>
+    <p>Order ${orderData.orderNumber}</p>
   </div>
-  
   <p>Hai <strong>${orderData.customerName}</strong>,</p>
-  
-  <p>Pembayaran Anda telah kami terima! Pesanan Anda sedang diproses dan akan segera dikirim.</p>
-  
+  <p>Pembayaran Anda telah kami terima!</p>
   <div class="info-box">
     <strong>Detail Pesanan:</strong><br>
     Produk: ${orderData.productName}<br>
     User ID: ${orderData.userId}<br>
     Total: Rp ${orderData.totalAmount.toLocaleString('id-ID')}
   </div>
-  
-  <p>Anda akan menerima notifikasi melalui email ketika pesanan selesai diproses.</p>
-  
-  <p>Terima kasih telah berbelanja di SEGAWON TOPUP!</p>
+  <p>Terima kasih! 🎮</p>
 </body>
-</html>
-    `;
+</html>`;
     
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     sendSmtpEmail.sender = {
       name: 'SEGAWON TOPUP',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@segawontopup.net'
     };
-    sendSmtpEmail.to = [{
-      email: orderData.customerEmail,
-      name: orderData.customerName
-    }];
+    sendSmtpEmail.to = [{ email: orderData.customerEmail, name: orderData.customerName }];
     sendSmtpEmail.subject = `✅ Pembayaran Berhasil - ${orderData.orderNumber}`;
     sendSmtpEmail.htmlContent = html;
-    sendSmtpEmail.tags = ['payment-success', 'order'];
+    sendSmtpEmail.tags = ['payment-success'];
 
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    
-    console.log('✅ Payment success email sent via Brevo');
-    return { 
-      success: true, 
-      messageId: response.messageId 
-    };
-
+    console.log('✅ Payment success email sent');
+    return { success: true, messageId: response.messageId };
   } catch (error) {
-    console.error('❌ Failed to send payment success email:', error);
-    return { 
-      success: false, 
-      error: error.message 
-    };
+    console.error('❌ Payment success email failed:', error);
+    return { success: false, error: error.message };
   }
 };
 
-/**
- * Kirim Email Order Complete
- */
 const sendOrderCompleteEmail = async (orderData) => {
   try {
     const apiInstance = getBrevoClient();
+    const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
     
     const html = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .complete-box {
-      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 8px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .voucher-box {
-      background: #fef3c7;
-      border: 2px dashed #f59e0b;
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .voucher-code {
-      font-size: 24px;
-      font-weight: bold;
-      color: #92400e;
-      letter-spacing: 2px;
-    }
-  </style>
-</head>
+<head><meta charset="UTF-8"><style>
+body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
+.complete-box{background:linear-gradient(135deg,#1a2332 0%,#2d3e50 100%);color:white;padding:30px;border-radius:8px;text-align:center;margin-bottom:20px;border:3px solid #FF6B35}
+.logo{width:100px;height:100px;margin-bottom:10px}
+.voucher-box{background:#fef3c7;border:2px dashed #FF6B35;padding:20px;border-radius:8px;text-align:center;margin:20px 0}
+.voucher-code{font-size:24px;font-weight:bold;color:#1a2332;letter-spacing:2px}
+</style></head>
 <body>
   <div class="complete-box">
-    <h1 style="margin: 0;">🎉 Pesanan Selesai!</h1>
-    <p style="font-size: 16px; margin-top: 10px;">Order ${orderData.orderNumber}</p>
+    <img src="${logoUrl}" alt="Logo" class="logo">
+    <h1 style="margin:0">🎉 Pesanan Selesai!</h1>
+    <p>Order ${orderData.orderNumber}</p>
   </div>
-  
   <p>Hai <strong>${orderData.customerName}</strong>,</p>
-  
-  <p>Pesanan Anda telah berhasil diproses dan ${orderData.productName} telah ditambahkan ke akun Anda!</p>
-  
+  <p>Pesanan Anda telah berhasil diproses!</p>
   ${orderData.voucherCode ? `
   <div class="voucher-box">
-    <div>Kode Voucher Game Anda:</div>
+    <div>Kode Voucher:</div>
     <div class="voucher-code">${orderData.voucherCode}</div>
-  </div>
-  ` : ''}
-  
-  <p>Terima kasih telah berbelanja di SEGAWON TOPUP. Sampai jumpa lagi! 🎮</p>
+  </div>` : ''}
+  <p>Terima kasih! 🎮</p>
 </body>
-</html>
-    `;
+</html>`;
     
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     sendSmtpEmail.sender = {
       name: 'SEGAWON TOPUP',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@segawontopup.net'
     };
-    sendSmtpEmail.to = [{
-      email: orderData.customerEmail,
-      name: orderData.customerName
-    }];
+    sendSmtpEmail.to = [{ email: orderData.customerEmail, name: orderData.customerName }];
     sendSmtpEmail.subject = `🎉 Pesanan Selesai - ${orderData.orderNumber}`;
     sendSmtpEmail.htmlContent = html;
-    sendSmtpEmail.tags = ['order-complete', 'order'];
+    sendSmtpEmail.tags = ['order-complete'];
 
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    
-    console.log('✅ Order complete email sent via Brevo');
-    return { 
-      success: true, 
-      messageId: response.messageId 
-    };
-
+    console.log('✅ Order complete email sent');
+    return { success: true, messageId: response.messageId };
   } catch (error) {
-    console.error('❌ Failed to send order complete email:', error);
-    return { 
-      success: false, 
-      error: error.message 
-    };
+    console.error('❌ Order complete email failed:', error);
+    return { success: false, error: error.message };
   }
 };
 

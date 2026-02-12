@@ -32,7 +32,10 @@ const generateInvoiceHTML = async (orderData) => {
     expiryTime
   } = orderData;
 
-  const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
+  // const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
+  // Gunakan URL dari CDN tempat Anda upload logo email
+  const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-header.png';
+  const logoSmallUrl = process.env.LOGO_EMAIL_SMALL_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-small.png';
 
   const paymentMethodNames = {
     'qris': 'QRIS',
@@ -405,7 +408,13 @@ const generateInvoiceHTML = async (orderData) => {
     <!-- Header with Logo -->
     <div class="header">
       <div class="logo-container">
-        <img src="${logoUrl}" alt="SEGAWON TOPUP Logo" class="logo">
+        <img 
+          src="${logoHeaderUrl}" 
+          srcset="${logoHeaderUrl.replace('.png', '@2x.png')} 2x"
+          alt="Segawon Top Up Logo" 
+          class="logo"
+          style="width: 100px; height: 100px; margin-bottom: 15px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));"
+        >
       </div>
       <div class="brand-name">SEGAWON TOPUP</div>
       <div class="tagline">⚡ Instant Gaming Topup</div>
@@ -567,7 +576,10 @@ const sendInvoiceEmail = async (orderData) => {
 const sendPaymentSuccessEmail = async (orderData) => {
   try {
     const apiInstance = getBrevoClient();
-    const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
+    // const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
+    // Gunakan URL dari CDN tempat Anda upload logo email
+    const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-header.png';
+    const logoSmallUrl = process.env.LOGO_EMAIL_SMALL_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-small.png';
     
     const html = `
 <!DOCTYPE html>
@@ -580,7 +592,12 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
 </style></head>
 <body>
   <div class="success-box">
-    <img src="${logoUrl}" alt="Logo" class="logo">
+    <img 
+      src="${logoSmallUrl}" 
+      alt="Segawon Top Up Logo" 
+      class="logo"
+      style="width: 80px; height: 80px; margin-bottom: 10px;"
+    >
     <h1 style="margin:0">✅ Pembayaran Berhasil!</h1>
     <p>Order ${orderData.orderNumber}</p>
   </div>
@@ -619,6 +636,9 @@ const sendOrderCompleteEmail = async (orderData) => {
   try {
     const apiInstance = getBrevoClient();
     const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
+    // Gunakan URL dari CDN tempat Anda upload logo email
+    const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-header.png';
+    const logoSmallUrl = process.env.LOGO_EMAIL_SMALL_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-small.png';
     
     const html = `
 <!DOCTYPE html>
@@ -632,7 +652,12 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
 </style></head>
 <body>
   <div class="complete-box">
-    <img src="${logoUrl}" alt="Logo" class="logo">
+    <img 
+      src="${logoHeaderUrl}" 
+      alt="Segawon Top Up Logo" 
+      class="logo"
+      style="width: 100px; height: 100px; margin-bottom: 10px;"
+    >
     <h1 style="margin:0">🎉 Pesanan Selesai!</h1>
     <p>Order ${orderData.orderNumber}</p>
   </div>

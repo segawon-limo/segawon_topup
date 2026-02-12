@@ -1,0 +1,47 @@
+{
+  "short_name": "Segawon",
+  "name": "Segawon Top Up - Top Up Game Terpercaya",
+  "description": "Platform top up game terpercaya dengan proses otomatis 24/7",
+  "icons": [
+    {
+      "src": "images/logo/favicon-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo/favicon-64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo/logo-navbar.png",
+      "sizes": "150x150",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo/logo-square.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "https://segawontopup.net/",
+  "scope": "https://segawontopup.net/",
+  "display": "standalone",
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["games", "shopping"],
+  "lang": "id",
+  "dir": "ltr"
+}
