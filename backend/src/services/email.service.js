@@ -211,8 +211,8 @@ const generateInvoiceHTML = async (orderData) => {
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrUrl)}`;
     
     qrImageTag = `
-      <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center;">
-        <img src="${qrImageUrl}" alt="QR Code" style="max-width: 250px; height: auto; display: block; margin: 0 auto;" />
+      <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; box-sizing: border-box; width: 100%;">
+        <img src="${qrImageUrl}" alt="QR Code" style="max-width: 250px; width: 100%; height: auto; display: block; margin: 0 auto;" />
         <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">
           Scan QR Code untuk membayar
         </div>
