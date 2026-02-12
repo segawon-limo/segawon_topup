@@ -5,7 +5,7 @@ const SITE_NAME = process.env.REACT_APP_SITE_NAME || 'Segawon Top Up';
 
 function Navbar() {
   return (
-    <nav className="bg-gradient-to-r from-purple-600 to-purple-800 shadow-lg sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-pink-600 to-red-600 shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
@@ -25,13 +25,13 @@ function Navbar() {
           <div className="flex items-center gap-6">
             <Link 
               to="/" 
-              className="text-white hover:text-purple-200 font-medium transition-colors duration-200"
+              className="text-white hover:text-pink-100 font-medium transition-colors duration-200"
             >
               Home
             </Link>
             <a 
               href="#games" 
-              className="text-white hover:text-purple-200 font-medium transition-colors duration-200"
+              className="text-white hover:text-pink-100 font-medium transition-colors duration-200"
             >
               Games
             </a>
@@ -39,7 +39,7 @@ function Navbar() {
               href={`https://wa.me/${process.env.REACT_APP_WHATSAPP}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-purple-700 px-6 py-2 rounded-lg font-semibold hover:bg-purple-50 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+              className="bg-white text-pink-700 px-6 py-2 rounded-lg font-semibold hover:bg-pink-50 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5"
             >
               Hubungi CS
             </a>

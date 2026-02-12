@@ -21,7 +21,7 @@ function Footer() {
               />
               <div>
                 <h3 className="text-2xl font-bold">{SITE_NAME}</h3>
-                <p className="text-purple-400 text-sm font-medium">Platform Top Up #1</p>
+                <p className="text-pink-400 text-sm font-medium">Platform Top Up #1</p>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed max-w-md">
@@ -33,14 +33,14 @@ function Footer() {
             <div className="flex gap-4 mt-6">
               <a 
                 href="#" 
-                className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center hover:bg-purple-500 transition-colors duration-200"
+                className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-500 transition-colors duration-200"
                 aria-label="Instagram"
               >
                 <FaInstagram className="text-lg" />
               </a>
               <a 
                 href="#" 
-                className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center hover:bg-purple-500 transition-colors duration-200"
+                className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-500 transition-colors duration-200"
                 aria-label="Facebook"
               >
                 <FaFacebook className="text-lg" />
@@ -59,7 +59,7 @@ function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-purple-400">Navigasi</h3>
+            <h3 className="text-lg font-bold mb-4 text-pink-400">Navigasi</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
               <li>
                 <a href="/" className="hover:text-white transition-colors duration-200">
@@ -86,7 +86,7 @@ function Footer() {
 
           {/* Contact Information */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-purple-400">Hubungi Kami</h3>
+            <h3 className="text-lg font-bold mb-4 text-pink-400">Hubungi Kami</h3>
             <div className="space-y-3 text-gray-400 text-sm">
               <div className="flex items-start gap-3">
                 <FaWhatsapp className="text-xl text-green-500 flex-shrink-0 mt-0.5" />
@@ -104,7 +104,7 @@ function Footer() {
               </div>
               
               <div className="flex items-start gap-3">
-                <FaEnvelope className="text-xl text-purple-500 flex-shrink-0 mt-0.5" />
+                <FaEnvelope className="text-xl text-pink-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-gray-500 text-xs">Email</p>
                   <a 

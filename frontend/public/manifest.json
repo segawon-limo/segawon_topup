@@ -38,7 +38,7 @@
   "start_url": "https://segawontopup.net/",
   "scope": "https://segawontopup.net/",
   "display": "standalone",
-  "theme_color": "#667eea",
+  "theme_color": "#e91e63",
   "background_color": "#ffffff",
   "orientation": "portrait-primary",
   "categories": ["games", "shopping"],
