@@ -299,7 +299,11 @@ function OrderPage() {
     } else if (!regex.test(email)) {
       setErrors(prev => ({ ...prev, customerEmail: "Format email tidak valid" }));
     } else {
-      setErrors(prev => ({ ...prev, customerEmail: "" }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.customerEmail;
+        return newErrors;
+      });
     }
   };
 
@@ -533,11 +537,13 @@ function OrderPage() {
       [name]: value,
     }));
     
+    // Clear error immediately when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null,
-      }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
 
     if (name === "customerName") {
@@ -756,8 +762,9 @@ function OrderPage() {
 
   // NEW: Check if form is valid and button should be enabled
   const isFormValid = () => {
-    // Check if there are any errors
-    if (Object.keys(errors).length > 0) {
+    // Check if there are any REAL errors (not null or empty string)
+    const hasErrors = Object.values(errors).some(error => error !== null && error !== "" && error !== undefined);
+    if (hasErrors) {
       return false;
     }
 
@@ -1278,9 +1285,9 @@ function OrderPage() {
                       </span>
                     </div>
 
-                    <div className="summary-note">
+                    {/* <div className="summary-note">
                       *Biaya admin sudah termasuk
-                    </div>
+                    </div> */}
 
                     {/* Submit Button */}
                     <button
