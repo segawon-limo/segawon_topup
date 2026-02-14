@@ -15,12 +15,40 @@ const emailService = require('../services/email.service');
  */
 exports.getGames = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id, name, slug, description, icon_url, is_active, sort_order
+    const { category } = req.query; // ?category=games | voucher | utilities | pulsa_data
+
+    let query = `
+      SELECT id, name, slug, description, icon_url,
+             category, product_type, is_active, sort_order
       FROM games
       WHERE is_active = true
-      ORDER BY sort_order ASC, name ASC
-    `);
+    `;
+    const params = [];
+
+    if (category) {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+
+    query += ` ORDER BY sort_order ASC, name ASC`;
+
+    const result = await pool.query(query, params);
+
+    // Jika tidak ada filter category, kelompokkan per category untuk frontend
+    if (!category) {
+      const grouped = {};
+      result.rows.forEach((g) => {
+        const cat = g.category || 'games';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(g);
+      });
+
+      return res.json({
+        success: true,
+        games: result.rows,   // flat list (kompatibel dengan kode lama)
+        grouped: grouped      // grouped per category (untuk HomePage baru)
+      });
+    }
 
     res.json({
       success: true,
@@ -44,9 +72,10 @@ exports.getProducts = async (req, res) => {
   try {
     const { gameSlug } = req.params;
 
-    // Get game
+    // Get game — include category & product_type
     const gameResult = await pool.query(
-      'SELECT id, name FROM games WHERE slug = $1 AND is_active = true',
+      `SELECT id, name, slug, icon_url, category, product_type
+       FROM games WHERE slug = $1 AND is_active = true`,
       [gameSlug]
     );
 
@@ -72,13 +101,20 @@ exports.getProducts = async (req, res) => {
 
     res.json({
       success: true,
-      game: game,
+      game: {
+        id:           game.id,
+        name:         game.name,
+        slug:         game.slug,
+        icon_url:     game.icon_url,
+        category:     game.category     || 'games',
+        product_type: game.product_type || 'topup_game'
+      },
       products: productsResult.rows.map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        sku: p.sku,
-        price: parseFloat(p.selling_price),
+        id:           p.id,
+        name:         p.name,
+        description:  p.description,
+        sku:          p.sku,
+        price:        parseFloat(p.selling_price),
         displayPrice: `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`
       }))
     });
@@ -167,17 +203,21 @@ exports.createOrder = async (req, res) => {
     } = req.body;
 
     // Use generic fields or fall back to Valorant-specific fields
-    const userId = gameUserId || riotId;
+    const userId = gameUserId || riotId || null;
     const zoneId = gameZoneId || riotTag || null;
 
-    // Validate required fields
-    if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber || !userId) {
+    // Validate required fields (userId tidak wajib untuk voucher_code)
+    if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber) {
       throw new Error('Missing required fields');
     }
 
-    // 1. Get product - UPDATED: Fetch profit_price
+    // 1. Get product + product_type dari game — UPDATED: Fetch profit_price & product_type
     const productResult = await client.query(
-      'SELECT id, name, sku, selling_price, profit_price, description FROM products WHERE id = $1 AND is_active = true',
+      `SELECT p.id, p.name, p.sku, p.selling_price, p.profit_price, p.description,
+              g.product_type, g.category
+       FROM products p
+       JOIN games g ON g.id = p.game_id
+       WHERE p.id = $1 AND p.is_active = true`,
       [productId]
     );
 
@@ -187,7 +227,14 @@ exports.createOrder = async (req, res) => {
 
     const product = productResult.rows[0];
     const productPrice = parseFloat(product.selling_price);
-    const profitPrice = parseFloat(product.profit_price); // NEW: Get profit price
+    const profitPrice  = parseFloat(product.profit_price);
+    const productType  = product.product_type || 'topup_game';
+
+    // Validasi userId wajib untuk produk yang butuh akun game / nomor meter / nomor HP
+    const needsUserId = !['voucher_code'].includes(productType);
+    if (needsUserId && !userId) {
+      throw new Error('User ID / nomor tujuan wajib diisi untuk produk ini');
+    }
 
     // NEW: Validate voucher if provided - WITH PROFIT PRICE
     let voucherDiscount = 0;
