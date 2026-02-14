@@ -633,7 +633,9 @@ function OrderPage() {
     }
 
     if (name === "customerName") {
-      value = value.replace(/[^\p{L}\s]/gu, "");
+      // value adalah const, tidak bisa di-reassign langsung
+      // filter sudah ditangani oleh allowOnlyAlphabet + handlePasteAlphabet
+      // tidak perlu replace di sini
     }
     // if (name === 'riotId' || name === 'riotTag') {
     //   setRiotIdValidated(false);
@@ -738,19 +740,20 @@ function OrderPage() {
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate userId (required for all games)
-    if (!formData.userId.trim()) {
-      newErrors.userId = currentGameConfig.fields[0].label + ' wajib diisi';
-    }
-
-    // Validate zoneId if required (some games have it, some don't)
-    if (currentGameConfig.fields.length > 1 && !formData.zoneId.trim()) {
-      newErrors.zoneId = currentGameConfig.fields[1].label + ' wajib diisi';
-    }
-
-    // Check if validation is required and done
-    if (currentGameConfig.validation && !userIdValidated) {
-      newErrors.userIdValidation = 'Verifikasi ID terlebih dahulu';
+    // Validate userId — tidak wajib untuk voucher_code
+    const fields = currentGameConfig.fields || [];
+    if (productType !== 'voucher_code') {
+      if (!formData.userId.trim()) {
+        newErrors.userId = (fields[0]?.label || 'User ID') + ' wajib diisi';
+      }
+      // Validate zoneId jika form punya 2 fields
+      if (fields.length > 1 && !formData.zoneId.trim()) {
+        newErrors.zoneId = (fields[1]?.label || 'Zone ID') + ' wajib diisi';
+      }
+      // Validasi khusus (misal Riot ID via API)
+      if (currentGameConfig.validation && !userIdValidated) {
+        newErrors.userIdValidation = 'Verifikasi ID terlebih dahulu';
+      }
     }
 
     if (!formData.customerEmail.trim()) {
@@ -801,7 +804,7 @@ function OrderPage() {
 
       const orderData = {
         productId: selectedProduct.id,
-        gameUserId: formData.userId.trim(),
+        gameUserId: productType !== 'voucher_code' ? formData.userId.trim() : null,
         gameZoneId: formData.zoneId?.trim() || null,
         customerEmail: formData.customerEmail.trim(),
         phoneNumber: formData.customerPhone.trim(),
@@ -857,17 +860,26 @@ function OrderPage() {
     // Check required fields
     if (!selectedProduct) return false;
     if (!selectedPaymentMethod) return false;
-    if (!formData.userId.trim()) return false;
+
+    // userId hanya wajib untuk produk yang butuh akun / nomor tujuan
+    if (productType !== 'voucher_code' && !formData.userId.trim()) return false;
+
     if (!formData.customerEmail.trim()) return false;
     if (!formData.customerPhone.trim()) return false;
     if (!formData.customerName.trim()) return false;
 
-    // Check if zoneId is required for this game
-    if (currentGameConfig.fields.length > 1 && !formData.zoneId.trim()) {
+    // zoneId wajib hanya jika form punya 2 fields (misal ML: userId + zoneId)
+    const fields = currentGameConfig.fields || [];
+    if (fields.length > 1 && !formData.zoneId.trim()) {
       return false;
     }
 
-    // Check if userId validation is required and completed
+    // userId harus terverifikasi untuk produk non-voucher
+    if (productType !== 'voucher_code' && !userIdValidated) {
+      return false;
+    }
+
+    // Validasi khusus (misal Riot ID check via API)
     if (currentGameConfig.validation && !userIdValidated) {
       return false;
     }
