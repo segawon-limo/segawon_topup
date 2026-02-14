@@ -872,3 +872,30 @@ input:disabled {
     width: 100%;
   }
 }
+
+/* Voucher product notice (Steam Wallet, dll — tidak perlu User ID) */
+.voucher-info-section {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.voucher-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.voucher-notice span {
+  font-size: 24px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.voucher-notice p {
+  color: #166534;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}

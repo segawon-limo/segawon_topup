@@ -4,6 +4,18 @@ import './OrderPage.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
+// Payment method logo mapping
+const paymentLogos = {
+  'qris':       '/images/qris-logo.png',
+  'va_bca':     '/images/bca-logo.png',
+  'va_mandiri': '/images/mandiri-logo.png',
+  'va_bni':     '/images/bni-logo.png',
+  'va_bri':     '/images/bri-logo.png',
+  'ovo':        '/images/ovo-logo.png',
+  'shopeepay':  '/images/shopeepay-logo.png',
+  'dana':       '/images/dana-logo.png',
+};
+
 // Game configurations
 const gameConfigs = {
   'valorant': {
@@ -16,7 +28,8 @@ const gameConfigs = {
       bodyFormat: (userId, zoneId) => ({ riotId: userId, riotTag: zoneId })
     },
     displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
-    headerImage: 'valorant-header.jpg'
+    headerImage: 'valorant-header.jpg',
+    iconFile: 'val.webp'
   },
   
   'arena-of-valor': {
@@ -25,7 +38,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId) => userId,
-    headerImage: 'arena-of-valor-header.jpg'
+    headerImage: 'arena-of-valor-header.jpg',
+    iconFile: 'aov.webp'
   },
 
   'mobile-legends': {
@@ -35,7 +49,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'mobile-legends-header.jpg'
+    headerImage: 'mobile-legends-header.jpg',
+    iconFile: 'mlb.webp'
   },
   
   'free-fire': {
@@ -44,7 +59,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId) => userId,
-    headerImage: 'free-fire-header.jpg'
+    headerImage: 'free-fire-header.jpg',
+    iconFile: 'ffr.webp'
   },
   
   'pubg-mobile': {
@@ -54,7 +70,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'pubg-mobile-header.jpg'
+    headerImage: 'pubg-mobile-header.jpg',
+    iconFile: null
   },
   
   'genshin-impact': {
@@ -64,7 +81,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'genshin-impact-header.jpg'
+    headerImage: 'genshin-impact-header.jpg',
+    iconFile: 'gip.webp'
   },
   
   'league-of-legends': {
@@ -74,7 +92,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
-    headerImage: 'league-of-legends-header.jpg'
+    headerImage: 'league-of-legends-header.jpg',
+    iconFile: 'lol.webp'
   },
 
   'honkai-star-rail': {
@@ -84,7 +103,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'honkai-star-rail-header.jpg'
+    headerImage: 'honkai-star-rail-header.jpg',
+    iconFile: 'hsr.webp'
   },
 
   'honor-of-kings': {
@@ -93,7 +113,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId) => userId,
-    headerImage: 'honor-of-kings-header.jpg'
+    headerImage: 'honor-of-kings-header.jpg',
+    iconFile: 'hok.webp'
   },
 
   'punishing-gray-raven': {
@@ -103,7 +124,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'punishing-gray-raven-header.jpg'
+    headerImage: 'punishing-gray-raven-header.jpg',
+    iconFile: 'pgr.webp'
   },
 
   'zenless-zone-zero': {
@@ -113,7 +135,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'zenless-zone-zero-header.jpg'
+    headerImage: 'zenless-zone-zero-header.jpg',
+    iconFile: 'zzz.webp'
   },
 
   'marvel-rivals': {
@@ -122,7 +145,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId) => userId,
-    headerImage: 'marvel-rivals-header.jpg'
+    headerImage: 'marvel-rivals-header.jpg',
+    iconFile: 'mrv.webp'
   },
 
   'haikyu-fly-high': {
@@ -131,7 +155,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId) => userId,
-    headerImage: 'haikyu-fly-high-header.jpg'
+    headerImage: 'haikyu-fly-high-header.jpg',
+    iconFile: 'hfh.webp'
   },
 
   'default': {
@@ -140,7 +165,8 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId) => userId,
-    headerImage: 'default-header.jpg'
+    headerImage: 'default-header.jpg',
+    iconFile: null
   }
 };
 
@@ -820,7 +846,18 @@ function OrderPage() {
       </div>
 
       <div className="container">
-        <h1 className="page-title">Order {game?.name || 'Valorant'} Points</h1>
+        <div className="page-title-wrapper">
+          {currentGameConfig.iconFile && (
+            <div className="game-icon-box">
+              <img
+                src={`${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`}
+                alt={game?.name || gameSlug}
+                className="game-icon-img"
+              />
+            </div>
+          )}
+          <h1 className="page-title">Order {game?.name || 'Valorant'} Points</h1>
+        </div>
 
         <div className="order-layout">
           {/* Left Side: Order Form */}
@@ -1044,6 +1081,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['qris']}`} alt="QRIS" className="payment-logo" />
                           <span className="payment-name">QRIS (Semua E-Wallet)</span>
                           {/* <span className="payment-note">Fee 0.7%</span> */}
                         </div>
@@ -1062,6 +1100,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_bca']}`} alt="BCA" className="payment-logo" />
                           <span className="payment-name">BCA Virtual Account</span>
                           {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
@@ -1076,6 +1115,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_mandiri']}`} alt="Mandiri" className="payment-logo" />
                           <span className="payment-name">Mandiri Virtual Account</span>
                           {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
@@ -1090,6 +1130,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_bni']}`} alt="BNI" className="payment-logo" />
                           <span className="payment-name">BNI Virtual Account</span>
                           {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
@@ -1104,6 +1145,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_bri']}`} alt="BRI" className="payment-logo" />
                           <span className="payment-name">BRI Virtual Account</span>
                           {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
                         </div>
@@ -1122,6 +1164,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['ovo']}`} alt="OVO" className="payment-logo" />
                           <span className="payment-name">OVO</span>
                           {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
@@ -1136,6 +1179,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['shopeepay']}`} alt="ShopeePay" className="payment-logo" />
                           <span className="payment-name">ShopeePay</span>
                           {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
@@ -1150,6 +1194,7 @@ function OrderPage() {
                           onChange={(e) => handlePaymentMethodChange(e.target.value)}
                         />
                         <div className="payment-info">
+                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['dana']}`} alt="DANA" className="payment-logo" />
                           <span className="payment-name">DANA</span>
                           {/* <span className="payment-note">Fee 2%</span> */}
                         </div>
