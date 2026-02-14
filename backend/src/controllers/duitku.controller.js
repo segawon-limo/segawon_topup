@@ -220,6 +220,23 @@ exports.duitkuCallback = async (req, res) => {
     console.log('=== Duitku Callback Received ===');
     console.log('Body:', JSON.stringify(req.body, null, 2));
 
+    // 0. Validasi field wajib ada sebelum apapun diproses
+    const requiredFields = ['merchantCode', 'amount', 'merchantOrderId', 'resultCode', 'signature'];
+    for (const field of requiredFields) {
+      if (req.body[field] === undefined || req.body[field] === null || req.body[field] === '') {
+        console.error(`❌ Missing required field: ${field}`);
+        await logCallbackError(req.body, `Missing required field: ${field}`);
+        return res.status(200).send('success');
+      }
+    }
+
+    // Pastikan resultCode bertipe string (bukan angka atau tipe lain)
+    if (typeof req.body.resultCode !== 'string') {
+      console.error(`❌ resultCode harus string, diterima: ${typeof req.body.resultCode}`);
+      await logCallbackError(req.body, 'Invalid resultCode type');
+      return res.status(200).send('success');
+    }
+
     const {
       merchantCode,
       amount,

@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const duitkuController = require('../controllers/duitku.controller');
+const duitkuIpWhitelist = require('../middleware/duitkuIpWhitelist');
 
 /**
  * GET /api/duitku/payment-methods?amount=50000
@@ -27,9 +28,11 @@ router.get('/check-transaction/:merchantOrderId', duitkuController.checkTransact
 /**
  * POST /api/duitku/callback
  * Duitku webhook callback
- * IMPORTANT: Harus bisa diakses dari internet!
+ * 
+ * Dilindungi IP whitelist — hanya IP resmi Duitku yang bisa masuk.
+ * Di mode development/sandbox, whitelist dinonaktifkan otomatis.
  */
-router.post('/callback', duitkuController.duitkuCallback);
+router.post('/callback', duitkuIpWhitelist, duitkuController.duitkuCallback);
 
 /**
  * GET /api/duitku/test
