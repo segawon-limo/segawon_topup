@@ -16,6 +16,47 @@ const paymentLogos = {
   'dana':       '/images/dana-logo.png',
 };
 
+// ── Product type configs ─────────────────────────────────────
+// Menentukan form Step 2 berdasarkan product_type dari API.
+// Ini menggantikan kebutuhan hardcode per-slug untuk produk baru.
+const productTypeConfigs = {
+  // Game topup biasa — pakai gameConfigs[slug] yang sudah ada
+  topup_game: null,
+
+  // Voucher (Steam Wallet, dll) — tidak ada form Step 2 sama sekali
+  voucher_code: {
+    showStep2: false,
+    label: null,
+  },
+
+  // Token PLN — input Nomor Meter / ID Pelanggan
+  token_pln: {
+    showStep2: true,
+    fields: [
+      { name: 'userId', label: 'Nomor Meter / ID Pelanggan', placeholder: 'Contoh: 515300012345', type: 'text' }
+    ],
+    displayFormat: (userId) => userId,
+  },
+
+  // Pulsa — input Nomor HP
+  pulsa: {
+    showStep2: true,
+    fields: [
+      { name: 'userId', label: 'Nomor HP', placeholder: 'Contoh: 08123456789', type: 'text' }
+    ],
+    displayFormat: (userId) => userId,
+  },
+
+  // Paket Data — input Nomor HP (sama dengan pulsa, provider dari slug)
+  data_package: {
+    showStep2: true,
+    fields: [
+      { name: 'userId', label: 'Nomor HP', placeholder: 'Contoh: 08123456789', type: 'text' }
+    ],
+    displayFormat: (userId) => userId,
+  },
+};
+
 // Game configurations
 const gameConfigs = {
   'valorant': {
@@ -172,7 +213,9 @@ const gameConfigs = {
 
 function OrderPage() {
   const { gameSlug } = useParams();
-  const currentGameConfig = gameConfigs[gameSlug] || gameConfigs['default'];
+
+  // gameConfigs tetap dipakai sebagai fallback untuk game yang sudah ada
+  const legacyConfig = gameConfigs[gameSlug] || gameConfigs['default'];
 
   const [game, setGame] = useState(null);
   const [products, setProducts] = useState([]);
@@ -180,6 +223,22 @@ function OrderPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+
+  // ── Derived: pilih config aktif berdasarkan product_type dari API ──
+  // Kalau API sudah return product_type, pakai productTypeConfigs.
+  // Fallback ke legacyConfig (gameConfigs[slug]) untuk game yang sudah ada.
+  const productType = game?.product_type || 'topup_game';
+  const ptConfig = productTypeConfigs[productType]; // null = pakai legacy
+
+  // Config akhir yang dipakai di JSX
+  const currentGameConfig = (ptConfig && ptConfig !== null)
+    ? ptConfig
+    : legacyConfig;
+
+  // Apakah Step 2 perlu ditampilkan?
+  const showStep2 = productType === 'voucher_code'
+    ? false
+    : true;
 
   // Riot ID validation state
   // const [riotIdValidated, setRiotIdValidated] = useState(false);
@@ -884,13 +943,16 @@ function OrderPage() {
                 {errors.product && <div className="error">{errors.product}</div>}
               </div>
 
-              {/* Step 2: Game Account Info */}
-              
-              {/* Step 2: Game Account Info - DYNAMIC */}
-              {selectedProduct && (
+              {/* Step 2: Informasi Akun / Tujuan */}
+              {selectedProduct && showStep2 && (
                 <div className="form-section">
-                  <h2>2. Informasi Akun Game</h2>
-                  
+                  <h2>
+                    {productType === 'token_pln'    ? '2. Nomor Meter / ID Pelanggan' :
+                     productType === 'data_package' ? '2. Nomor HP Tujuan' :
+                     productType === 'pulsa'         ? '2. Nomor HP Tujuan' :
+                                                       '2. Informasi Akun Game'}
+                  </h2>
+
                   {currentGameConfig.fields.map((field) => (
                     <div className="form-group" key={field.name}>
                       <label>{field.label} *</label>
@@ -908,7 +970,7 @@ function OrderPage() {
                       )}
                     </div>
                   ))}
-                  
+
                   {/* Validation Button */}
                   {!userIdValidated && (
                     <button
@@ -920,14 +982,14 @@ function OrderPage() {
                       {validating ? 'Memverifikasi...' : 'Verifikasi ID'}
                     </button>
                   )}
-                  
+
                   {validationError && (
                     <div className="error">{validationError}</div>
                   )}
-                  
+
                   {userIdValidated && (
                     <div className="success">
-                      ✓ ID terverifikasi: {currentGameConfig.displayFormat(formData.userId, formData.zoneId)}
+                      ✓ Terverifikasi: {currentGameConfig.displayFormat(formData.userId, formData.zoneId)}
                       <button
                         type="button"
                         onClick={() => setUserIdValidated(false)}
@@ -937,6 +999,19 @@ function OrderPage() {
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Step 2 — Voucher: tidak perlu input, langsung ke Step 3 */}
+              {selectedProduct && !showStep2 && !userIdValidated && (
+                <div className="form-section voucher-info-section">
+                  <h2>2. Informasi Produk</h2>
+                  <div className="voucher-notice">
+                    <span>🎁</span>
+                    <p>Kode voucher akan dikirim ke email kamu setelah pembayaran berhasil. Tidak perlu memasukkan User ID.</p>
+                  </div>
+                  {/* Auto-set userIdValidated agar flow lanjut ke Step 3 */}
+                  {(() => { if (!userIdValidated) setTimeout(() => setUserIdValidated(true), 0); return null; })()}
                 </div>
               )}
 

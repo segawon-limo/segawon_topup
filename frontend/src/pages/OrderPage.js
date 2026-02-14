@@ -26,7 +26,8 @@ const productTypeConfigs = {
   // Voucher (Steam Wallet, dll) — tidak ada form Step 2 sama sekali
   voucher_code: {
     showStep2: false,
-    label: null,
+    fields: [],
+    displayFormat: () => '—',   // tidak ada ID, tampilkan dash
   },
 
   // Token PLN — input Nomor Meter / ID Pelanggan
@@ -989,7 +990,9 @@ function OrderPage() {
 
                   {userIdValidated && (
                     <div className="success">
-                      ✓ Terverifikasi: {currentGameConfig.displayFormat(formData.userId, formData.zoneId)}
+                      ✓ Terverifikasi: {typeof currentGameConfig.displayFormat === 'function'
+                        ? currentGameConfig.displayFormat(formData.userId, formData.zoneId)
+                        : formData.userId}
                       <button
                         type="button"
                         onClick={() => setUserIdValidated(false)}
@@ -1351,10 +1354,19 @@ function OrderPage() {
                   </div>
                 )} */}
 
-                {userIdValidated && (
+                {userIdValidated && productType !== 'voucher_code' && (
                   <div className="summary-item">
-                    <span>Game ID</span>
-                    <span>{currentGameConfig.displayFormat(formData.userId, formData.zoneId)}</span>
+                    <span>
+                      {productType === 'token_pln'    ? 'No. Meter' :
+                       productType === 'data_package' ? 'No. HP'    :
+                       productType === 'pulsa'         ? 'No. HP'    :
+                                                         'Game ID'}
+                    </span>
+                    <span>
+                      {typeof currentGameConfig.displayFormat === 'function'
+                        ? currentGameConfig.displayFormat(formData.userId, formData.zoneId)
+                        : formData.userId}
+                    </span>
                   </div>
                 )}
 
