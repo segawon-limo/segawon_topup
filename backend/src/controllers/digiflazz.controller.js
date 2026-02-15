@@ -25,10 +25,15 @@ exports.digiflazzWebhook = async (req, res) => {
   try {
 
     // ── 1. Validasi field wajib ───────────────────────────────
-    const data = req.body?.data || req.body;
+    // Digiflazz webhook payload: field ada di root body (bukan nested di data:{})
+    // Tapi handle juga kalau ada wrapper data:{} untuk backward compat
+    const data = (req.body?.data && req.body.data.ref_id)
+      ? req.body.data
+      : req.body;
 
     if (!data || !data.ref_id) {
       console.error('❌ Webhook: ref_id tidak ada di payload');
+      console.error('   Body:', JSON.stringify(req.body));
       return res.status(200).json({ success: false, message: 'Missing ref_id' });
     }
 
@@ -42,23 +47,28 @@ exports.digiflazzWebhook = async (req, res) => {
       message,
       price,
       buyer_last_saldo,
-      sign: receivedSign,
     } = data;
 
-    // ── 2. Verifikasi signature ───────────────────────────────
-    // Formula: MD5(username + apiKey + ref_id)
-    const crypto    = require('crypto');
-    const username  = digiflazzService.username;
-    const apiKey    = digiflazzService.apiKey;
-    const rawSign   = `${username}${apiKey}${ref_id}`;
-    const calcSign  = crypto.createHash('md5').update(rawSign).digest('hex');
+    // ── 2. Verifikasi via X-Hub-Sign header ─────────────────
+    // Docs: Digiflazz mengirim HMAC-SHA1 dari raw body menggunakan secret
+    // Formula: sha1=HMAC-SHA1(secret, rawBody)
+    const crypto = require('crypto');
+    const secret  = process.env.DIGIFLAZZ_WEBHOOK_SECRET || '';
+    const hubSign = req.headers['x-hub-sign'] || '';
 
-    if (receivedSign && receivedSign !== calcSign) {
-      console.error(`❌ Webhook: Signature tidak valid!`);
-      console.error(`   Received : ${receivedSign}`);
-      console.error(`   Expected : ${calcSign}`);
-      // Tetap 200 tapi jangan proses
-      return res.status(200).json({ success: false, message: 'Invalid signature' });
+    if (secret && hubSign) {
+      const rawBody   = JSON.stringify(req.body);
+      const calcSign  = 'sha1=' + crypto.createHmac('sha1', secret).update(rawBody).digest('hex');
+
+      if (hubSign !== calcSign) {
+        console.error(`❌ Webhook: X-Hub-Sign tidak valid!`);
+        console.error(`   Received : ${hubSign}`);
+        console.error(`   Expected : ${calcSign}`);
+        return res.status(200).json({ success: false, message: 'Invalid signature' });
+      }
+      console.log(`✓ X-Hub-Sign valid`);
+    } else if (!secret) {
+      console.warn(`⚠️  DIGIFLAZZ_WEBHOOK_SECRET belum diisi di .env — verifikasi signature dilewati!`);
     }
 
     console.log(`✓ Signature valid`);
