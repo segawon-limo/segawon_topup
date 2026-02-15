@@ -492,9 +492,12 @@ async function processDigiflazzTopup(order) {
     console.log('Product SKU:', order.sku);
     console.log('Customer:', order.game_user_id + (order.game_user_tag ? '#' + order.game_user_tag : ''));
 
-    // Get product details untuk validasi
+    // Get product + product_type sekaligus
     const productResult = await pool.query(
-      'SELECT * FROM products WHERE id = $1',
+      `SELECT p.*, g.product_type, g.category
+       FROM products p
+       JOIN games g ON g.id = p.game_id
+       WHERE p.id = $1`,
       [order.product_id]
     );
 
@@ -502,7 +505,10 @@ async function processDigiflazzTopup(order) {
       throw new Error('Product not found');
     }
 
-    const product = productResult.rows[0];
+    const product     = productResult.rows[0];
+    const productType = product.product_type || 'topup_game';
+
+    console.log('Product type:', productType);
 
     // Update status ke processing
     await pool.query(
@@ -514,17 +520,40 @@ async function processDigiflazzTopup(order) {
 
     console.log('📞 Calling Digiflazz API...');
 
-    // Format customer_no berdasarkan tipe game
-    let customerNo = order.game_user_id;
-    
-    // Untuk game yang butuh tag (Valorant, LOL, dll)
-    if (order.game_user_tag) {
-      customerNo = `${order.game_user_id}#${order.game_user_tag}`;
+    // Format customer_no berdasarkan product_type
+    let customerNo;
+
+    if (productType === 'voucher_code') {
+      // Steam Wallet & voucher lain: customer_no = nomor HP customer
+      // Digiflazz butuh nomor tujuan untuk kirim konfirmasi via WhatsApp seller
+      customerNo = order.customer_phone;
+      console.log('Voucher product — customer_no pakai nomor HP:', customerNo);
+
+    } else if (productType === 'token_pln') {
+      // PLN: customer_no = nomor meter
+      customerNo = order.game_user_id;
+
+    } else if (productType === 'pulsa' || productType === 'data_package') {
+      // Pulsa/Data: customer_no = nomor HP tujuan
+      customerNo = order.game_user_id;
+
+    } else {
+      // topup_game (default): game_user_id + format sesuai game
+      customerNo = order.game_user_id;
+
+      // Game yang butuh tag (Valorant, dll)
+      if (order.game_user_tag) {
+        customerNo = `${order.game_user_id}#${order.game_user_tag}`;
+      }
+
+      // Game yang butuh zone_id (Mobile Legends, Free Fire, dll)
+      if (order.game_zone_id) {
+        customerNo = `${order.game_user_id}|${order.game_zone_id}`;
+      }
     }
-    
-    // Untuk game yang butuh zone_id (Mobile Legends, Free Fire, dll)
-    if (order.game_zone_id) {
-      customerNo = `${order.game_user_id}|${order.game_zone_id}`;
+
+    if (!customerNo) {
+      throw new Error(`customer_no kosong untuk product_type: ${productType}`);
     }
 
     // Call Digiflazz API
@@ -566,15 +595,12 @@ async function processDigiflazzTopup(order) {
       console.log('✅ Order completed successfully!');
       console.log('Serial Number:', digiflazzResult.data.sn || 'N/A (async — webhook akan menyusul)');
 
-      // Kirim email hanya jika SN sudah ada (langsung sukses, bukan async)
-      if (digiflazzResult.data.sn) {
+      // Kirim email:
+      // - SN ada = langsung sukses, kirim sekarang
+      // - SN kosong = async (Pending), email dikirim saat webhook Digiflazz masuk
+      const sn = digiflazzResult.data.sn;
+      if (sn) {
         const emailService = require('../services/email.service');
-        const productResult2 = await pool.query(
-          'SELECT g.product_type FROM products p JOIN games g ON g.id = p.game_id WHERE p.id = $1',
-          [order.product_id]
-        );
-        const productType = productResult2.rows[0]?.product_type || 'topup_game';
-
         emailService.sendOrderCompleteEmail({
           orderNumber:   order.order_number,
           customerName:  order.customer_name,
@@ -582,12 +608,12 @@ async function processDigiflazzTopup(order) {
           productName:   product.name,
           userId:        order.game_user_id || null,
           zoneId:        order.game_zone_id || null,
-          voucherCode:   digiflazzResult.data.sn,
+          voucherCode:   sn,
           isVoucher:     productType === 'voucher_code',
           totalAmount:   order.total_amount,
         }).catch(err => console.error('❌ Email error (non-blocking):', err.message));
       } else {
-        console.log('⏳ SN kosong — order async, email akan dikirim saat webhook Digiflazz masuk');
+        console.log('⏳ SN kosong — transaksi async, email dikirim saat webhook Digiflazz masuk');
       }
 
     } else {
