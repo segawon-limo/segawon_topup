@@ -12,8 +12,11 @@ const PORT = process.env.PORT || 5000;
 
 // ========================================
 // IMPORTANT: Trust proxy (for Nginx)
+// '1' = trust one hop (Nginx sebagai reverse proxy langsung)
+// Ini membuat express-rate-limit bisa baca IP asli dari X-Forwarded-For
+// tanpa bisa di-spoof dari luar
 // ========================================
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // ========================================
 // MIDDLEWARE (order matters!)
