@@ -54,12 +54,14 @@ app.use('/api', limiter);
 // ========================================
 
 // Import routes
-const routes = require('./routes/index');
-const duitkuRoutes = require('./routes/duitku.routes');
+const routes          = require('./routes/index');
+const duitkuRoutes    = require('./routes/duitku.routes');
+const digiflazzRoutes = require('./routes/digiflazz.routes');
 
 // Register routes
 app.use('/api', routes);
 app.use('/api/duitku', duitkuRoutes);
+app.use('/api/digiflazz', digiflazzRoutes);
 
 // ========================================
 // ROOT ENDPOINT
@@ -75,8 +77,10 @@ app.get('/', (req, res) => {
       products: '/api/products/:gameSlug',
       createOrder: 'POST /api/orders/create',
       orderStatus: '/api/orders/:orderNumber',
-      duitkuCallback: 'POST /api/duitku/callback',
-      duitkuTest: '/api/duitku/test'
+      duitkuCallback:      'POST /api/duitku/callback',
+      duitkuTest:          '/api/duitku/test',
+      digiflazzWebhook:    'POST /api/digiflazz/webhook',
+      digiflazzWebhookGet: 'GET /api/digiflazz/webhook'
     }
   });
 });

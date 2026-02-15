@@ -564,31 +564,10 @@ async function processDigiflazzTopup(order) {
       );
 
       console.log('✅ Order completed successfully!');
-      console.log('Serial Number:', digiflazzResult.data.sn || 'N/A (async — webhook akan menyusul)');
+      console.log('Serial Number:', digiflazzResult.data.sn || 'N/A');
 
-      // Kirim email hanya jika SN sudah ada (langsung sukses, bukan async)
-      if (digiflazzResult.data.sn) {
-        const emailService = require('../services/email.service');
-        const productResult2 = await pool.query(
-          'SELECT g.product_type FROM products p JOIN games g ON g.id = p.game_id WHERE p.id = $1',
-          [order.product_id]
-        );
-        const productType = productResult2.rows[0]?.product_type || 'topup_game';
-
-        emailService.sendOrderCompleteEmail({
-          orderNumber:   order.order_number,
-          customerName:  order.customer_name,
-          customerEmail: order.customer_email,
-          productName:   product.name,
-          userId:        order.game_user_id || null,
-          zoneId:        order.game_zone_id || null,
-          voucherCode:   digiflazzResult.data.sn,
-          isVoucher:     productType === 'voucher_code',
-          totalAmount:   order.total_amount,
-        }).catch(err => console.error('❌ Email error (non-blocking):', err.message));
-      } else {
-        console.log('⏳ SN kosong — order async, email akan dikirim saat webhook Digiflazz masuk');
-      }
+      // TODO: Send success notification to customer
+      // await sendSuccessEmail(order, digiflazzResult.data);
 
     } else {
       // ❌ Topup gagal

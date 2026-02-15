@@ -5,113 +5,136 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const routes = require('./routes');
 const { pool } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middleware
+// ========================================
+// IMPORTANT: Trust proxy (for Nginx)
+// ========================================
+app.set('trust proxy', true);
+
+// ========================================
+// MIDDLEWARE (order matters!)
+// ========================================
+
+// 1. Security
 app.use(helmet());
 
-// CORS configuration
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-  })
-);
+// 2. CORS
+app.use(cors({
+  origin: [
+    'https://segawontopup.net',
+    'https://www.segawontopup.net',
+    'http://localhost:3000'
+  ],
+  credentials: true
+}));
 
-// Body parser
+// 3. Body parser (BEFORE routes!)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
+// 4. Logging
+app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
-// Rate limiting
+// 5. Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later',
-  },
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: { success: false, message: 'Too many requests' },
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: false
 });
-
 app.use('/api', limiter);
 
-// Routes
-app.use('/api', routes);
+// ========================================
+// ROUTES
+// ========================================
 
-// Root endpoint
+// Import routes
+const routes = require('./routes/index');
+const duitkuRoutes = require('./routes/duitku.routes');
+
+// Register routes
+app.use('/api', routes);
+app.use('/api/duitku', duitkuRoutes);
+
+// ========================================
+// ROOT ENDPOINT
+// ========================================
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Instant Game Topup API',
-    version: '1.0.0',
+    message: 'Segawon Topup API - Duitku Payment',
+    version: '2.0.0',
     endpoints: {
       health: '/api/health',
       games: '/api/games',
       products: '/api/products/:gameSlug',
-      createOrder: 'POST /api/orders',
+      createOrder: 'POST /api/orders/create',
       orderStatus: '/api/orders/:orderNumber',
-      paymentCallback: 'POST /api/payment/callback',
-    },
+      duitkuCallback: 'POST /api/duitku/callback',
+      duitkuTest: '/api/duitku/test'
+    }
   });
 });
+
+// ========================================
+// ERROR HANDLERS
+// ========================================
 
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Endpoint not found',
+    message: 'Endpoint not found'
   });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    message: err.message || 'Internal server error'
   });
+});
+
+// ========================================
+// SERVER START
+// ========================================
+
+const server = app.listen(PORT, () => {
+  console.log(`
+╔═══════════════════════════════════════════════╗
+║   🎮 Segawon Topup API                        ║
+║   💳 Duitku Payment Gateway                   ║
+║                                               ║
+║   Server: http://localhost:${PORT}              ║
+║   Environment: ${process.env.NODE_ENV || 'production'}                     ║
+║                                               ║
+║   Ready to accept requests! 🚀                ║
+╚═══════════════════════════════════════════════╝
+  `);
+  
+  console.log('✓ Routes loaded');
+  console.log('✓ Database connected');
+  if (process.env.DUITKU_SANDBOX_MERCHANT_CODE) {
+    console.log('✓ Duitku configured');
+  }
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+  console.log('SIGTERM received, closing server...');
   server.close(() => {
-    console.log('HTTP server closed');
     pool.end(() => {
-      console.log('Database pool closed');
+      console.log('Server closed');
       process.exit(0);
     });
   });
-});
-
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`
-╔═══════════════════════════════════════════════╗
-║                                               ║
-║   🎮 Instant Game Topup API                   ║
-║                                               ║
-║   Server: http://localhost:${PORT}              ║
-║   Environment: ${process.env.NODE_ENV || 'development'}                     ║
-║                                               ║
-║   Ready to accept requests! 🚀                ║
-║                                               ║
-╚═══════════════════════════════════════════════╝
-  `);
 });
 
 module.exports = app;
