@@ -492,19 +492,22 @@ function OrderPage() {
     }
   };
 
-  // === ADD THIS BLOCK ===
-  // Calculate payment fee in real-time
+  // Calculate payment fee — harus konsisten dengan backend (order.controller.js)
   const calculatePaymentFee = (method, price) => {
     if (!method || !price) return 0;
     const amount = parseFloat(price);
-    
-    if (method === 'qris') return Math.round(amount * 0.007);
-    if (method.startsWith('va_')) {
-      if (method === 'va_bca') return 5000;
-      if (method === 'va_mandiri') return 4000;
-      return 3000;
-    }
-    if (['ovo', 'shopeepay', 'dana'].includes(method)) return Math.round(amount * 0.02) + 1000;
+
+    const isQris     = ['SP', 'qris'].includes(method);
+    const isVaBca    = ['BC', 'va_bca'].includes(method);
+    const isVaMandiri= ['M2', 'va_mandiri'].includes(method);
+    const isVaLain   = ['BR','I1','BT','B1','DM','BV','va_bri','va_bni','va_permata','va_cimb'].includes(method);
+    const isEwallet  = ['OV','SA','DA','LA','ovo','shopeepay','dana','linkaja'].includes(method);
+
+    if (isQris)      return Math.round(amount * 0.007);
+    if (isVaBca)     return 5000;
+    if (isVaMandiri) return 4000;
+    if (isVaLain)    return 3000;
+    if (isEwallet)   return Math.round(amount * 0.02) + 1000;
     return 2500;
   };
 

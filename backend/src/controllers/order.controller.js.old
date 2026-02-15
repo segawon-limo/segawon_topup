@@ -206,9 +206,9 @@ exports.createOrder = async (req, res) => {
     const userId = gameUserId || riotId || null;
     const zoneId = gameZoneId || riotTag || null;
 
-    // Validate required fields (userId tidak wajib untuk voucher_code)
+    // Validate required fields
     if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber) {
-      throw new Error('Missing required fields');
+      throw new Error('Missing required fields: productId, paymentMethod, customerEmail, customerName, phoneNumber');
     }
 
     // 1. Get product + product_type dari game — UPDATED: Fetch profit_price & product_type
@@ -230,10 +230,13 @@ exports.createOrder = async (req, res) => {
     const profitPrice  = parseFloat(product.profit_price);
     const productType  = product.product_type || 'topup_game';
 
-    // Validasi userId wajib untuk produk yang butuh akun game / nomor meter / nomor HP
-    const needsUserId = !['voucher_code'].includes(productType);
+    // userId wajib untuk semua produk KECUALI voucher_code (Steam Wallet, dll)
+    const needsUserId = productType !== 'voucher_code';
     if (needsUserId && !userId) {
-      throw new Error('User ID / nomor tujuan wajib diisi untuk produk ini');
+      return res.status(400).json({
+        success: false,
+        message: 'User ID / nomor tujuan wajib diisi untuk produk ini'
+      });
     }
 
     // NEW: Validate voucher if provided - WITH PROFIT PRICE
@@ -366,7 +369,9 @@ exports.createOrder = async (req, res) => {
     const paymentResult = await duitkuService.createTransaction({
       merchantOrderId: orderNumber,
       paymentAmount: totalAmount,
-      productDetails: `${product.name} - ${userId}${zoneId ? ' (' + zoneId + ')' : ''}`,
+      productDetails: userId
+        ? `${product.name} - ${userId}${zoneId ? ' (' + zoneId + ')' : ''}`
+        : product.name,
       email: customerEmail,
       customerVaName: customerName.substring(0, 20).replace(/[^a-zA-Z0-9 ]/g, ''),
       phoneNumber: phoneNumber,
