@@ -252,8 +252,15 @@ function OrderPage() {
   const ptConfig = productTypeConfigs[productType]; // null = pakai legacy
 
   // Config akhir yang dipakai di JSX
+  // Untuk visual (headerImage, iconFile): selalu ambil dari legacyConfig (gameConfigs[slug])
+  // Untuk form (fields, displayFormat, validation): ambil dari ptConfig kalau ada
   const currentGameConfig = (ptConfig && ptConfig !== null)
-    ? ptConfig
+    ? {
+        ...ptConfig,
+        // Override visual dari legacyConfig supaya header & icon tetap tampil
+        headerImage: legacyConfig.headerImage || ptConfig.headerImage || 'default-header.jpg',
+        iconFile:    legacyConfig.iconFile    || ptConfig.iconFile    || null,
+      }
     : legacyConfig;
 
   // Apakah Step 2 perlu ditampilkan?
@@ -942,14 +949,10 @@ function OrderPage() {
 
       <div className="container">
         <div className="page-title-wrapper">
-          {(currentGameConfig.iconFile || game?.icon_url) && (
+          {currentGameConfig.iconFile && (
             <div className="game-icon-box">
               <img
-                src={
-                  currentGameConfig.iconFile
-                    ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
-                    : game.icon_url
-                }
+                src={`${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`}
                 alt={game?.name || gameSlug}
                 className="game-icon-img"
               />
