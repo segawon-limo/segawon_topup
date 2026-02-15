@@ -124,21 +124,19 @@ class DigiflazzService {
         }
       );
 
-      // Response cek saldo Digiflazz tidak punya field rc —
-      // sukses kalau field deposit ada dan tidak null
-      const deposit = response.data?.data?.deposit;
-      if (response.data?.data && deposit !== undefined && deposit !== null) {
-        console.log('✅ Digiflazz balance:', deposit);
+      // Check response code
+      if (response.data && response.data.data && response.data.data.rc === '00') {
+        console.log('✅ Digiflazz balance:', response.data.data.deposit);
         return {
           success: true,
-          balance: deposit,
+          balance: response.data.data.deposit,
           data: response.data.data,
         };
       } else {
         console.error('❌ Digiflazz balance error:', response.data);
         return {
           success: false,
-          message: response.data?.data?.message || 'Failed to check balance',
+          message: response.data.data?.message || 'Failed to check balance',
           error: response.data,
         };
       }
