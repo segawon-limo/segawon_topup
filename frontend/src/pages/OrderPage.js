@@ -201,6 +201,26 @@ const gameConfigs = {
     iconFile: 'hfh.webp'
   },
 
+  'steam-wallet': {
+    // fields: [
+    //   { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
+    // ],
+    // validation: null,
+    // displayFormat: (userId) => userId,
+    headerImage: 'steam-wallet-header.jpg',
+    iconFile: 'stm.webp'
+  },
+
+  'pln': {
+    // fields: [
+    //   { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
+    // ],
+    // validation: null,
+    // displayFormat: (userId) => userId,
+    headerImage: 'pln.jpg',
+    iconFile: 'pln.webp'
+  },
+
   'default': {
     fields: [
       { name: 'userId', label: 'User ID', placeholder: 'Masukkan ID Anda', type: 'text' }
