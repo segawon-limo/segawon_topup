@@ -113,7 +113,7 @@ const gameConfigs = {
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
     headerImage: 'pubg-mobile-header.jpg',
-    iconFile: null
+    iconFile: 'pgm.webp'
   },
   
   'genshin-impact': {
