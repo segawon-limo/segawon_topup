@@ -524,7 +524,9 @@ exports.getOrderStatus = async (req, res) => {
         o.*,
         p.name as product_name,
         p.sku as product_sku,
-        g.name as game_name
+        g.name as game_name,
+        g.product_type,
+        g.slug as game_slug
       FROM orders o
       JOIN products p ON o.product_id = p.id
       JOIN games g ON p.game_id = g.id
@@ -578,6 +580,9 @@ exports.getOrderStatus = async (req, res) => {
           expiresAt: order.payment_expires_at
         },
         orderStatus: order.order_status,
+        serialNumber: order.provider_serial_number || null,
+        gameSlug: order.game_slug,
+        productType: order.product_type || 'topup_game',
         createdAt: order.created_at,
         completedAt: order.completed_at
       }
