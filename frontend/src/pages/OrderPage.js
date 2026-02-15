@@ -942,10 +942,14 @@ function OrderPage() {
 
       <div className="container">
         <div className="page-title-wrapper">
-          {currentGameConfig.iconFile && (
+          {(currentGameConfig.iconFile || game?.icon_url) && (
             <div className="game-icon-box">
               <img
-                src={`${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`}
+                src={
+                  currentGameConfig.iconFile
+                    ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
+                    : game.icon_url
+                }
                 alt={game?.name || gameSlug}
                 className="game-icon-img"
               />
