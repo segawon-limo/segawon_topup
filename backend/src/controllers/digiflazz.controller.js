@@ -24,7 +24,15 @@ exports.digiflazzWebhook = async (req, res) => {
   // atau mereka akan retry terus
   try {
 
-    // ── 1. Validasi field wajib ───────────────────────────────
+    // ── 1. Deteksi ping event ────────────────────────────────
+    // Ping event punya hook_id tapi tidak ada data transaksi
+    // Ini normal — Digiflazz kirim ping untuk verifikasi URL aktif
+    if (req.body?.hook_id && !req.body?.data?.ref_id && !req.body?.ref_id) {
+      console.log(`✅ Webhook: Ping event diterima (hook_id: ${req.body.hook_id}) — URL aktif!`);
+      return res.status(200).json({ success: true, message: 'Ping received' });
+    }
+
+    // ── 2. Validasi field wajib untuk transaksi ───────────────
     // Digiflazz webhook payload: field ada di root body (bukan nested di data:{})
     // Tapi handle juga kalau ada wrapper data:{} untuk backward compat
     const data = (req.body?.data && req.body.data.ref_id)
