@@ -634,56 +634,104 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
 
 const sendOrderCompleteEmail = async (orderData) => {
   try {
-    const apiInstance = getBrevoClient();
-    const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
-    // Gunakan URL dari CDN tempat Anda upload logo email
-    const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-header.png';
-    const logoSmallUrl = process.env.LOGO_EMAIL_SMALL_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-small.png';
-    
-    const html = `
-<!DOCTYPE html>
+    const apiInstance   = getBrevoClient();
+    const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://segawontopup.net/images/logo.png';
+
+    const {
+      orderNumber, customerName, customerEmail, productName,
+      userId, zoneId, voucherCode, isVoucher, totalAmount
+    } = orderData;
+
+    // Rupiah formatter
+    const rp = (n) => n
+      ? `Rp ${Number(n).toLocaleString('id-ID')}`
+      : '-';
+
+    // Bagian kode voucher / serial number — hanya tampil kalau ada
+    const snSection = voucherCode ? `
+      <div style="background:#fef3c7;border:2px dashed #FF6B35;padding:24px;border-radius:8px;text-align:center;margin:24px 0;">
+        <p style="margin:0 0 8px;color:#92400e;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">
+          ${isVoucher ? '🎁 Kode Voucher Kamu' : '🔑 Serial Number'}
+        </p>
+        <p style="margin:0;font-size:26px;font-weight:bold;color:#1a2332;letter-spacing:3px;font-family:monospace;">
+          ${voucherCode}
+        </p>
+        ${isVoucher ? '<p style="margin:8px 0 0;font-size:12px;color:#92400e;">Masukkan kode ini di platform tujuan</p>' : ''}
+      </div>` : `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:16px;border-radius:8px;margin:24px 0;text-align:center;">
+        <p style="margin:0;color:#166534;">✅ Topup berhasil masuk ke akun kamu!</p>
+      </div>`;
+
+    // Info tujuan — tidak tampil untuk voucher
+    const targetSection = !isVoucher && userId ? `
+      <tr>
+        <td style="padding:8px 0;color:#6b7280;font-size:14px;">Tujuan</td>
+        <td style="padding:8px 0;font-weight:600;text-align:right;">
+          ${userId}${zoneId ? ' (' + zoneId + ')' : ''}
+        </td>
+      </tr>` : '';
+
+    const html = `<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><style>
-body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
-.complete-box{background:linear-gradient(135deg,#1a2332 0%,#2d3e50 100%);color:white;padding:30px;border-radius:8px;text-align:center;margin-bottom:20px;border:3px solid #FF6B35}
-.logo{width:100px;height:100px;margin-bottom:10px}
-.voucher-box{background:#fef3c7;border:2px dashed #FF6B35;padding:20px;border-radius:8px;text-align:center;margin:20px 0}
-.voucher-code{font-size:24px;font-weight:bold;color:#1a2332;letter-spacing:2px}
-</style></head>
-<body>
-  <div class="complete-box">
-    <img 
-      src="${logoHeaderUrl}" 
-      alt="Segawon Top Up Logo" 
-      class="logo"
-      style="width: 100px; height: 100px; margin-bottom: 10px;"
-    >
-    <h1 style="margin:0">🎉 Pesanan Selesai!</h1>
-    <p>Order ${orderData.orderNumber}</p>
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9fafb;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a2332 0%,#2d3e50 100%);color:white;padding:32px;border-radius:12px;text-align:center;margin-bottom:24px;border:3px solid #FF6B35;">
+    <img src="${logoHeaderUrl}" alt="Segawon" style="width:80px;height:80px;margin-bottom:12px;border-radius:12px;">
+    <h1 style="margin:0;font-size:24px;">🎉 Pesanan Selesai!</h1>
+    <p style="margin:6px 0 0;opacity:.8;font-size:14px;">${orderNumber}</p>
   </div>
-  <p>Hai <strong>${orderData.customerName}</strong>,</p>
-  <p>Pesanan Anda telah berhasil diproses!</p>
-  ${orderData.voucherCode ? `
-  <div class="voucher-box">
-    <div>Kode Voucher:</div>
-    <div class="voucher-code">${orderData.voucherCode}</div>
-  </div>` : ''}
-  <p>Terima kasih! 🎮</p>
+
+  <!-- Body -->
+  <div style="background:white;border-radius:12px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,.1);">
+    <p style="margin:0 0 16px;">Hai <strong>${customerName}</strong>,</p>
+    <p style="margin:0 0 20px;color:#374151;">
+      Pesanan <strong>${productName}</strong> kamu telah berhasil diproses. 
+      ${isVoucher ? 'Gunakan kode di bawah ini untuk melakukan redeem.' : ''}
+    </p>
+
+    ${snSection}
+
+    <!-- Detail order -->
+    <table style="width:100%;border-top:1px solid #e5e7eb;margin-top:20px;padding-top:16px;">
+      <tr>
+        <td style="padding:8px 0;color:#6b7280;font-size:14px;">No. Order</td>
+        <td style="padding:8px 0;font-weight:600;text-align:right;">${orderNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 0;color:#6b7280;font-size:14px;">Produk</td>
+        <td style="padding:8px 0;font-weight:600;text-align:right;">${productName}</td>
+      </tr>
+      ${targetSection}
+      <tr>
+        <td style="padding:8px 0;color:#6b7280;font-size:14px;">Total Bayar</td>
+        <td style="padding:8px 0;font-weight:700;text-align:right;color:#FF6B35;">${rp(totalAmount)}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <p style="text-align:center;margin-top:20px;color:#9ca3af;font-size:12px;">
+    Ada pertanyaan? Hubungi CS kami di 
+    <a href="https://segawontopup.net" style="color:#FF6B35;">segawontopup.net</a>
+  </p>
+
 </body>
 </html>`;
-    
+
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     sendSmtpEmail.sender = {
-      name: 'SEGAWON TOPUP',
+      name:  'SEGAWON TOPUP',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@segawontopup.net'
     };
-    sendSmtpEmail.to = [{ email: orderData.customerEmail, name: orderData.customerName }];
-    sendSmtpEmail.subject = `🎉 Pesanan Selesai - ${orderData.orderNumber}`;
+    sendSmtpEmail.to      = [{ email: customerEmail, name: customerName }];
+    sendSmtpEmail.subject = `🎉 Pesanan Selesai - ${orderNumber}`;
     sendSmtpEmail.htmlContent = html;
-    sendSmtpEmail.tags = ['order-complete'];
+    sendSmtpEmail.tags    = ['order-complete'];
 
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('✅ Order complete email sent');
+    console.log('✅ Order complete email sent to', customerEmail);
     return { success: true, messageId: response.messageId };
   } catch (error) {
     console.error('❌ Order complete email failed:', error);

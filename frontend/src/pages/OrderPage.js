@@ -113,7 +113,7 @@ const gameConfigs = {
     validation: null,
     displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
     headerImage: 'pubg-mobile-header.jpg',
-    iconFile: 'pgm.webp'
+    iconFile: null
   },
   
   'genshin-impact': {
@@ -252,15 +252,8 @@ function OrderPage() {
   const ptConfig = productTypeConfigs[productType]; // null = pakai legacy
 
   // Config akhir yang dipakai di JSX
-  // Untuk visual (headerImage, iconFile): selalu ambil dari legacyConfig (gameConfigs[slug])
-  // Untuk form (fields, displayFormat, validation): ambil dari ptConfig kalau ada
   const currentGameConfig = (ptConfig && ptConfig !== null)
-    ? {
-        ...ptConfig,
-        // Override visual dari legacyConfig supaya header & icon tetap tampil
-        headerImage: legacyConfig.headerImage || ptConfig.headerImage || 'default-header.jpg',
-        iconFile:    legacyConfig.iconFile    || ptConfig.iconFile    || null,
-      }
+    ? ptConfig
     : legacyConfig;
 
   // Apakah Step 2 perlu ditampilkan?
@@ -536,6 +529,14 @@ function OrderPage() {
     if (isVaLain)    return 3000;
     if (isEwallet)   return Math.round(amount * 0.02) + 1000;
     return 2500;
+  };
+
+  // Biaya tambahan Mandiri yang ditagih langsung oleh bank (info saja, tidak masuk total)
+  const getMandiriBankFee = (price) => {
+    const amount = parseFloat(price || 0);
+    if (amount >= 1000000) return 'Rp 5.000';
+    if (amount >= 500000)  return 'Rp 3.000';
+    return 'Rp 2.500';
   };
 
   // NEW: Calculate totals with voucher discount
@@ -1449,6 +1450,25 @@ function OrderPage() {
                         {formatRupiah(paymentFee)}
                       </span>
                     </div>
+
+                    {/* Note biaya bank Mandiri — info saja, tidak masuk total */}
+                    {['M2', 'va_mandiri'].includes(selectedPaymentMethod) && (
+                      <div style={{
+                        background: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        marginTop: '-4px',
+                        marginBottom: '4px',
+                      }}>
+                        <p style={{ fontSize: '12px', color: '#92400e', fontWeight: '600', marginBottom: '4px' }}>
+                          ⚠️ Biaya Bank Mandiri (ditagih langsung oleh bank)
+                        </p>
+                        <p style={{ fontSize: '12px', color: '#78350f', margin: 0, lineHeight: '1.6' }}>
+                          {getMandiriBankFee(priceAfterDiscount)} — tidak termasuk dalam total di atas
+                        </p>
+                      </div>
+                    )}
 
                     <div className="summary-divider"></div>
 
