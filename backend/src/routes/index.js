@@ -33,6 +33,7 @@ router.get('/products/:gameSlug', orderController.getProducts);
 // RIOT ID VALIDATION
 // ========================================
 router.post('/validate-riot-id', orderController.validateRiotId);
+router.post('/check-pln-meter', orderController.checkPlnMeter);
 
 // ========================================
 // VOUCHER MANAGEMENT

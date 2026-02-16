@@ -176,6 +176,55 @@ exports.validateRiotId = async (req, res) => {
 };
 
 /**
+ * Cek Nomor Meter / ID Pelanggan PLN via Digiflazz PLNCEK
+ * POST /api/check-pln-meter
+ * Body: { nomorMeter: "45107107679" }
+ */
+exports.checkPlnMeter = async (req, res) => {
+  try {
+    const { nomorMeter } = req.body;
+
+    if (!nomorMeter || !nomorMeter.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'Nomor meter wajib diisi' });
+    }
+
+    const meter = nomorMeter.toString().trim();
+
+    // Validasi: hanya angka, 11-12 digit
+    if (!/^\d{11,12}$/.test(meter)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nomor meter harus 11-12 digit angka',
+      });
+    }
+
+    const digiflazzService = require('../services/digiflazz.service');
+    const result = await digiflazzService.checkPlnMeter(meter);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message || 'Nomor meter tidak ditemukan',
+      });
+    }
+
+    console.log(`✅ PLN cek meter OK: ${meter} → ${result.nama}`);
+
+    return res.json({
+      success: true,
+      idpel:  result.idpel,
+      nama:   result.nama,
+      tarif:  result.tarif,
+      daya:   result.daya,
+    });
+
+  } catch (error) {
+    console.error('checkPlnMeter Error:', error);
+    res.status(500).json({ success: false, message: 'Gagal mengecek nomor meter' });
+  }
+};
+
+/**
  * Create order with Duitku payment
  * POST /api/orders/create
  * 

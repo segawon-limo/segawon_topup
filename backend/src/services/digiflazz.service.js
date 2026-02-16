@@ -4,6 +4,42 @@
 const axios = require('axios');
 const crypto = require('crypto');
 
+// Helper: parse SN dari PLNCEK
+// Format 1: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"  (spasi sebelum tarif)
+// Format 2: "IDPEL:12345678@NAMA :BUDI SANTOSO/R1/900"                  (slash sebelum tarif)
+function parsePlnCekSn(sn) {
+  if (!sn) return {};
+
+  // IDPEL: hanya angka
+  const idpelMatch = sn.match(/IDPEL[:\s]*(\d+)/i);
+  const idpel = idpelMatch ? idpelMatch[1] : null;
+
+  let nama = null, tarif = null, daya = null;
+  const namaTarifMatch = sn.match(/NAMA\s*:\s*(.+)/i);
+  if (namaTarifMatch) {
+    const rest = namaTarifMatch[1].trim();
+    // Format slash: NAMA/TARIF/DAYA
+    const slashM = rest.match(/^(.+?)\/([A-Z]\d+)\/(\d+)\s*$/);
+    if (slashM) {
+      nama  = slashM[1].trim();
+      tarif = slashM[2];
+      daya  = slashM[3] + ' VA';
+    } else {
+      // Format spasi: NAMA TARIF/DAYA
+      const spaceM = rest.match(/^(.+?)\s+([A-Z]\d+)\/(\d+)\s*$/);
+      if (spaceM) {
+        nama  = spaceM[1].trim();
+        tarif = spaceM[2];
+        daya  = spaceM[3] + ' VA';
+      } else {
+        nama = rest;
+      }
+    }
+  }
+
+  return { idpel, nama, tarif, daya };
+}
+
 class DigiflazzService {
   constructor() {
     this.username = process.env.DIGIFLAZZ_USERNAME;
@@ -213,8 +249,14 @@ class DigiflazzService {
         orderStatus = 'processing';
       }
 
+      // rc:00 = Sukses, rc:03 = Pending (normal, tunggu webhook), selain itu = Gagal
+      const rc = response.data.data.rc;
+      const isSuccess = rc === '00' || rc === '03'; // Pending juga dianggap sukses (webhook menyusul)
+      const isFailed  = !isSuccess;
+
       return {
-        success: response.data.data.rc === '00',
+        success: isSuccess,
+        isPending: rc === '03',
         data: {
           ref_id: response.data.data.ref_id,
           customer_no: response.data.data.customer_no,
@@ -222,7 +264,7 @@ class DigiflazzService {
           message: response.data.data.message,
           status: response.data.data.status,
           order_status: orderStatus,
-          rc: response.data.data.rc,
+          rc: rc,
           sn: response.data.data.sn,
           balance: response.data.data.buyer_last_saldo,
           price: response.data.data.price,
@@ -236,6 +278,65 @@ class DigiflazzService {
         success: false,
         message: error.response?.data?.data?.message || 'Failed to create transaction',
         error: error.response?.data,
+      };
+    }
+  }
+
+  /**
+   * Cek Nomor Meter / ID Pelanggan PLN
+   * SKU: PLNCEK, harga Rp 6 (biaya cek)
+   * SN format: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"
+   */
+  async checkPlnMeter(nomorMeter) {
+    try {
+      const refId = `CEK-${Date.now()}`;
+      const signatureData = this.username + this.apiKey + refId;
+      const signature = this.generateSignature(signatureData);
+
+      console.log(`🔍 PLN Cek Meter: ${nomorMeter}`);
+
+      const response = await axios.post(
+        `${this.apiUrl}/transaction`,
+        {
+          commands:       'inq-pasca',
+          username:       this.username,
+          buyer_sku_code: 'PLNCEK',
+          customer_no:    nomorMeter,
+          ref_id:         refId,
+          sign:           signature,
+        },
+        { headers: { 'Content-Type': 'application/json' }, timeout: 20000 }
+      );
+
+      const d = response.data?.data;
+      if (!d) return { success: false, message: 'Response tidak valid dari Digiflazz' };
+
+      if (d.rc !== '00') {
+        return {
+          success: false,
+          message: d.message || 'Nomor meter tidak ditemukan',
+          rc: d.rc,
+        };
+      }
+
+      // Parse SN: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"
+      const sn   = d.sn || '';
+      const parsed = parsePlnCekSn(sn);
+
+      return {
+        success: true,
+        idpel:  parsed.idpel  || nomorMeter,
+        nama:   parsed.nama   || '-',
+        tarif:  parsed.tarif  || '-',
+        daya:   parsed.daya   || '-',
+        sn,
+      };
+
+    } catch (error) {
+      console.error('❌ PLN cek meter error:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.data?.message || 'Gagal mengecek nomor meter',
       };
     }
   }
