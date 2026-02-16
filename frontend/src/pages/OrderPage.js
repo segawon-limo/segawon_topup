@@ -6,15 +6,31 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
 // Payment method logo mapping
 const paymentLogos = {
-  'qris':       '/images/qris-logo.png',
-  'va_bca':     '/images/bca-logo.png',
-  'va_mandiri': '/images/mandiri-logo.png',
-  'va_bni':     '/images/bni-logo.png',
-  'va_bri':     '/images/bri-logo.png',
-  'ovo':        '/images/ovo-logo.png',
-  'shopeepay':  '/images/shopeepay-logo.png',
-  'dana':       '/images/dana-logo.png',
+  // VA aktif — kode Duitku langsung
+  'BR': '/images/bri-logo.png',
+  'M2': '/images/mandiri-logo.png',
+  'NC': '/images/bnc-logo.png',
+  'I1': '/images/bni-logo.png',
+  'BV': '/images/bsi-logo.png',
+  'B1': '/images/cimb-logo.png',
+  'DM': '/images/danamon-logo.png',
+  'BT': '/images/permata-logo.png',
+  // Coming soon
+  'qris':      '/images/qris-logo.png',
+  'ewallet':   '/images/ovo-logo.png',
 };
+
+// VA yang aktif dan bisa dipilih
+const VA_BANKS = [
+  { code: 'BR', name: 'BRI Virtual Account',          logo: 'BR' },
+  { code: 'M2', name: 'Mandiri Virtual Account',       logo: 'M2' },
+  { code: 'NC', name: 'Bank Neo Commerce (BNC)',       logo: 'NC' },
+  { code: 'I1', name: 'BNI Virtual Account',          logo: 'I1' },
+  { code: 'BV', name: 'BSI Virtual Account',          logo: 'BV' },
+  { code: 'B1', name: 'CIMB Niaga Virtual Account',   logo: 'B1' },
+  { code: 'DM', name: 'Danamon Virtual Account',      logo: 'DM' },
+  { code: 'BT', name: 'Permata Bank Virtual Account', logo: 'BT' },
+];
 
 // ── Product type configs ─────────────────────────────────────
 // Menentukan form Step 2 berdasarkan product_type dari API.
@@ -1298,136 +1314,47 @@ function OrderPage() {
                   <h2>4. Pilih Pembayaran</h2>
                   
                   <div className="payment-methods">
-                    {/* QRIS */}
-                    <div className="payment-category">
-                      <h3>QRIS</h3>
-                      <label className={`payment-option ${selectedPaymentMethod === 'qris' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="qris"
-                          checked={selectedPaymentMethod === 'qris'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['qris']}`} alt="QRIS" className="payment-logo" />
-                          <span className="payment-name">QRIS (Semua E-Wallet)</span>
-                          {/* <span className="payment-note">Fee 0.7%</span> */}
-                        </div>
-                      </label>
-                    </div>
-
-                    {/* Virtual Account */}
+                    {/* Virtual Account — 8 bank aktif */}
                     <div className="payment-category">
                       <h3>Virtual Account</h3>
-                      <label className={`payment-option ${selectedPaymentMethod === 'va_bca' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="va_bca"
-                          checked={selectedPaymentMethod === 'va_bca'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_bca']}`} alt="BCA" className="payment-logo" />
-                          <span className="payment-name">BCA Virtual Account</span>
-                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
-                        </div>
-                      </label>
-
-                      <label className={`payment-option ${selectedPaymentMethod === 'va_mandiri' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="va_mandiri"
-                          checked={selectedPaymentMethod === 'va_mandiri'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_mandiri']}`} alt="Mandiri" className="payment-logo" />
-                          <span className="payment-name">Mandiri Virtual Account</span>
-                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
-                        </div>
-                      </label>
-
-                      <label className={`payment-option ${selectedPaymentMethod === 'va_bni' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="va_bni"
-                          checked={selectedPaymentMethod === 'va_bni'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_bni']}`} alt="BNI" className="payment-logo" />
-                          <span className="payment-name">BNI Virtual Account</span>
-                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
-                        </div>
-                      </label>
-
-                      <label className={`payment-option ${selectedPaymentMethod === 'va_bri' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="va_bri"
-                          checked={selectedPaymentMethod === 'va_bri'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['va_bri']}`} alt="BRI" className="payment-logo" />
-                          <span className="payment-name">BRI Virtual Account</span>
-                          {/* <span className="payment-note">Fee 0.7% + Rp 1.000</span> */}
-                        </div>
-                      </label>
+                      {VA_BANKS.map(bank => (
+                        <label
+                          key={bank.code}
+                          className={`payment-option ${selectedPaymentMethod === bank.code ? 'selected' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value={bank.code}
+                            checked={selectedPaymentMethod === bank.code}
+                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                          />
+                          <div className="payment-info">
+                            <img
+                              src={`${process.env.PUBLIC_URL}${paymentLogos[bank.logo]}`}
+                              alt={bank.name}
+                              className="payment-logo"
+                              onError={e => { e.target.style.display='none'; }}
+                            />
+                            <span className="payment-name">{bank.name}</span>
+                          </div>
+                        </label>
+                      ))}
                     </div>
 
-                    {/* E-Wallet */}
-                    <div className="payment-category">
-                      <h3>E-Wallet</h3>
-                      <label className={`payment-option ${selectedPaymentMethod === 'ovo' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="ovo"
-                          checked={selectedPaymentMethod === 'ovo'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['ovo']}`} alt="OVO" className="payment-logo" />
-                          <span className="payment-name">OVO</span>
-                          {/* <span className="payment-note">Fee 2%</span> */}
+                    {/* QRIS & E-Wallet — Coming Soon */}
+                    {['QRIS', 'E-Wallet'].map(cat => (
+                      <div key={cat} className="payment-category payment-category-disabled">
+                        <h3>{cat} <span className="badge-coming-soon-inline">Coming Soon</span></h3>
+                        <div className="payment-option payment-option-disabled">
+                          <div className="payment-info">
+                            <span className="payment-name coming-soon-text">
+                              🔒 {cat === 'QRIS' ? 'QRIS (Semua E-Wallet)' : 'OVO, GoPay, ShopeePay, DANA'} — Segera Hadir
+                            </span>
+                          </div>
                         </div>
-                      </label>
-
-                      <label className={`payment-option ${selectedPaymentMethod === 'shopeepay' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="shopeepay"
-                          checked={selectedPaymentMethod === 'shopeepay'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['shopeepay']}`} alt="ShopeePay" className="payment-logo" />
-                          <span className="payment-name">ShopeePay</span>
-                          {/* <span className="payment-note">Fee 2%</span> */}
-                        </div>
-                      </label>
-
-                      <label className={`payment-option ${selectedPaymentMethod === 'dana' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="dana"
-                          checked={selectedPaymentMethod === 'dana'}
-                          onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        />
-                        <div className="payment-info">
-                          <img src={`${process.env.PUBLIC_URL}${paymentLogos['dana']}`} alt="DANA" className="payment-logo" />
-                          <span className="payment-name">DANA</span>
-                          {/* <span className="payment-note">Fee 2%</span> */}
-                        </div>
-                      </label>
+                      </div>
+                    ))}
                     </div>
                   </div>
 

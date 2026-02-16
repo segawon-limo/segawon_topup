@@ -251,9 +251,13 @@ function OrderPage() {
   const productType = game?.product_type || 'topup_game';
   const ptConfig = productTypeConfigs[productType]; // null = pakai legacy
 
-  // Config akhir yang dipakai di JSX
-  const currentGameConfig = (ptConfig && ptConfig !== null)
-    ? ptConfig
+  // Config akhir: form fields dari ptConfig, visual assets (header/icon) dari legacyConfig
+  const currentGameConfig = ptConfig
+    ? {
+        ...ptConfig,
+        headerImage: legacyConfig.headerImage || ptConfig.headerImage || 'default-header.jpg',
+        iconFile:    legacyConfig.iconFile    || ptConfig.iconFile    || null,
+      }
     : legacyConfig;
 
   // Apakah Step 2 perlu ditampilkan?
@@ -1010,15 +1014,18 @@ function OrderPage() {
         style={{
           backgroundImage: `url(${process.env.PUBLIC_URL}/images/header/${currentGameConfig.headerImage})`
         }}
-      >
-      </div>
+      />
 
       <div className="container">
         <div className="page-title-wrapper">
-          {currentGameConfig.iconFile && (
+          {(currentGameConfig.iconFile || game?.icon_url) && (
             <div className="game-icon-box">
               <img
-                src={`${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`}
+                src={
+                  currentGameConfig.iconFile
+                    ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
+                    : game.icon_url
+                }
                 alt={game?.name || gameSlug}
                 className="game-icon-img"
               />

@@ -872,3 +872,83 @@ input:disabled {
     width: 100%;
   }
 }
+
+/* Voucher product notice (Steam Wallet, dll — tidak perlu User ID) */
+.voucher-info-section {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.voucher-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.voucher-notice span {
+  font-size: 24px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.voucher-notice p {
+  color: #166534;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── PLN Cek Nomor Meter Result Card ── */
+.pln-check-result {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #22c55e;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-top: 16px;
+}
+
+.pln-check-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #bbf7d0;
+}
+
+.pln-check-icon {
+  font-size: 18px;
+}
+
+.pln-check-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pln-check-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 14px;
+  gap: 12px;
+}
+
+.pln-check-label {
+  color: #4b7c59;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.pln-check-value {
+  color: #14532d;
+  font-weight: 700;
+  text-align: right;
+  word-break: break-word;
+}
