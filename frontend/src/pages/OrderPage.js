@@ -534,22 +534,11 @@ function OrderPage() {
   };
 
   // Calculate payment fee — harus konsisten dengan backend (order.controller.js)
-  const calculatePaymentFee = (method, price) => {
-    if (!method || !price) return 0;
-    const amount = parseFloat(price);
-
-    const isQris     = ['SP', 'qris'].includes(method);
-    const isVaBca    = ['BC', 'va_bca'].includes(method);
-    const isVaMandiri= ['M2', 'va_mandiri'].includes(method);
-    const isVaLain   = ['BR','I1','BT','B1','DM','BV','va_bri','va_bni','va_permata','va_cimb'].includes(method);
-    const isEwallet  = ['OV','SA','DA','LA','ovo','shopeepay','dana','linkaja'].includes(method);
-
-    if (isQris)      return Math.round(amount * 0.007);
-    if (isVaBca)     return 5000;
-    if (isVaMandiri) return 4000;
-    if (isVaLain)    return 3000;
-    if (isEwallet)   return Math.round(amount * 0.02) + 1000;
-    return 2500;
+  const calculatePaymentFee = (method) => {
+    // Kode Duitku: M2=Mandiri, BR=BRI, NC=BNC, I1=BNI, BV=BSI, B1=CIMB, DM=Danamon, BT=Permata
+    if (method === 'M2') return 4000;
+    if (['BR','NC','I1','BV','B1','DM','BT'].includes(method)) return 3000;
+    return 3000; // default
   };
 
   // Biaya tambahan Mandiri yang ditagih langsung oleh bank (info saja, tidak masuk total)
@@ -568,7 +557,7 @@ function OrderPage() {
 
   // Payment fee is calculated based on price AFTER voucher discount
   const paymentFee = selectedPaymentMethod && selectedProduct 
-    ? calculatePaymentFee(selectedPaymentMethod, priceAfterDiscount)
+    ? calculatePaymentFee(selectedPaymentMethod)
     : 0;
   
   const totalAmount = priceAfterDiscount + paymentFee;
@@ -1467,14 +1456,7 @@ function OrderPage() {
                     <div className="summary-item">
                       <span>Metode Pembayaran</span>
                       <span>
-                        {selectedPaymentMethod === 'qris' && 'QRIS'}
-                        {selectedPaymentMethod === 'va_bca' && 'BCA VA'}
-                        {selectedPaymentMethod === 'va_mandiri' && 'Mandiri VA'}
-                        {selectedPaymentMethod === 'va_bni' && 'BNI VA'}
-                        {selectedPaymentMethod === 'va_bri' && 'BRI VA'}
-                        {selectedPaymentMethod === 'ovo' && 'OVO'}
-                        {selectedPaymentMethod === 'shopeepay' && 'ShopeePay'}
-                        {selectedPaymentMethod === 'dana' && 'DANA'}
+                        {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name || selectedPaymentMethod}
                       </span>
                     </div>
  
