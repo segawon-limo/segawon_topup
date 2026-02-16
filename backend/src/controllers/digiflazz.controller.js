@@ -93,7 +93,44 @@ exports.digiflazzWebhook = async (req, res) => {
     `, [ref_id, status, rc, sn || null, JSON.stringify(req.body)])
     .catch(() => {}); // tabel log opsional, jangan block proses utama
 
-    // ── 4. Cari order di database ─────────────────────────────
+    // ── 4a. Intercept PLNCEK — proses ke pln_meter_checks ──────
+    if (ref_id && ref_id.startsWith('CEK-')) {
+      console.log(`⚡ Webhook PLNCEK — ref_id: ${ref_id}`);
+
+      if (status === 'Sukses' || rc === '00') {
+        const { parsePlnCekSn } = require('../services/digiflazz.service');
+        const parsed = parsePlnCekSn(sn || '');
+        await pool.query(`
+          UPDATE pln_meter_checks
+          SET status   = 'success',
+              idpel    = $1,
+              nama     = $2,
+              tarif    = $3,
+              daya     = $4,
+              raw_sn   = $5
+          WHERE ref_id = $6
+        `, [
+          parsed.idpel || customer_no,
+          parsed.nama  || null,
+          parsed.tarif || null,
+          parsed.daya  || null,
+          sn           || null,
+          ref_id,
+        ]);
+        console.log(`✅ PLNCEK sukses — ${parsed.nama} (${parsed.idpel})`);
+      } else {
+        await pool.query(`
+          UPDATE pln_meter_checks
+          SET status='failed', message=$1
+          WHERE ref_id=$2
+        `, [message || 'Gagal', ref_id]);
+        console.log(`❌ PLNCEK gagal — ${message}`);
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
+    // ── 4b. Cari order di database (transaksi biasa) ──────────
     const orderResult = await pool.query(`
       SELECT o.*, p.sku, p.name AS product_name, g.product_type, g.category
       FROM orders o

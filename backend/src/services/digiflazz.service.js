@@ -284,8 +284,9 @@ class DigiflazzService {
 
   /**
    * Cek Nomor Meter / ID Pelanggan PLN
-   * SKU: PLNCEK, harga Rp 6 (biaya cek)
-   * SN format: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"
+   * Flow: buat transaksi PLNCEK ke Digiflazz (async)
+   *       → Digiflazz kirim webhook → kita parse & simpan ke pln_meter_checks
+   *       → frontend polling /api/check-pln-meter/:refId sampai status = success
    */
   async checkPlnMeter(nomorMeter) {
     try {
@@ -293,8 +294,17 @@ class DigiflazzService {
       const signatureData = this.username + this.apiKey + refId;
       const signature = this.generateSignature(signatureData);
 
-      console.log(`🔍 PLN Cek Meter: ${nomorMeter}`);
+      console.log(`🔍 PLN Cek Meter: ${nomorMeter} (ref: ${refId})`);
 
+      // Simpan ke DB dulu dengan status pending
+      const { pool } = require('../config/database');
+      await pool.query(
+        `INSERT INTO pln_meter_checks (ref_id, nomor_meter, status)
+         VALUES ($1, $2, 'pending')`,
+        [refId, nomorMeter]
+      );
+
+      // Buat transaksi ke Digiflazz
       const response = await axios.post(
         `${this.apiUrl}/transaction`,
         {
@@ -309,9 +319,14 @@ class DigiflazzService {
       );
 
       const d = response.data?.data;
-      if (!d) return { success: false, message: 'Response tidak valid dari Digiflazz' };
+      console.log(`📦 PLNCEK response: rc=${d?.rc} status=${d?.status}`);
 
-      if (d.rc !== '00') {
+      // Jika langsung gagal (bukan pending), update DB
+      if (d?.rc && d.rc !== '00' && d.rc !== '03') {
+        await pool.query(
+          `UPDATE pln_meter_checks SET status='failed', message=$1 WHERE ref_id=$2`,
+          [d.message || 'Gagal', refId]
+        );
         return {
           success: false,
           message: d.message || 'Nomor meter tidak ditemukan',
@@ -319,18 +334,20 @@ class DigiflazzService {
         };
       }
 
-      // Parse SN: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"
-      const sn   = d.sn || '';
-      const parsed = parsePlnCekSn(sn);
+      // rc:00 sync (langsung ada SN) atau rc:03 async (tunggu webhook)
+      if (d?.sn) {
+        // Langsung parse dan simpan (jika sync)
+        const parsed = parsePlnCekSn(d.sn);
+        await pool.query(
+          `UPDATE pln_meter_checks
+           SET status='success', idpel=$1, nama=$2, tarif=$3, daya=$4, raw_sn=$5
+           WHERE ref_id=$6`,
+          [parsed.idpel || nomorMeter, parsed.nama, parsed.tarif, parsed.daya, d.sn, refId]
+        );
+      }
 
-      return {
-        success: true,
-        idpel:  parsed.idpel  || nomorMeter,
-        nama:   parsed.nama   || '-',
-        tarif:  parsed.tarif  || '-',
-        daya:   parsed.daya   || '-',
-        sn,
-      };
+      // Return refId — frontend akan polling dengan ini
+      return { success: true, refId };
 
     } catch (error) {
       console.error('❌ PLN cek meter error:', error.response?.data || error.message);
@@ -517,4 +534,6 @@ class DigiflazzService {
   }
 }
 
-module.exports = new DigiflazzService();
+const digiflazzServiceInstance = new DigiflazzService();
+module.exports = digiflazzServiceInstance;
+module.exports.parsePlnCekSn = parsePlnCekSn;

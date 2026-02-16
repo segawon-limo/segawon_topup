@@ -34,6 +34,7 @@ router.get('/products/:gameSlug', orderController.getProducts);
 // ========================================
 router.post('/validate-riot-id', orderController.validateRiotId);
 router.post('/check-pln-meter', orderController.checkPlnMeter);
+router.get('/check-pln-meter/:refId', orderController.getPlnMeterResult);
 
 // ========================================
 // VOUCHER MANAGEMENT

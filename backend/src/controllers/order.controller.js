@@ -180,6 +180,8 @@ exports.validateRiotId = async (req, res) => {
  * POST /api/check-pln-meter
  * Body: { nomorMeter: "45107107679" }
  */
+// POST /api/check-pln-meter
+// Buat transaksi PLNCEK ke Digiflazz, return refId untuk polling
 exports.checkPlnMeter = async (req, res) => {
   try {
     const { nomorMeter } = req.body;
@@ -204,23 +206,54 @@ exports.checkPlnMeter = async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: result.message || 'Nomor meter tidak ditemukan',
+        message: result.message || 'Gagal mengirim permintaan ke Digiflazz',
       });
     }
 
-    console.log(`✅ PLN cek meter OK: ${meter} → ${result.nama}`);
-
-    return res.json({
-      success: true,
-      idpel:  result.idpel,
-      nama:   result.nama,
-      tarif:  result.tarif,
-      daya:   result.daya,
-    });
+    // Return refId — frontend akan polling dengan ini
+    return res.json({ success: true, refId: result.refId });
 
   } catch (error) {
     console.error('checkPlnMeter Error:', error);
     res.status(500).json({ success: false, message: 'Gagal mengecek nomor meter' });
+  }
+};
+
+// GET /api/check-pln-meter/:refId
+// Polling — cek apakah hasil PLNCEK sudah tersedia
+exports.getPlnMeterResult = async (req, res) => {
+  try {
+    const { refId } = req.params;
+    if (!refId || !refId.startsWith('CEK-')) {
+      return res.status(400).json({ success: false, message: 'refId tidak valid' });
+    }
+
+    const { pool } = require('../config/database');
+    const result = await pool.query(
+      `SELECT status, idpel, nama, tarif, daya, message
+       FROM pln_meter_checks
+       WHERE ref_id = $1 AND expires_at > NOW()`,
+      [refId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Data tidak ditemukan atau sudah expired' });
+    }
+
+    const row = result.rows[0];
+    return res.json({
+      success: true,
+      status:  row.status,           // pending | success | failed
+      idpel:   row.idpel,
+      nama:    row.nama,
+      tarif:   row.tarif,
+      daya:    row.daya,
+      message: row.message,
+    });
+
+  } catch (error) {
+    console.error('getPlnMeterResult Error:', error);
+    res.status(500).json({ success: false, message: 'Gagal mengambil hasil cek meter' });
   }
 };
 
