@@ -17,7 +17,7 @@ const paymentLogos = {
   'BT': '/images/permata-logo.png',
   // Coming soon
   'qris':      '/images/qris-logo.png',
-  'ewallet':   '/images/ovo-logo.png',
+  'ewallet':   '/images/dana-logo.png',
 };
 
 // VA yang aktif dan bisa dipilih
@@ -1355,7 +1355,6 @@ function OrderPage() {
                         </div>
                       </div>
                     ))}
-                    </div>
                   </div>
 
                   {errors.payment && <div className="error">{errors.payment}</div>}
