@@ -465,6 +465,20 @@ const generateInvoiceHTML = async (orderData) => {
         <span class="price-label">Biaya Admin</span>
         <span class="price-value">Rp ${paymentFee.toLocaleString('id-ID')}</span>
       </div>
+      ${['M2', 'va_mandiri'].includes(paymentMethod) ? `
+      <div class="price-row" style="background: #fffbeb; border-radius: 6px; padding: 8px 12px; margin: 4px 0; border: 1px solid #fde68a;">
+        <span class="price-label" style="color: #92400e; font-size: 12px;">
+          ⚠️ Biaya Bank Mandiri*
+        </span>
+        <span class="price-value" style="color: #92400e; font-size: 12px;">
+          ${parseFloat(amount - (voucherDiscount || 0)) >= 1000000 ? 'Rp 5.000' :
+            parseFloat(amount - (voucherDiscount || 0)) >= 500000  ? 'Rp 3.000' : 'Rp 2.500'}
+        </span>
+      </div>
+      <div style="font-size: 11px; color: #92400e; padding: 0 4px 8px; font-style: italic;">
+        *Ditagih langsung oleh Bank Mandiri, tidak termasuk dalam total di atas
+      </div>
+      ` : ''}
       <div class="total-row">
         <span class="total-label">Total Pembayaran</span>
         <span class="total-value">Rp ${totalAmount.toLocaleString('id-ID')}</span>

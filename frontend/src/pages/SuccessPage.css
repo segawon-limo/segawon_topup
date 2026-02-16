@@ -354,3 +354,36 @@
   .sp-code-value { font-size: 17px; letter-spacing: 2px; padding: 12px 16px; }
   .sp-actions { flex-direction: column; }
 }
+
+/* ── PLN Info Table ── */
+.sp-pln-info {
+  width: 100%;
+  background: #052e1666;
+  border: 1px solid #22c55e33;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 4px 0 2px;
+  text-align: left;
+}
+.sp-pln-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 12px;
+  border-bottom: 1px solid #22c55e18;
+}
+.sp-pln-row:last-child { border-bottom: none; }
+.sp-pln-key {
+  font-size: 12px;
+  color: #4ade80aa;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sp-pln-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0fdf4;
+  text-align: right;
+  word-break: break-word;
+}

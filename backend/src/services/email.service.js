@@ -653,7 +653,7 @@ const sendOrderCompleteEmail = async (orderData) => {
 
     const {
       orderNumber, customerName, customerEmail, productName,
-      userId, zoneId, voucherCode, isVoucher, totalAmount
+      userId, zoneId, voucherCode, isVoucher, totalAmount, productType
     } = orderData;
 
     // Rupiah formatter
@@ -661,20 +661,71 @@ const sendOrderCompleteEmail = async (orderData) => {
       ? `Rp ${Number(n).toLocaleString('id-ID')}`
       : '-';
 
+    // ── Parser SN Token PLN ─────────────────────────────────
+    // Format: TOKEN/NAMA/TARIF/DAYAva/KWH
+    const parsePlnSn = (sn) => {
+      if (!sn) return null;
+      const m = sn.match(/^(\d{4}-\d{4}-\d{4}-\d{4}-\d{4})/);
+      if (!m) return null;
+      const token = m[1];
+      const parts = sn.slice(token.length + 1).split('/');
+      if (parts.length < 3) return { token, nama: parts[0] };
+      const kwh   = parts[parts.length - 1];
+      const daya  = parts[parts.length - 2].replace(/VA$/i, '') + ' VA';
+      const tarif = parts[parts.length - 3];
+      const nama  = parts.slice(0, parts.length - 3).join('/');
+      return { token, nama, tarif, daya, kwh };
+    };
+
     // Bagian kode voucher / serial number — hanya tampil kalau ada
-    const snSection = voucherCode ? `
+    let snSection;
+    if (voucherCode && productType === 'token_pln') {
+      // Token PLN: parse dan tampilkan detail
+      const pln = parsePlnSn(voucherCode);
+      const plnInfoRows = pln ? `
+        <table style="width:100%;margin-top:12px;border-top:1px solid #22c55e33;padding-top:8px;">
+          ${pln.nama ? `<tr>
+            <td style="padding:6px 0;font-size:12px;color:#4ade80;">Nama Pelanggan</td>
+            <td style="padding:6px 0;font-size:12px;font-weight:600;color:#f0fdf4;text-align:right;">${pln.nama}</td>
+          </tr>` : ''}
+          ${pln.tarif && pln.daya ? `<tr>
+            <td style="padding:6px 0;font-size:12px;color:#4ade80;">Tarif / Daya</td>
+            <td style="padding:6px 0;font-size:12px;font-weight:600;color:#f0fdf4;text-align:right;">${pln.tarif} / ${pln.daya}</td>
+          </tr>` : ''}
+          ${pln.kwh ? `<tr>
+            <td style="padding:6px 0;font-size:12px;color:#4ade80;">Jumlah kWh</td>
+            <td style="padding:6px 0;font-size:12px;font-weight:600;color:#f0fdf4;text-align:right;">${pln.kwh}</td>
+          </tr>` : ''}
+        </table>` : '';
+      snSection = `
+      <div style="background:linear-gradient(135deg,#052e16,#14532d);border:1px solid #22c55e44;padding:24px;border-radius:12px;text-align:center;margin:24px 0;box-shadow:0 0 24px #22c55e18;">
+        <p style="margin:0 0 8px;color:#4ade80;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">
+          ⚡ Token PLN Kamu
+        </p>
+        <p style="margin:0;font-size:26px;font-weight:bold;color:#f0fdf4;letter-spacing:3px;font-family:monospace;">
+          ${pln ? pln.token : voucherCode}
+        </p>
+        ${plnInfoRows}
+        <p style="margin:12px 0 0;font-size:12px;color:#4ade80aa;">Masukkan token di meteran listrik atau aplikasi PLN Mobile</p>
+      </div>`;
+    } else if (voucherCode) {
+      // Voucher biasa (Steam Wallet, dll)
+      snSection = `
       <div style="background:#fef3c7;border:2px dashed #FF6B35;padding:24px;border-radius:8px;text-align:center;margin:24px 0;">
         <p style="margin:0 0 8px;color:#92400e;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">
-          ${isVoucher ? '🎁 Kode Voucher Kamu' : '🔑 Serial Number'}
+          🎁 Kode Voucher Kamu
         </p>
         <p style="margin:0;font-size:26px;font-weight:bold;color:#1a2332;letter-spacing:3px;font-family:monospace;">
           ${voucherCode}
         </p>
-        ${isVoucher ? '<p style="margin:8px 0 0;font-size:12px;color:#92400e;">Masukkan kode ini di platform tujuan</p>' : ''}
-      </div>` : `
+        <p style="margin:8px 0 0;font-size:12px;color:#92400e;">Masukkan kode ini di platform tujuan</p>
+      </div>`;
+    } else {
+      snSection = `
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:16px;border-radius:8px;margin:24px 0;text-align:center;">
         <p style="margin:0;color:#166534;">✅ Topup berhasil masuk ke akun kamu!</p>
       </div>`;
+    }
 
     // Info tujuan — tidak tampil untuk voucher
     const targetSection = !isVoucher && userId ? `

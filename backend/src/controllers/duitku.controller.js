@@ -570,8 +570,12 @@ async function processDigiflazzTopup(order) {
     });
 
     if (digiflazzResult.success) {
-      // ✅ Topup berhasil
-      console.log('✅ Digiflazz topup SUCCESS!');
+      // ✅ Topup sukses atau pending (rc:00 atau rc:03 — webhook menyusul untuk rc:03)
+      if (digiflazzResult.isPending) {
+        console.log('⏳ Digiflazz rc:03 PENDING — transaksi diterima, menunggu webhook Digiflazz...');
+      } else {
+        console.log('✅ Digiflazz topup SUCCESS! (rc:00 — SN langsung tersedia)');
+      }
 
       await pool.query(
         `UPDATE orders 
@@ -610,6 +614,7 @@ async function processDigiflazzTopup(order) {
           zoneId:        order.game_zone_id || null,
           voucherCode:   sn,
           isVoucher:     productType === 'voucher_code',
+          productType:   productType,
           totalAmount:   order.total_amount,
         }).catch(err => console.error('❌ Email error (non-blocking):', err.message));
       } else {

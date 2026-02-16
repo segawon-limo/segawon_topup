@@ -225,6 +225,7 @@ async function sendCompletionEmail(order, digiflazzData) {
       // SN / kode voucher — ini yang ditunggu customer
       voucherCode:   sn || null,
       isVoucher:     isVoucher,
+      productType:   order.product_type || 'topup_game',
 
       totalAmount:   order.total_amount,
       price:         price || null,
