@@ -284,76 +284,72 @@ class DigiflazzService {
 
   /**
    * Cek Nomor Meter / ID Pelanggan PLN
-   * Flow: buat transaksi PLNCEK ke Digiflazz (async)
-   *       → Digiflazz kirim webhook → kita parse & simpan ke pln_meter_checks
-   *       → frontend polling /api/check-pln-meter/:refId sampai status = success
+   * Flow:
+   *   1. Insert ke pln_meter_checks (status: pending)
+   *   2. Panggil createTransaction({ sku: 'PLNCEK', customerNo, orderNumber: refId })
+   *   3. Digiflazz proses async → kirim webhook ke /api/digiflazz/webhook
+   *   4. Webhook handler parse SN → UPDATE pln_meter_checks status='success'
+   *   5. Frontend polling GET /api/check-pln-meter/:refId sampai success
    */
   async checkPlnMeter(nomorMeter) {
-    try {
-      const refId = `CEK-${Date.now()}`;
-      const signatureData = this.username + this.apiKey + refId;
-      const signature = this.generateSignature(signatureData);
+    const refId = `CEK-${Date.now()}`;
+    const { pool } = require('../config/database');
 
+    try {
       console.log(`🔍 PLN Cek Meter: ${nomorMeter} (ref: ${refId})`);
 
-      // Simpan ke DB dulu dengan status pending
-      const { pool } = require('../config/database');
+      // Step 1: Insert ke DB dengan status pending
       await pool.query(
         `INSERT INTO pln_meter_checks (ref_id, nomor_meter, status)
          VALUES ($1, $2, 'pending')`,
         [refId, nomorMeter]
       );
 
-      // Buat transaksi ke Digiflazz
-      const response = await axios.post(
-        `${this.apiUrl}/transaction`,
-        {
-          commands:       'inq-pasca',
-          username:       this.username,
-          buyer_sku_code: 'PLNCEK',
-          customer_no:    nomorMeter,
-          ref_id:         refId,
-          sign:           signature,
-        },
-        { headers: { 'Content-Type': 'application/json' }, timeout: 20000 }
-      );
+      // Step 2: Buat transaksi via createTransaction() yang sudah teruji
+      const result = await this.createTransaction({
+        sku:         'PLNCEK',
+        customerNo:  nomorMeter,
+        orderNumber: refId,
+      });
 
-      const d = response.data?.data;
-      console.log(`📦 PLNCEK response: rc=${d?.rc} status=${d?.status}`);
+      console.log(`📦 PLNCEK createTransaction result: success=${result.success} rc=${result.data?.rc} status=${result.data?.status}`);
 
-      // Jika langsung gagal (bukan pending), update DB
-      if (d?.rc && d.rc !== '00' && d.rc !== '03') {
+      // Jika langsung gagal (rc bukan 00/03)
+      if (!result.success && result.data?.order_status === 'failed') {
         await pool.query(
           `UPDATE pln_meter_checks SET status='failed', message=$1 WHERE ref_id=$2`,
-          [d.message || 'Gagal', refId]
+          [result.data?.message || 'Transaksi gagal', refId]
         );
         return {
           success: false,
-          message: d.message || 'Nomor meter tidak ditemukan',
-          rc: d.rc,
+          message: result.data?.message || 'Nomor meter tidak ditemukan',
         };
       }
 
-      // rc:00 sync (langsung ada SN) atau rc:03 async (tunggu webhook)
-      if (d?.sn) {
-        // Langsung parse dan simpan (jika sync)
-        const parsed = parsePlnCekSn(d.sn);
+      // Jika langsung ada SN di response (sync — jarang terjadi di PLNCEK)
+      if (result.success && result.data?.sn) {
+        const parsed = parsePlnCekSn(result.data.sn);
         await pool.query(
           `UPDATE pln_meter_checks
            SET status='success', idpel=$1, nama=$2, tarif=$3, daya=$4, raw_sn=$5
            WHERE ref_id=$6`,
-          [parsed.idpel || nomorMeter, parsed.nama, parsed.tarif, parsed.daya, d.sn, refId]
+          [parsed.idpel || nomorMeter, parsed.nama, parsed.tarif, parsed.daya, result.data.sn, refId]
         );
       }
 
-      // Return refId — frontend akan polling dengan ini
+      // Return refId — frontend polling akan menggunakannya
       return { success: true, refId };
 
     } catch (error) {
-      console.error('❌ PLN cek meter error:', error.response?.data || error.message);
+      console.error('❌ PLN cek meter error:', error.message);
+      // Tandai failed di DB
+      await pool.query(
+        `UPDATE pln_meter_checks SET status='failed', message=$1 WHERE ref_id=$2`,
+        [error.message, refId]
+      ).catch(() => {});
       return {
         success: false,
-        message: error.response?.data?.data?.message || 'Gagal mengecek nomor meter',
+        message: 'Gagal mengecek nomor meter',
       };
     }
   }
