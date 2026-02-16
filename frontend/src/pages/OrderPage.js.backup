@@ -266,6 +266,7 @@ function OrderPage() {
   const [userIdValidated, setUserIdValidated] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [plnInfo, setPlnInfo] = useState(null); // { idpel, nama, tarif, daya } dari PLNCEK
 
   // Form data
   const [formData, setFormData] = useState({
@@ -566,6 +567,7 @@ function OrderPage() {
     setSelectedProduct(product);
     setSelectedPaymentMethod('');
     setUserIdValidated(false);
+    setPlnInfo(null);
     // Reset voucher when product changes
     setVoucherCode('');
     setVoucherDiscount(0);
@@ -722,36 +724,99 @@ function OrderPage() {
   const validateUserId = async () => {
     const { userId, zoneId } = formData;
     const config = currentGameConfig;
-    
-    // Check required fields
+
     const hasUserId = userId.trim();
-    const hasZoneId = config.fields.length > 1 ? zoneId.trim() : true;
-    
+    const hasZoneId = config.fields && config.fields.length > 1 ? zoneId.trim() : true;
+
     if (!hasUserId || !hasZoneId) {
       setValidationError('Mohon lengkapi semua field');
       return;
     }
-    
-    // If no validation endpoint, just mark as validated
+
+    // ── Khusus Token PLN: cek nomor meter via Digiflazz (async + polling) ──
+    if (productType === 'token_pln') {
+      try {
+        setValidating(true);
+        setValidationError('');
+        setPlnInfo(null);
+
+        // Step 1: POST → Digiflazz buat transaksi PLNCEK, dapat refId
+        const postRes  = await fetch(`${API_URL}/api/check-pln-meter`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ nomorMeter: userId.trim() }),
+        });
+        const postData = await postRes.json();
+
+        if (!postData.success) {
+          setValidationError(postData.message || 'Gagal mengirim permintaan');
+          setUserIdValidated(false);
+          setValidating(false);
+          return;
+        }
+
+        const { refId } = postData;
+
+        // Step 2: Polling GET sampai status = success / failed (max 30 detik)
+        const MAX_POLL = 15;
+        let pollCount  = 0;
+
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+          try {
+            const pollRes  = await fetch(`${API_URL}/api/check-pln-meter/${refId}`);
+            const pollData = await pollRes.json();
+
+            if (pollData.status === 'success') {
+              clearInterval(pollInterval);
+              setPlnInfo({ idpel: pollData.idpel, nama: pollData.nama, tarif: pollData.tarif, daya: pollData.daya });
+              setUserIdValidated(true);
+              setValidationError('');
+              setValidating(false);
+            } else if (pollData.status === 'failed') {
+              clearInterval(pollInterval);
+              setValidationError(pollData.message || 'Nomor meter tidak ditemukan');
+              setUserIdValidated(false);
+              setValidating(false);
+            } else if (pollCount >= MAX_POLL) {
+              clearInterval(pollInterval);
+              setValidationError('Timeout — coba lagi beberapa saat');
+              setUserIdValidated(false);
+              setValidating(false);
+            }
+          } catch (err) {
+            console.error('PLN poll error:', err);
+          }
+        }, 2000); // poll setiap 2 detik
+
+      } catch (err) {
+        console.error('PLN check error:', err);
+        setValidationError('Gagal mengecek nomor meter. Coba lagi.');
+        setUserIdValidated(false);
+        setValidating(false);
+      }
+      return;
+    }
+
+    // ── Game lain tanpa validation endpoint ──
     if (!config.validation) {
       setUserIdValidated(true);
       setValidationError('');
       return;
     }
-    
-    // Call validation API (for Valorant)
+
+    // ── Valorant: validasi via Riot API ──
     try {
       setValidating(true);
       setValidationError('');
-      
+
       const response = await fetch(`${API_URL}${config.validation.endpoint}`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config.validation.bodyFormat(userId, zoneId))
+        body:    JSON.stringify(config.validation.bodyFormat(userId, zoneId)),
       });
-      
       const data = await response.json();
-      
+
       if (data.success) {
         setUserIdValidated(true);
         setValidationError('');
@@ -1023,7 +1088,9 @@ function OrderPage() {
                       disabled={validating}
                       className="btn-validate"
                     >
-                      {validating ? 'Memverifikasi...' : 'Verifikasi ID'}
+                      {validating
+                        ? (productType === 'token_pln' ? 'Mengecek...' : 'Memverifikasi...')
+                        : (productType === 'token_pln' ? '🔍 Cek Nomor Meter' : 'Verifikasi ID')}
                     </button>
                   )}
 
@@ -1031,7 +1098,41 @@ function OrderPage() {
                     <div className="error">{validationError}</div>
                   )}
 
-                  {userIdValidated && (
+                  {/* Hasil cek PLN — tampilkan info pelanggan */}
+                  {userIdValidated && productType === 'token_pln' && plnInfo && (
+                    <div className="pln-check-result">
+                      <div className="pln-check-header">
+                        <span className="pln-check-icon">⚡</span>
+                        <span>Data Pelanggan Ditemukan</span>
+                      </div>
+                      <div className="pln-check-rows">
+                        <div className="pln-check-row">
+                          <span className="pln-check-label">ID Pelanggan</span>
+                          <span className="pln-check-value">{plnInfo.idpel}</span>
+                        </div>
+                        <div className="pln-check-row">
+                          <span className="pln-check-label">Nama</span>
+                          <span className="pln-check-value">{plnInfo.nama}</span>
+                        </div>
+                        {plnInfo.tarif && (
+                          <div className="pln-check-row">
+                            <span className="pln-check-label">Tarif / Daya</span>
+                            <span className="pln-check-value">{plnInfo.tarif} / {plnInfo.daya}</span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setUserIdValidated(false); setPlnInfo(null); }}
+                        className="btn-change"
+                      >
+                        Ubah Nomor
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Tampilan sukses verifikasi untuk game lain */}
+                  {userIdValidated && productType !== 'token_pln' && (
                     <div className="success">
                       ✓ Terverifikasi: {typeof currentGameConfig.displayFormat === 'function'
                         ? currentGameConfig.displayFormat(formData.userId, formData.zoneId)
