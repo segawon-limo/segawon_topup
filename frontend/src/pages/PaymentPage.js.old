@@ -278,10 +278,15 @@ function PaymentPage() {
                     <span className="detail-label">Produk</span>
                     <span className="detail-value">{paymentData.productName}</span>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Riot ID</span>
-                    <span className="detail-value">{paymentData.gameUserId}#{paymentData.gameUserTag}</span>
-                  </div>
+                  {paymentData.gameUserId && (
+                    <div className="detail-row">
+                      <span className="detail-label">Game ID</span>
+                      <span className="detail-value">
+                        {paymentData.gameUserId}
+                        {paymentData.gameUserTag ? `#${paymentData.gameUserTag}` : ''}
+                      </span>
+                    </div>
+                  )}
                   <div className="detail-row">
                     <span className="detail-label">Email</span>
                     <span className="detail-value">{paymentData.customer_email}</span>
@@ -303,6 +308,29 @@ function PaymentPage() {
                     <span className="detail-label">Biaya Admin</span>
                     <span className="detail-value">{formatRupiah(paymentData.paymentFee)}</span>
                   </div>
+
+                  {/* Note biaya bank Mandiri — info saja, tidak masuk total */}
+                  {['M2', 'va_mandiri'].includes(paymentData.payment?.method) && (() => {
+                    const amt = parseFloat(paymentData.amount || 0) - parseFloat(paymentData.voucherDiscount || 0);
+                    const bankFee = amt >= 1000000 ? 'Rp 5.000' : amt >= 500000 ? 'Rp 3.000' : 'Rp 2.500';
+                    return (
+                      <div style={{
+                        background: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        marginTop: '4px',
+                      }}>
+                        <p style={{ fontSize: '12px', color: '#92400e', fontWeight: '600', margin: '0 0 3px' }}>
+                          ⚠️ Biaya Bank Mandiri (ditagih langsung oleh bank)
+                        </p>
+                        <p style={{ fontSize: '12px', color: '#78350f', margin: 0 }}>
+                          {bankFee} — tidak termasuk dalam total di atas
+                        </p>
+                      </div>
+                    );
+                  })()}
+
                   <div className="detail-divider"></div>
                   <div className="detail-row total-row">
                     <span className="detail-label">Total</span>

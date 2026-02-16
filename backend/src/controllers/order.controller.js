@@ -365,32 +365,20 @@ exports.createOrder = async (req, res) => {
     // 2. Calculate payment fee - Based on price AFTER voucher discount
     let paymentFee = 0;
 
-    // Mapping kode Duitku ke nama internal
-    // Frontend kirim kode Duitku langsung (BR, BC, I1, M2, SP, OV, SA, DA, dll)
-    const duitkuVaBca      = ['BC', 'va_bca'];
-    const duitkuVaMandiri  = ['M2', 'va_mandiri'];
-    const duitkuVaLainnya  = ['BR', 'I1', 'BT', 'B1', 'DM', 'BV', 'va_bri', 'va_bni', 'va_permata', 'va_cimb'];
-    const duitkuQris       = ['SP', 'qris'];
-    const duitkuEwallet    = ['OV', 'SA', 'DA', 'LA', 'ovo', 'shopeepay', 'dana', 'linkaja'];
+    // Kode Duitku VA yang aktif (BCA dihapus, BNC/BSI/Danamon ditambah)
+    // BR=BRI | M2=Mandiri | NC=BNC | I1=BNI | BV=BSI | B1=CIMB | DM=Danamon | BT=Permata
+    const duitkuVaMandiri  = ['M2'];
+    const duitkuVaLainnya  = ['BR', 'I1', 'BT', 'B1', 'DM', 'BV', 'NC'];
 
-    if (duitkuQris.includes(paymentMethod)) {
-      // QRIS - 0.7%
-      paymentFee = Math.round(priceAfterDiscount * 0.007);
-    } else if (duitkuVaBca.includes(paymentMethod)) {
-      // BCA VA - Rp 5.000
-      paymentFee = 5000;
-    } else if (duitkuVaMandiri.includes(paymentMethod)) {
+    if (duitkuVaMandiri.includes(paymentMethod)) {
       // Mandiri VA - Rp 4.000
       paymentFee = 4000;
     } else if (duitkuVaLainnya.includes(paymentMethod)) {
-      // VA lainnya (BRI, BNI, dll) - Rp 3.000
+      // VA lainnya (BRI, BNC, BNI, BSI, CIMB, Danamon, Permata) - Rp 3.000
       paymentFee = 3000;
-    } else if (duitkuEwallet.includes(paymentMethod)) {
-      // E-Wallet - 2% + Rp 1.000
-      paymentFee = Math.round(priceAfterDiscount * 0.02) + 1000;
     } else {
-      // Default
-      paymentFee = 2500;
+      // Default fallback
+      paymentFee = 3000;
     }
 
     const totalAmount = priceAfterDiscount + paymentFee;

@@ -306,27 +306,41 @@ class DuitkuService {
    * Map payment method to Duitku code
    */
   getPaymentMethodCode(method, channel = null) {
-    // Kode Duitku VA yang aktif:
-    // BR=BRI | M2=Mandiri | NC=BNC | I1=BNI | BV=BSI | B1=CIMB | DM=Danamon | BT=Permata
     const methodMap = {
-      'va_bri':     'BR',
+      // Virtual Account
+      'va_bca': 'BC',
       'va_mandiri': 'M2',
-      'va_bnc':     'NC',
-      'va_bni':     'I1',
-      'va_bsi':     'BV',
-      'va_cimb':    'B1',
-      'va_danamon': 'DM',
+      'va_bni': 'I1',
+      'va_bri': 'BR',
       'va_permata': 'BT',
-      // Pass-through kode Duitku langsung dari frontend
-      'BR': 'BR', 'M2': 'M2', 'NC': 'NC', 'I1': 'I1',
-      'BV': 'BV', 'B1': 'B1', 'DM': 'DM', 'BT': 'BT',
+      'va_cimb': 'B1',
+      'va_danamon': 'DM',
+      'va_bsi': 'BV',
+      
+      // QRIS
+      'qris': 'SP',
+      
+      // E-Wallet
+      'gopay': 'OV',
+      'shopeepay': 'SA',
+      'dana': 'DA',
+      'linkaja': 'LF',
+      'ovo': 'OV',
+      
+      // Retail
+      'alfamart': 'FT',
+      'indomaret': 'IR',
+      
+      // Credit Card
+      'credit_card': 'CC'
     };
 
+    // If specific channel provided
     if (channel) {
-      return methodMap[`${method}_${channel}`] || methodMap[method] || 'BR';
+      return methodMap[`${method}_${channel}`] || methodMap[method] || 'BC';
     }
 
-    return methodMap[method] || 'BR'; // Default BRI VA
+    return methodMap[method] || 'BC'; // Default to BCA VA
   }
 
   /**

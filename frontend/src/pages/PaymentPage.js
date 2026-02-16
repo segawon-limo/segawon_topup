@@ -138,44 +138,46 @@ function PaymentPage() {
 
   const getPaymentMethodName = (method) => {
     const names = {
-      'BC': 'BCA Virtual Account',
-      'M2': 'Mandiri Virtual Account',
-      'I1': 'BNI Virtual Account',
+      // VA aktif: BR M2 NC I1 BV B1 DM BT
       'BR': 'BRI Virtual Account',
-      'BT': 'Permata Virtual Account',
+      'M2': 'Mandiri Virtual Account',
+      'NC': 'Bank Neo Commerce (BNC) Virtual Account',
+      'I1': 'BNI Virtual Account',
+      'BV': 'BSI Virtual Account',
       'B1': 'CIMB Niaga Virtual Account',
       'DM': 'Danamon Virtual Account',
-      'BV': 'BSI Virtual Account',
-      'SP': 'QRIS',
-      'OV': 'OVO',
-      'SA': 'ShopeePay',
-      'DA': 'DANA',
-      'va_bca': 'BCA Virtual Account',
+      'BT': 'Permata Bank Virtual Account',
+      // legacy keys
+      'va_bri':     'BRI Virtual Account',
       'va_mandiri': 'Mandiri Virtual Account',
-      'va_bni': 'BNI Virtual Account',
-      'va_bri': 'BRI Virtual Account',
-      'qris': 'QRIS',
-      'ovo': 'OVO',
-      'shopeepay': 'ShopeePay',
-      'dana': 'DANA',
+      'va_bni':     'BNI Virtual Account',
+      'va_bnc':     'Bank Neo Commerce (BNC) Virtual Account',
+      'va_bsi':     'BSI Virtual Account',
+      'va_cimb':    'CIMB Niaga Virtual Account',
+      'va_danamon': 'Danamon Virtual Account',
+      'va_permata': 'Permata Bank Virtual Account',
     };
     return names[method] || method;
   };
 
   const getVABankName = (method) => {
     const names = {
-      'BC': 'BCA',
-      'M2': 'Mandiri',
-      'I1': 'BNI',
       'BR': 'BRI',
-      'BT': 'Permata',
+      'M2': 'Mandiri',
+      'NC': 'BNC',
+      'I1': 'BNI',
+      'BV': 'BSI',
       'B1': 'CIMB Niaga',
       'DM': 'Danamon',
-      'BV': 'BSI',
-      'va_bca': 'BCA',
+      'BT': 'Permata',
+      'va_bri':     'BRI',
       'va_mandiri': 'Mandiri',
-      'va_bni': 'BNI',
-      'va_bri': 'BRI'
+      'va_bni':     'BNI',
+      'va_bnc':     'BNC',
+      'va_bsi':     'BSI',
+      'va_cimb':    'CIMB Niaga',
+      'va_danamon': 'Danamon',
+      'va_permata': 'Permata',
     };
     return names[method] || method;
   };
@@ -219,9 +221,9 @@ function PaymentPage() {
   }
 
   // Determine payment type
-  const isQRIS = paymentData?.payment?.method === 'SP' || paymentData?.payment?.method === 'qris';
+  const isQRIS = false; // QRIS belum aktif
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
-  const isEwallet = ['OV', 'SA', 'DA', 'LA', 'ovo', 'shopeepay', 'dana', 'linkaja'].includes(paymentData?.payment?.method);
+  const isEwallet = false; // E-Wallet belum aktif
 
   return (
     <div className="payment-page">
@@ -310,7 +312,7 @@ function PaymentPage() {
                   </div>
 
                   {/* Note biaya bank Mandiri — info saja, tidak masuk total */}
-                  {['M2', 'va_mandiri'].includes(paymentData.payment?.method) && (() => {
+                  {paymentData.payment?.method === 'M2' && (() => {
                     const amt = parseFloat(paymentData.amount || 0) - parseFloat(paymentData.voucherDiscount || 0);
                     const bankFee = amt >= 1000000 ? 'Rp 5.000' : amt >= 500000 ? 'Rp 3.000' : 'Rp 2.500';
                     return (
