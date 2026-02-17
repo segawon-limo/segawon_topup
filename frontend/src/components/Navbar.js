@@ -77,7 +77,7 @@ function Navbar() {
               alt="Segawon Top Up Logo"
               className="w-10 h-10 md:w-12 md:h-12 transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"
             />
-            <span className="text-xl md:text-2xl font-bold text-white drop-shadow-md hidden sm:block">
+            <span className="text-base sm:text-xl md:text-2xl font-bold text-white drop-shadow-md">
               {SITE_NAME}
             </span>
           </Link>
@@ -85,17 +85,19 @@ function Navbar() {
           {/* ── Search Bar — Desktop (tengah) ── */}
           <div ref={containerRef} className="relative hidden md:flex flex-1 max-w-md mx-auto">
             <div className="relative w-full">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                🔍
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
               </span>
               <input
                 type="text"
                 value={query}
-                placeholder="Cari game atau produk..."
+                placeholder="Cari game atau voucher..."
                 onChange={e => setQuery(e.target.value)}
                 onFocus={() => setFocused(true)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl text-sm bg-white/20 text-white placeholder-white/60
-                           border border-white/30 focus:outline-none focus:bg-white/30 focus:border-white/60
+                className="w-full pl-8 pr-4 py-2 rounded-xl text-sm bg-white/15 text-white placeholder-white/50
+                           border border-white/20 focus:outline-none focus:bg-white/25 focus:border-white/40
                            transition-all duration-200"
               />
               {query && (
@@ -150,10 +152,15 @@ function Navbar() {
             {/* Tombol search mobile */}
             <button
               onClick={() => { setSearchOpen(p => !p); setMenuOpen(false); setTimeout(() => inputRef.current?.focus(), 50); }}
-              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition-colors duration-200 text-white text-xl"
+              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition-colors duration-200 text-white"
               aria-label="Cari"
             >
-              {searchOpen ? '×' : '🔍'}
+              {searchOpen
+                ? <span className="text-xl leading-none">×</span>
+                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+              }
             </button>
 
             {/* Hamburger */}
@@ -174,15 +181,19 @@ function Navbar() {
       <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${searchOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="px-4 py-3 bg-red-700/50 border-t border-white/20">
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">🔍</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </span>
             <input
               ref={inputRef}
               type="text"
               value={query}
-              placeholder="Cari game atau produk..."
+              placeholder="Cari game atau voucher..."
               onChange={e => setQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm bg-white/20 text-white placeholder-white/60
-                         border border-white/30 focus:outline-none focus:bg-white/30 transition-all duration-200"
+              className="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm bg-white/15 text-white placeholder-white/50
+                         border border-white/20 focus:outline-none focus:bg-white/25 transition-all duration-200"
             />
             {query && (
               <button
