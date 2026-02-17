@@ -150,7 +150,7 @@ const gameConfigs = {
     ],
     validation: null,
     displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
-    headerImage: 'league-of-legends-header.jpg',
+    headerImage: 'league-of-leagends-header.jpg',
     iconFile: 'lol.webp'
   },
 
