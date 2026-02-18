@@ -34,19 +34,19 @@ const VA_BANKS = [
 
 // Page title per game slug (currency names)
 const PAGE_TITLES = {
-  'valorant':           'Valorant Points',
-  'mobile-legends':     'Mobile Legends Diamonds',
-  'free-fire':          'Free Fire Diamonds',
-  'arena-of-valor':     'Arena of Valor Vouchers',
-  'genshin-impact':     'Genshin Impact Genesis Crystals',
-  'haikyu-fly-high':    'Haikyuu Fly High Star Gems',
-  'honor-of-kings':     'Honor of Kings Tokens',
-  'league-of-legends':  'League of Legends Wild Cores',
-  'marvel-rivals':      'Marvel Rivals Lattices',
-  'punishing-gray-raven': 'Punishing Gray Raven Rainbow Cards',
-  'zenless-zone-zero':  'Zenless Zone Zero Monochrome',
-  'honkai-star-rail':   'Honkai Star Rail Oneiric Shards',
-  'pubg-mobile':        'PUBG Mobile UC',
+  'valorant':           'Points',
+  'mobile-legends':     'Diamonds',
+  'free-fire':          'Diamonds',
+  'arena-of-valor':     'Vouchers',
+  'genshin-impact':     'Genesis Crystals',
+  'haikyu-fly-high':    'Diamonds',
+  'honor-of-kings':     'Tokens',
+  'league-of-legends':  'Riot Points',
+  'marvel-rivals':      'Lattices',
+  'punishing-gray-raven': 'Rainbow Cards',
+  'zenless-zone-zero':  'Monochrome',
+  'honkai-star-rail':   'Oneiric Shards',
+  'pubg-mobile':        'UC',
   'steam-wallet':       'Steam Wallet',
   'token-pln':          'Token PLN',
   'telkomsel':          'Pulsa & Paket Data Telkomsel',
@@ -1097,7 +1097,7 @@ function OrderPage() {
                       <div className="product-price">
                         {product.displayPrice}
                       </div>
-                      <div className="product-description">{product.description}</div>
+                      {/* <div className="product-description">{product.description}</div> */}
                     </div>
                   ))}
                 </div>

@@ -32,6 +32,28 @@ const VA_BANKS = [
   { code: 'BT', name: 'Permata Bank Virtual Account', logo: 'BT' },
 ];
 
+// Page title per game slug (currency names)
+const PAGE_TITLES = {
+  'valorant':           'Valorant Points',
+  'mobile-legends':     'Mobile Legends Diamonds',
+  'free-fire':          'Free Fire Diamonds',
+  'arena-of-valor':     'Arena of Valor Vouchers',
+  'genshin-impact':     'Genshin Impact Genesis Crystals',
+  'haikyu-fly-high':    'Haikyuu Fly High Star Gems',
+  'honor-of-kings':     'Honor of Kings Tokens',
+  'league-of-legends':  'League of Legends Wild Cores',
+  'marvel-rivals':      'Marvel Rivals Lattices',
+  'punishing-gray-raven': 'Punishing Gray Raven Rainbow Cards',
+  'zenless-zone-zero':  'Zenless Zone Zero Monochrome',
+  'honkai-star-rail':   'Honkai Star Rail Oneiric Shards',
+  'pubg-mobile':        'PUBG Mobile UC',
+  'steam-wallet':       'Steam Wallet',
+  'token-pln':          'Token PLN',
+  'telkomsel':          'Pulsa & Paket Data Telkomsel',
+  'indosat':            'Pulsa & Paket Data Indosat',
+  'xl-axis':            'Pulsa & Paket Data XL/Axis',
+};
+
 // ── Product type configs ─────────────────────────────────────
 // Menentukan form Step 2 berdasarkan product_type dari API.
 // Ini menggantikan kebutuhan hardcode per-slug untuk produk baru.
@@ -1036,7 +1058,9 @@ function OrderPage() {
               />
             </div>
           )}
-          <h1 className="page-title">Order {game?.name || 'Valorant'} Points</h1>
+          <h1 className="page-title">
+            Order {PAGE_TITLES[gameSlug] || game?.name || 'Game'}
+          </h1>
         </div>
 
         <div className="order-layout">
@@ -1053,7 +1077,23 @@ function OrderPage() {
                       className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''}`}
                       onClick={() => handleProductSelect(product)}
                     >
-                      <div className="product-name">{product.name}</div>
+                      <div className="product-name">
+                        {/* icon_product_url = filename dari games, load dari /images/icon_product/ */}
+                        {(product.icon_product_url || currentGameConfig.iconFile || game?.icon_url) && (
+                          <img
+                            src={
+                              product.icon_product_url
+                                ? `${process.env.PUBLIC_URL}/images/icon_product/${product.icon_product_url}`
+                                : currentGameConfig.iconFile
+                                  ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
+                                  : game.icon_url
+                            }
+                            alt=""
+                            className="product-card-icon"
+                          />
+                        )}
+                        {product.name}
+                      </div>
                       <div className="product-price">
                         {product.displayPrice}
                       </div>
