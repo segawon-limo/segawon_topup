@@ -984,3 +984,18 @@ input:disabled {
   letter-spacing: 0.5px;
   vertical-align: middle;
 }
+
+/* ── Product card icon ── */
+.product-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-card-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}

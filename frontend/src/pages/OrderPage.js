@@ -1053,7 +1053,23 @@ function OrderPage() {
                       className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''}`}
                       onClick={() => handleProductSelect(product)}
                     >
-                      <div className="product-name">{product.name}</div>
+                      <div className="product-name">
+                        {/* icon_product_url = filename dari games, load dari /images/icon_product/ */}
+                        {(product.icon_product_url || currentGameConfig.iconFile || game?.icon_url) && (
+                          <img
+                            src={
+                              product.icon_product_url
+                                ? `${process.env.PUBLIC_URL}/images/icon_product/${product.icon_product_url}`
+                                : currentGameConfig.iconFile
+                                  ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
+                                  : game.icon_url
+                            }
+                            alt=""
+                            className="product-card-icon"
+                          />
+                        )}
+                        {product.name}
+                      </div>
                       <div className="product-price">
                         {product.displayPrice}
                       </div>
