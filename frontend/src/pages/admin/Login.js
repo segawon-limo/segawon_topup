@@ -1,0 +1,88 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Admin.css';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
+
+function AdminLogin() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_user', JSON.stringify(data.admin));
+        navigate('/admin/dashboard');
+      } else {
+        setError(data.message || 'Login gagal');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan. Coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="admin-login-page">
+      <div className="login-container">
+        <div className="login-header">
+          <img src="/images/logo/logo-navbar.png" alt="Logo" className="login-logo" />
+          <h1>Admin Dashboard</h1>
+          <p>Segawon Top Up</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form">
+          {error && <div className="error-message">{error}</div>}
+          
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              placeholder="Masukkan username"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Masukkan password"
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn-login" disabled={loading}>
+            {loading ? 'Memproses...' : 'Login'}
+          </button>
+        </form>
+
+        <div className="login-footer">
+          <small>© 2026 Segawon Top Up. Admin Only.</small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AdminLogin;

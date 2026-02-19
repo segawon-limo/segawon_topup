@@ -33,9 +33,6 @@ router.get('/products/:gameSlug', orderController.getProducts);
 // RIOT ID VALIDATION
 // ========================================
 router.post('/validate-riot-id', orderController.validateRiotId);
-router.get('/validate-riot-id', (req, res) => {
-  res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST.' });
-});
 router.post('/check-pln-meter', orderController.checkPlnMeter);
 router.get('/check-pln-meter/:refId', orderController.getPlnMeterResult);
 
@@ -63,9 +60,3 @@ router.get('/orders/:orderNumber', orderController.getOrderStatus);
 router.get('/orders/history', orderController.getOrderHistory);
 
 module.exports = router;
-
-// ══════════════════════════════════════════════════════════════
-// ADMIN ROUTES
-// ══════════════════════════════════════════════════════════════
-const adminRoutes = require('./admin');
-router.use('/admin', adminRoutes);
