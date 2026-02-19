@@ -94,9 +94,10 @@ exports.getDashboard = async (req, res) => {
     const overview = overviewResult.rows[0].data;
 
     // Get Digiflazz saldo
-    let digiflazzSaldo = null;
+    // let digiflazzSaldo = null; checkBalance()
+    //  TEMPORARY: Disabled until cekSaldo() method implemented in digiflazz.service.js
     try {
-      const saldoRes = await digiflazzService.cekSaldo();
+      const saldoRes = await digiflazzService.checkBalance();
       if (saldoRes.success && saldoRes.data) {
         digiflazzSaldo = {
           deposit: parseFloat(saldoRes.data.deposit || 0),
@@ -146,7 +147,7 @@ exports.getDailyStats = async (req, res) => {
     
     const result = await pool.query(`
       SELECT * FROM v_daily_stats
-      WHERE date >= CURRENT_DATE - $1
+      WHERE date >= CURRENT_DATE - INTERVAL '1 day' * $1
       ORDER BY date ASC
     `, [days]);
 

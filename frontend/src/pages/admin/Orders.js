@@ -142,8 +142,8 @@ function AdminOrders() {
                     <td><strong>{formatRupiah(order.amount)}</strong></td>
                     <td>{order.payment_method}</td>
                     <td>
-                      <span className={`badge ${getStatusBadge(order.status)}`}>
-                        {order.status}
+                      <span className={`badge ${getStatusBadge(order.order_status)}`}>
+                        {order.order_status}
                       </span>
                     </td>
                     <td><small>{formatDate(order.created_at)}</small></td>
