@@ -112,7 +112,7 @@ exports.getDashboard = async (req, res) => {
     const failedOrders = await pool.query(`
       SELECT COUNT(*) as count
       FROM orders
-      WHERE status IN ('FAILED', 'PENDING_RETRY')
+      WHERE order_status IN ('FAILED', 'PENDING_RETRY')
         AND created_at >= NOW() - INTERVAL '24 hours'
     `);
 
@@ -247,7 +247,7 @@ exports.getOrders = async (req, res) => {
 
     if (status) {
       params.push(status);
-      whereClause += ` AND o.status = $${params.length}`;
+      whereClause += ` AND o.order_status = $${params.length}`;
     }
 
     if (search) {
@@ -268,11 +268,11 @@ exports.getOrders = async (req, res) => {
     params.push(limit, offset);
     const result = await pool.query(`
       SELECT 
-        o.id, o.order_number, o.user_id, o.customer_name, o.customer_email,
-        o.amount, o.base_price, o.payment_fee, o.profit_price,
-        o.status, o.payment_method, o.voucher_code, o.voucher_discount,
+        o.id, o.order_number, o.game_user_id, o.customer_name, o.customer_email,
+        o.amount, o.payment_fee,
+        o.order_status, o.payment_method, o.voucher_code, o.voucher_discount,
         o.created_at, o.updated_at,
-        p.name as product_name, p.sku,
+        p.name as product_name, p.sku, p.base_price,
         g.name as game_name
       FROM orders o
       LEFT JOIN products p ON o.product_id = p.id
@@ -326,7 +326,7 @@ exports.retryFailedOrders = async (req, res) => {
       try {
         // Get order details
         const orderResult = await pool.query(
-          'SELECT * FROM orders WHERE id = $1 AND status IN ($2, $3)',
+          'SELECT * FROM orders WHERE id = $1 AND order_status IN ($2, $3)',
           [orderId, 'FAILED', 'PENDING_RETRY']
         );
 
@@ -353,7 +353,7 @@ exports.retryFailedOrders = async (req, res) => {
         // Retry Digiflazz transaction
         const digiflazzRes = await digiflazzService.createTransaction({
           sku,
-          customerNo: order.user_id,
+          customerNo: order.game_user_id,
           orderNumber: order.order_number
         });
 
@@ -361,7 +361,7 @@ exports.retryFailedOrders = async (req, res) => {
           // Success! Update order
           await pool.query(
             `UPDATE orders 
-             SET status = $1, sn = $2, updated_at = NOW()
+             SET order_status = $1, provider_serial_number = $2, updated_at = NOW()
              WHERE id = $3`,
             ['SUCCESS', digiflazzRes.data.sn, orderId]
           );
