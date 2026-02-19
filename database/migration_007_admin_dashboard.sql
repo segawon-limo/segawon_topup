@@ -79,14 +79,14 @@ CREATE OR REPLACE VIEW v_daily_stats AS
 SELECT 
   DATE(created_at) as date,
   COUNT(*) as total_orders,
-  COUNT(*) FILTER (WHERE status = 'SUCCESS') as success_orders,
-  COUNT(*) FILTER (WHERE status = 'FAILED') as failed_orders,
-  COUNT(*) FILTER (WHERE status = 'PENDING') as pending_orders,
-  COUNT(*) FILTER (WHERE status = 'PENDING_RETRY') as retry_orders,
-  SUM(amount) FILTER (WHERE status = 'SUCCESS') as total_revenue,
-  SUM(base_price) FILTER (WHERE status = 'SUCCESS') as total_cost,
-  SUM(payment_fee) FILTER (WHERE status = 'SUCCESS') as total_payment_fee,
-  SUM(amount - base_price - payment_fee) FILTER (WHERE status = 'SUCCESS') as total_profit
+  COUNT(*) FILTER (WHERE order_status = 'SUCCESS') as success_orders,
+  COUNT(*) FILTER (WHERE order_status = 'FAILED') as failed_orders,
+  COUNT(*) FILTER (WHERE order_status = 'PENDING') as pending_orders,
+  COUNT(*) FILTER (WHERE order_status = 'PENDING_RETRY') as retry_orders,
+  SUM(amount) FILTER (WHERE order_status = 'SUCCESS') as total_revenue,
+  SUM(base_price) FILTER (WHERE order_status = 'SUCCESS') as total_cost,
+  SUM(payment_fee) FILTER (WHERE order_status = 'SUCCESS') as total_payment_fee,
+  SUM(amount - base_price - payment_fee) FILTER (WHERE order_status = 'SUCCESS') as total_profit
 FROM orders
 WHERE created_at >= NOW() - INTERVAL '90 days'
 GROUP BY DATE(created_at)
@@ -103,8 +103,8 @@ SELECT
   g.name as game_name,
   g.category,
   COUNT(o.id) as total_sales,
-  SUM(o.amount) FILTER (WHERE o.status = 'SUCCESS') as total_revenue,
-  SUM(o.amount - o.base_price - o.payment_fee) FILTER (WHERE o.status = 'SUCCESS') as total_profit,
+  SUM(o.amount) FILTER (WHERE o.order_status = 'SUCCESS') as total_revenue,
+  SUM(o.amount - o.base_price - o.payment_fee) FILTER (WHERE o.orderstatus = 'SUCCESS') as total_profit,
   MAX(o.created_at) as last_order_at
 FROM products p
 LEFT JOIN orders o ON o.product_id = p.id AND o.created_at >= NOW() - INTERVAL '30 days'
@@ -120,9 +120,9 @@ CREATE OR REPLACE VIEW v_payment_stats AS
 SELECT 
   payment_method,
   COUNT(*) as total_transactions,
-  COUNT(*) FILTER (WHERE status = 'SUCCESS') as success_count,
-  SUM(amount) FILTER (WHERE status = 'SUCCESS') as total_revenue,
-  SUM(payment_fee) FILTER (WHERE status = 'SUCCESS') as total_fees
+  COUNT(*) FILTER (WHERE order_status = 'SUCCESS') as success_count,
+  SUM(amount) FILTER (WHERE order_status = 'SUCCESS') as total_revenue,
+  SUM(payment_fee) FILTER (WHERE order_status = 'SUCCESS') as total_fees
 FROM orders
 WHERE created_at >= NOW() - INTERVAL '30 days'
 GROUP BY payment_method
@@ -135,8 +135,8 @@ CREATE OR REPLACE VIEW v_hourly_pattern AS
 SELECT 
   EXTRACT(HOUR FROM created_at) as hour,
   COUNT(*) as total_orders,
-  COUNT(*) FILTER (WHERE status = 'SUCCESS') as success_orders,
-  AVG(amount) FILTER (WHERE status = 'SUCCESS') as avg_transaction_value
+  COUNT(*) FILTER (WHERE order_status = 'SUCCESS') as success_orders,
+  AVG(amount) FILTER (WHERE order_status = 'SUCCESS') as avg_transaction_value
 FROM orders
 WHERE created_at >= NOW() - INTERVAL '7 days'
 GROUP BY EXTRACT(HOUR FROM created_at)
@@ -156,9 +156,9 @@ BEGIN
     'today', (
       SELECT json_build_object(
         'total_orders', COUNT(*),
-        'success_orders', COUNT(*) FILTER (WHERE status = 'SUCCESS'),
-        'total_revenue', COALESCE(SUM(amount) FILTER (WHERE status = 'SUCCESS'), 0),
-        'total_profit', COALESCE(SUM(amount - base_price - payment_fee) FILTER (WHERE status = 'SUCCESS'), 0)
+        'success_orders', COUNT(*) FILTER (WHERE order_status = 'SUCCESS'),
+        'total_revenue', COALESCE(SUM(amount) FILTER (WHERE order_status = 'SUCCESS'), 0),
+        'total_profit', COALESCE(SUM(amount - base_price - payment_fee) FILTER (WHERE order_status = 'SUCCESS'), 0)
       )
       FROM orders
       WHERE DATE(created_at) = CURRENT_DATE
@@ -166,9 +166,9 @@ BEGIN
     'yesterday', (
       SELECT json_build_object(
         'total_orders', COUNT(*),
-        'success_orders', COUNT(*) FILTER (WHERE status = 'SUCCESS'),
-        'total_revenue', COALESCE(SUM(amount) FILTER (WHERE status = 'SUCCESS'), 0),
-        'total_profit', COALESCE(SUM(amount - base_price - payment_fee) FILTER (WHERE status = 'SUCCESS'), 0)
+        'success_orders', COUNT(*) FILTER (WHERE order_status = 'SUCCESS'),
+        'total_revenue', COALESCE(SUM(amount) FILTER (WHERE order_status = 'SUCCESS'), 0),
+        'total_profit', COALESCE(SUM(amount - base_price - payment_fee) FILTER (WHERE order_status = 'SUCCESS'), 0)
       )
       FROM orders
       WHERE DATE(created_at) = CURRENT_DATE - 1
@@ -176,15 +176,15 @@ BEGIN
     'this_month', (
       SELECT json_build_object(
         'total_orders', COUNT(*),
-        'success_orders', COUNT(*) FILTER (WHERE status = 'SUCCESS'),
-        'total_revenue', COALESCE(SUM(amount) FILTER (WHERE status = 'SUCCESS'), 0),
-        'total_profit', COALESCE(SUM(amount - base_price - payment_fee) FILTER (WHERE status = 'SUCCESS'), 0)
+        'success_orders', COUNT(*) FILTER (WHERE order_status = 'SUCCESS'),
+        'total_revenue', COALESCE(SUM(amount) FILTER (WHERE order_status = 'SUCCESS'), 0),
+        'total_profit', COALESCE(SUM(amount - base_price - payment_fee) FILTER (WHERE order_status = 'SUCCESS'), 0)
       )
       FROM orders
       WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
     ),
     'pending_retry', (
-      SELECT COUNT(*) FROM orders WHERE status = 'PENDING_RETRY'
+      SELECT COUNT(*) FROM orders WHERE order_status = 'PENDING_RETRY'
     )
   ) INTO result;
   
@@ -198,8 +198,8 @@ COMMENT ON FUNCTION get_dashboard_overview IS 'Get quick overview stats untuk da
 -- 6. INDEXES untuk performance
 -- ══════════════════════════════════════════════════════════════
 CREATE INDEX IF NOT EXISTS idx_orders_created_date ON orders(DATE(created_at));
-CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_orders_product_status ON orders(product_id, status);
+CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(order_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_product_status ON orders(product_id, order_status);
 
 -- Verify
 SELECT 'Migration 007 completed successfully' as status;
