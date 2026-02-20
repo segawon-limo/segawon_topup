@@ -314,7 +314,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
       if (name === 'base_price' || name === 'selling_price') {
         const sp = parseFloat(name === 'selling_price' ? value : updated.selling_price) || 0;
         const bp = parseFloat(name === 'base_price'    ? value : updated.base_price)    || 0;
-        updated.profit_price = sp > 0 ? (sp - bp).toFixed(0) : updated.profit_price;
+        updated.profit_price = sp > 0 ? (sp - bp).toFixed(2) : updated.profit_price;
       }
       return updated;
     });
@@ -349,8 +349,8 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     }
   };
 
-  const profitMargin = form.selling_price && form.base_price
-    ? (Math.ceil(((form.selling_price - form.base_price) / form.selling_price) * 1000) / 10).toFixed(1)
+  const profitMargin = form.selling_price && form.profit_price
+    ? (Math.ceil((parseFloat(form.profit_price) / parseFloat(form.selling_price)) * 1000) / 10).toFixed(1)
     : null;
 
   return (
