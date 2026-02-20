@@ -141,8 +141,9 @@ function AdminDashboard() {
           <p>Welcome back, {JSON.parse(localStorage.getItem('admin_user') || '{}').full_name}</p>
         </div>
         <div className="header-right">
-          <button onClick={() => navigate('/admin/orders')}  className="btn-secondary">📋 Orders</button>
-          <button onClick={() => navigate('/admin/catalog')} className="btn-secondary">🗂️ Catalog</button>
+          <button onClick={() => navigate('/admin/orders')} className="btn-secondary">
+            📋 Orders
+          </button>
           <button onClick={handleLogout} className="btn-danger">Logout</button>
         </div>
       </div>
