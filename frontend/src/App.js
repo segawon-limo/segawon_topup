@@ -19,6 +19,7 @@ import Footer from './components/Footer';
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminOrders from './pages/admin/Orders';
+import AdminCatalog from './pages/admin/Catalog';
 
 function App() {
   return (
@@ -34,9 +35,10 @@ function App() {
             // <Route path="/order/payment" element={<PaymentPage />} />
             <Route path="/payment/:orderNumber" element={<PaymentPage />} />
             <Route path="/order/qr" element={<QRPaymentPage />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/login"     element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/orders" element={<AdminOrders />} />
+            <Route path="/admin/orders"    element={<AdminOrders />} />
+            <Route path="/admin/catalog"   element={<AdminCatalog />} />
           </Routes>
         </main>
         <Footer />
