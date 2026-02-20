@@ -49,3 +49,6 @@ router.delete('/catalog/products/:id',      catalogController.deleteProduct);
 router.post  ('/catalog/products/bulk',     catalogController.bulkCreateProducts);
 
 module.exports = router;
+
+// Image Upload (base64, no multer)
+router.post('/catalog/upload-image', catalogController.uploadImage);

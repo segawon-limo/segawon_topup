@@ -82,3 +82,8 @@ coverage/
 *.bak
 *.orig
 .env.backup
+
+# Ignore image folders
+frontend/public/images/icon_product/
+frontend/public/images/games_icon/
+frontend/public/images/header/
