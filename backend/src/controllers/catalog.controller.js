@@ -212,7 +212,8 @@ exports.getProducts = async (req, res) => {
         p.id, p.name, p.description, p.sku,
         p.base_price, p.selling_price, p.profit_price,
         p.is_active, p.sort_order,
-        p.icon_product_url,
+        g.icon_product_url,
+        p.game_id,
         p.created_at, p.updated_at,
         g.name AS game_name, g.slug AS game_slug
       FROM products p
