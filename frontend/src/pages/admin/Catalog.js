@@ -350,7 +350,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
   };
 
   const profitMargin = form.selling_price && form.base_price
-    ? (((form.selling_price - form.base_price) / form.selling_price) * 100).toFixed(1)
+    ? (Math.ceil(((form.selling_price - form.base_price) / form.selling_price) * 1000) / 10).toFixed(1)
     : null;
 
   return (
@@ -625,7 +625,7 @@ function AdminCatalog() {
         />
         {tab === 'products' && (
           <select className="filter-select" value={filterGame} onChange={e => setFilterGame(e.target.value)}>
-            <option value="">Semua Game</option>
+            <option value="">Semua Products</option>
             {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         )}
@@ -732,7 +732,7 @@ function AdminCatalog() {
               )}
               {filteredProducts.map((p, i) => {
                 const profitMargin = p.selling_price > 0
-                  ? ((p.profit_price / p.selling_price) * 100).toFixed(1)
+                  ? (Math.ceil((p.profit_price / p.selling_price) * 1000) / 10).toFixed(1)
                   : 0;
                 return (
                   <tr key={p.id} style={{ opacity: p.is_active ? 1 : 0.5 }}>
