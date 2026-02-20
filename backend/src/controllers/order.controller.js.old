@@ -91,12 +91,14 @@ exports.getProducts = async (req, res) => {
     // Get products
     const productsResult = await pool.query(`
       SELECT 
-        id, name, description, sku,
-        base_price, selling_price, profit_price,
-        is_active, sort_order
-      FROM products
-      WHERE game_id = $1 AND is_active = true
-      ORDER BY sort_order ASC, selling_price ASC
+        p.id, p.name, p.description, p.sku,
+        p.base_price, p.selling_price, p.profit_price,
+        p.is_active, p.sort_order,
+        g.icon_product_url
+      FROM products p
+      JOIN games g ON g.id = p.game_id
+      WHERE p.game_id = $1 AND p.is_active = true
+      ORDER BY p.sort_order ASC, p.selling_price ASC
     `, [game.id]);
 
     res.json({
@@ -115,7 +117,8 @@ exports.getProducts = async (req, res) => {
         description:  p.description,
         sku:          p.sku,
         price:        parseFloat(p.selling_price),
-        displayPrice: `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`
+        displayPrice: `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`,
+        icon_product_url: p.icon_product_url || null,
       }))
     });
 
