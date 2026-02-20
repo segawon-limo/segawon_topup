@@ -12,7 +12,7 @@ exports.getGames = async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        id, name, slug, description, icon_url,
+        id, name, slug, description, icon_url, icon_product_url,
         category, product_type, digiflazz_format_key,
         form_config, is_active, sort_order,
         created_at, updated_at,
@@ -54,7 +54,7 @@ exports.getGame = async (req, res) => {
 exports.createGame = async (req, res) => {
   try {
     const {
-      name, slug, description, icon_url,
+      name, slug, description, icon_url, icon_product_url,
       category, product_type, digiflazz_format_key,
       form_config, is_active, sort_order
     } = req.body;
@@ -71,14 +71,14 @@ exports.createGame = async (req, res) => {
 
     const result = await pool.query(`
       INSERT INTO games (
-        name, slug, description, icon_url,
+        name, slug, description, icon_url, icon_product_url,
         category, product_type, digiflazz_format_key,
         form_config, is_active, sort_order,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW(), NOW())
       RETURNING *
     `, [
-      name, slug, description || null, icon_url || null,
+      name, slug, description || null, icon_url || null, icon_product_url || null,
       category || 'games',
       product_type || 'topup_game',
       digiflazz_format_key || 'userId_only',
@@ -102,7 +102,7 @@ exports.updateGame = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      name, slug, description, icon_url,
+      name, slug, description, icon_url, icon_product_url,
       category, product_type, digiflazz_format_key,
       form_config, is_active, sort_order
     } = req.body;
@@ -123,17 +123,18 @@ exports.updateGame = async (req, res) => {
         slug               = COALESCE($2, slug),
         description        = $3,
         icon_url           = $4,
-        category           = COALESCE($5, category),
-        product_type       = COALESCE($6, product_type),
-        digiflazz_format_key = COALESCE($7, digiflazz_format_key),
-        form_config        = $8,
-        is_active          = COALESCE($9, is_active),
-        sort_order         = COALESCE($10, sort_order),
+        icon_product_url   = $5,
+        category           = COALESCE($6, category),
+        product_type       = COALESCE($7, product_type),
+        digiflazz_format_key = COALESCE($8, digiflazz_format_key),
+        form_config        = $9,
+        is_active          = COALESCE($10, is_active),
+        sort_order         = COALESCE($11, sort_order),
         updated_at         = NOW()
-      WHERE id = $11
+      WHERE id = $12
       RETURNING *
     `, [
-      name, slug, description, icon_url,
+      name, slug, description, icon_url, icon_product_url,
       category, product_type, digiflazz_format_key,
       form_config ? JSON.stringify(form_config) : null,
       is_active,
@@ -404,5 +405,80 @@ exports.bulkCreateProducts = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   } finally {
     client.release();
+  }
+};
+
+
+// ══════════════════════════════════════════════════════════════
+// IMAGE UPLOAD (base64, no multer needed)
+// ══════════════════════════════════════════════════════════════
+
+const fs   = require('fs');
+const path = require('path');
+
+/**
+ * POST /api/admin/catalog/upload-image
+ * Body: { type: 'header' | 'icon', filename: 'val.webp', data: '<base64>' }
+ * Saves to frontend/public/images/{header|games_icon}/
+ */
+exports.uploadImage = async (req, res) => {
+  try {
+    const { type, filename, data } = req.body;
+
+    if (!type || !filename || !data) {
+      return res.status(400).json({ success: false, message: 'type, filename, dan data wajib diisi' });
+    }
+
+    if (!['header', 'icon'].includes(type)) {
+      return res.status(400).json({ success: false, message: 'type harus "header" atau "icon"' });
+    }
+
+    // Sanitize filename — only allow safe chars
+    const safeName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '');
+    if (!safeName) {
+      return res.status(400).json({ success: false, message: 'Nama file tidak valid' });
+    }
+
+    // Allowed extensions
+    const ext = path.extname(safeName).toLowerCase();
+    if (!['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)) {
+      return res.status(400).json({ success: false, message: 'Ekstensi file tidak didukung. Gunakan jpg, png, webp.' });
+    }
+
+    // Strip base64 header if present (e.g. "data:image/webp;base64,...")
+    const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Max 5MB
+    if (buffer.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ success: false, message: 'Ukuran file maksimal 5MB' });
+    }
+
+    // Resolve target folder — relative to backend, go up to frontend/public/images
+    const folderMap = {
+      header: 'header',
+      icon:   'games_icon',
+    };
+    const targetDir = path.resolve(
+      __dirname, '..', '..', '..', '..', 'frontend', 'public', 'images', folderMap[type]
+    );
+
+    // Make sure dir exists
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const targetPath = path.join(targetDir, safeName);
+    fs.writeFileSync(targetPath, buffer);
+
+    console.log(`✅ Image uploaded: ${targetPath}`);
+
+    res.json({
+      success:  true,
+      filename: safeName,
+      url:      `/images/${folderMap[type]}/${safeName}`,
+      message:  `File ${safeName} berhasil diupload`,
+    });
+  } catch (err) {
+    console.error('uploadImage error:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -52,6 +52,85 @@ function Toast({ toast, onClose }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// ── Image Upload Helper ──────────────────────────────────────
+function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
+  const [uploading, setUploading] = React.useState(false);
+  const [preview,   setPreview]   = React.useState(null);
+
+  const handleFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreview(ev.target.result);
+    reader.readAsDataURL(file);
+
+    setUploading(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload  = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const res  = await fetch(`${API_URL}/api/admin/catalog/upload-image`, {
+        method:  'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ type, filename: file.name, data: base64 }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      onChange(data.filename);
+    } catch (err) {
+      alert('Upload gagal: ' + err.message);
+      setPreview(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const previewSrc = preview
+    || (value ? (type === 'header'
+        ? `/images/header/${value}`
+        : `/images/games_icon/${value}`) : null);
+
+  return (
+    <div className="form-group">
+      <label>{label} <span className="label-hint">{hint}</span></label>
+      <div className="upload-field">
+        {previewSrc && (
+          <img
+            src={previewSrc}
+            alt="preview"
+            className={type === 'header' ? 'upload-preview-header' : 'upload-preview-icon'}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+        )}
+        <div className="upload-controls">
+          <input
+            type="text"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={type === 'header' ? 'game-header.jpg' : 'game-icon.webp'}
+            className="upload-text-input"
+          />
+          <label className={`btn-upload ${uploading ? 'btn-uploading' : ''}`}>
+            {uploading ? '⏳ Uploading...' : '📁 Pilih File'}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleFile}
+              style={{ display: 'none' }}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 // GAME FORM MODAL
 // ══════════════════════════════════════════════════════════════
 function GameModal({ game, onClose, onSaved, authHeader }) {
@@ -60,15 +139,14 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
     name:                 game?.name               || '',
     slug:                 game?.slug               || '',
     description:          game?.description        || '',
-    icon_url:             game?.icon_url           || '',
     category:             game?.category           || 'games',
     product_type:         game?.product_type       || 'topup_game',
     digiflazz_format_key: game?.digiflazz_format_key || 'userId_only',
     is_active:            game?.is_active !== false,
     sort_order:           game?.sort_order         ?? 0,
-    // form_config fields — simplified inputs
-    fc_header_image: game?.form_config?.headerImage   || '',
-    fc_icon_file:    game?.form_config?.iconFile      || '',
+    fc_header_image:    game?.form_config?.headerImage   || '',
+    fc_icon_file:       game?.form_config?.iconFile      || '',
+    icon_product_url:   game?.icon_product_url            || '',
     fc_page_title:   game?.form_config?.pageTitle     || '',
     fc_display_fmt:  game?.form_config?.displayFormat || 'userId',
     fc_validation:   game?.form_config?.validation    || '',
@@ -81,7 +159,6 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
-  // Auto-generate slug dari name
   const handleNameChange = (e) => {
     const name = e.target.value;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -111,7 +188,8 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
       name:                 form.name,
       slug:                 form.slug,
       description:          form.description || null,
-      icon_url:             form.icon_url    || null,
+      icon_url:             form.fc_icon_file ? `/images/games_icon/${form.fc_icon_file}` : null,
+      icon_product_url:     form.icon_product_url || null,
       category:             form.category,
       product_type:         form.product_type,
       digiflazz_format_key: form.digiflazz_format_key,
@@ -156,7 +234,6 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
         <form onSubmit={handleSubmit} className="modal-form">
           {error && <div className="form-error">❌ {error}</div>}
 
-          {/* Row 1 */}
           <div className="form-row">
             <div className="form-group">
               <label>Nama Game *</label>
@@ -168,7 +245,6 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
             </div>
           </div>
 
-          {/* Row 2 */}
           <div className="form-row">
             <div className="form-group">
               <label>Category</label>
@@ -184,7 +260,6 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
             </div>
           </div>
 
-          {/* Row 3 */}
           <div className="form-row">
             <div className="form-group">
               <label>Digiflazz Format Key</label>
@@ -206,30 +281,41 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
             </div>
           </div>
 
-          {/* Row 4 — assets */}
-          <div className="form-row">
-            <div className="form-group">
-              <label>Icon URL / filename <span className="label-hint">(icon_url di DB)</span></label>
-              <input name="icon_url" value={form.icon_url} onChange={handleChange} placeholder="https://... atau mlb.webp" />
-            </div>
-            <div className="form-group">
-              <label>Description</label>
-              <input name="description" value={form.description} onChange={handleChange} placeholder="Opsional" />
-            </div>
+          <div className="form-group">
+            <label>Description <span className="label-hint">(opsional)</span></label>
+            <input name="description" value={form.description} onChange={handleChange} placeholder="Opsional" />
           </div>
 
-          {/* form_config section */}
           <div className="section-divider">⚙️ form_config (OrderPage)</div>
 
           <div className="form-row">
-            <div className="form-group">
-              <label>Header Image <span className="label-hint">(public/images/header/)</span></label>
-              <input name="fc_header_image" value={form.fc_header_image} onChange={handleChange} placeholder="mobile-legends-header.jpg" />
-            </div>
-            <div className="form-group">
-              <label>Icon File <span className="label-hint">(public/images/games_icon/)</span></label>
-              <input name="fc_icon_file" value={form.fc_icon_file} onChange={handleChange} placeholder="mlb.webp" />
-            </div>
+            <ImageUploadField
+              label="Header Image"
+              hint="(public/images/header/)"
+              type="header"
+              value={form.fc_header_image}
+              onChange={(filename) => setForm(f => ({ ...f, fc_header_image: filename }))}
+              authHeader={authHeader}
+            />
+            <ImageUploadField
+              label="Icon File"
+              hint="(public/images/games_icon/) — icon_url auto terisi"
+              type="icon"
+              value={form.fc_icon_file}
+              onChange={(filename) => setForm(f => ({ ...f, fc_icon_file: filename }))}
+              authHeader={authHeader}
+            />
+          </div>
+
+          <div className="form-row">
+            <ImageUploadField
+              label="Icon Product URL"
+              hint="(icon produk di tabel games)"
+              type="icon"
+              value={form.icon_product_url}
+              onChange={(filename) => setForm(f => ({ ...f, icon_product_url: `/images/games_icon/${filename}` }))}
+              authHeader={authHeader}
+            />
           </div>
 
           <div className="form-row">
@@ -278,6 +364,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
             <button type="button" className="btn-secondary" onClick={onClose}>Batal</button>
             <button type="submit" className="btn-primary" disabled={saving}>
               {saving ? 'Menyimpan...' : isEdit ? '💾 Simpan Perubahan' : '➕ Buat Game'}
+
             </button>
           </div>
         </form>
@@ -285,6 +372,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
     </div>
   );
 }
+
 
 // ══════════════════════════════════════════════════════════════
 // PRODUCT FORM MODAL
@@ -625,7 +713,7 @@ function AdminCatalog() {
         />
         {tab === 'products' && (
           <select className="filter-select" value={filterGame} onChange={e => setFilterGame(e.target.value)}>
-            <option value="">Semua Products</option>
+            <option value="">Semua Game</option>
             {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         )}

@@ -73,10 +73,12 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
         r.onerror = reject;
         r.readAsDataURL(file);
       });
+      // Map frontend type to backend folder key
+      const backendType = type === 'icon_product' ? 'icon_product' : type;
       const res  = await fetch(`${API_URL}/api/admin/catalog/upload-image`, {
         method:  'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ type, filename: file.name, data: base64 }),
+        body:    JSON.stringify({ type: backendType, filename: file.name, data: base64 }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
@@ -90,9 +92,11 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
   };
 
   const previewSrc = preview
-    || (value ? (type === 'header'
-        ? `/images/header/${value}`
-        : `/images/games_icon/${value}`) : null);
+    || (value ? (
+        type === 'header'      ? `/images/header/${value}` :
+        type === 'icon_product'? `/images/icon_product/${value}` :
+                                 `/images/games_icon/${value}`
+    ) : null);
 
   return (
     <div className="form-group">
@@ -310,10 +314,10 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <ImageUploadField
               label="Icon Product URL"
-              hint="(icon produk di tabel games)"
-              type="icon"
+              hint="(public/images/icon_product/) — simpan nama file saja"
+              type="icon_product"
               value={form.icon_product_url}
-              onChange={(filename) => setForm(f => ({ ...f, icon_product_url: `/images/games_icon/${filename}` }))}
+              onChange={(filename) => setForm(f => ({ ...f, icon_product_url: filename }))}
               authHeader={authHeader}
             />
           </div>

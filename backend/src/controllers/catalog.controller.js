@@ -429,8 +429,8 @@ exports.uploadImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'type, filename, dan data wajib diisi' });
     }
 
-    if (!['header', 'icon'].includes(type)) {
-      return res.status(400).json({ success: false, message: 'type harus "header" atau "icon"' });
+    if (!['header', 'icon', 'icon_product'].includes(type)) {
+      return res.status(400).json({ success: false, message: 'type harus "header", "icon", atau "icon_product"' });
     }
 
     // Sanitize filename — only allow safe chars
@@ -456,8 +456,9 @@ exports.uploadImage = async (req, res) => {
 
     // Resolve target folder — relative to backend, go up to frontend/public/images
     const folderMap = {
-      header: 'header',
-      icon:   'games_icon',
+      header:       'header',
+      icon:         'games_icon',
+      icon_product: 'icon_product',
     };
     const targetDir = path.resolve(
       __dirname, '..', '..', '..', '..', 'frontend', 'public', 'images', folderMap[type]
