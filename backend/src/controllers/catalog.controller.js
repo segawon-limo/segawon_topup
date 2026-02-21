@@ -454,15 +454,15 @@ exports.uploadImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Ukuran file maksimal 5MB' });
     }
 
-    // Resolve target folder — relative to backend, go up to frontend/public/images
+    // Resolve target folder — pakai env variable IMAGES_PATH atau fallback relative
     const folderMap = {
       header:       'header',
       icon:         'games_icon',
       icon_product: 'icon_product',
     };
-    const targetDir = path.resolve(
-      __dirname, '..', '..', '..', '..', 'frontend', 'public', 'images', folderMap[type]
-    );
+    const imagesBase = process.env.IMAGES_PATH
+      || path.resolve(__dirname, '..', '..', '..', '..', 'frontend', 'public', 'images');
+    const targetDir = path.join(imagesBase, folderMap[type]);
 
     // Make sure dir exists
     fs.mkdirSync(targetDir, { recursive: true });
