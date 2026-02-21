@@ -391,6 +391,9 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     base_price:       product?.base_price       || '',
     selling_price:    product?.selling_price    || '',
     profit_price:     product?.profit_price     || '',
+    margin:           product?.selling_price && product?.profit_price
+                        ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.selling_price)) * 1000) / 10).toFixed(1)
+                        : '',
     icon_product_url: product?.icon_product_url || '',
     is_active:        product?.is_active !== false,
     sort_order:       product?.sort_order       ?? 0,
@@ -402,11 +405,33 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     const { name, value, type, checked } = e.target;
     setForm(f => {
       const updated = { ...f, [name]: type === 'checkbox' ? checked : value };
-      // Auto-hitung profit kalau base/selling berubah
+      const bp = parseFloat(name === 'base_price'    ? value : updated.base_price)    || 0;
+      const sp = parseFloat(name === 'selling_price' ? value : updated.selling_price) || 0;
+      const pp = parseFloat(name === 'profit_price'  ? value : updated.profit_price)  || 0;
+      const mg = parseFloat(name === 'margin'        ? value : updated.margin)        || 0;
+
       if (name === 'base_price' || name === 'selling_price') {
-        const sp = parseFloat(name === 'selling_price' ? value : updated.selling_price) || 0;
-        const bp = parseFloat(name === 'base_price'    ? value : updated.base_price)    || 0;
-        updated.profit_price = sp > 0 ? (sp - bp).toFixed(2) : updated.profit_price;
+        // Modal + Jual → Profit & Margin
+        if (bp > 0 && sp > 0) {
+          const profit = sp - bp;
+          updated.profit_price = profit.toFixed(2);
+          updated.margin = (Math.ceil((profit / sp) * 1000) / 10).toFixed(1);
+        }
+      } else if (name === 'margin') {
+        // Modal + Margin → Jual & Profit
+        if (bp > 0 && mg > 0) {
+          const sell = bp / (1 - mg / 100);
+          const profit = sell - bp;
+          updated.selling_price = sell.toFixed(2);
+          updated.profit_price  = profit.toFixed(2);
+        }
+      } else if (name === 'profit_price') {
+        // Modal + Profit → Jual & Margin
+        if (bp > 0 && pp > 0) {
+          const sell = bp + pp;
+          updated.selling_price = sell.toFixed(2);
+          updated.margin = (Math.ceil((pp / sell) * 1000) / 10).toFixed(1);
+        }
       }
       return updated;
     });
@@ -441,9 +466,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     }
   };
 
-  const profitMargin = form.selling_price && form.profit_price
-    ? (Math.ceil((parseFloat(form.profit_price) / parseFloat(form.selling_price)) * 1000) / 10).toFixed(1)
-    : null;
+  // margin is now part of form state
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -488,21 +511,42 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Profit Price <span className="label-hint">(auto dari selling - base)</span></label>
-              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} />
+              <label>Profit Price <span className="label-hint">(auto kalkulasi)</span></label>
+              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} placeholder="0" />
             </div>
+            <div className="form-group">
+              <label>Margin % <span className="label-hint">(isi salah satu: profit atau margin)</span></label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  name="margin"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={form.margin}
+                  onChange={handleChange}
+                  placeholder="Contoh: 5.5"
+                  style={{ paddingRight: 28 }}
+                />
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#718096', fontSize: 14, pointerEvents: 'none' }}>%</span>
+              </div>
+            </div>
+          </div>
+
+          {form.selling_price && form.profit_price && (
+            <div className="profit-preview">
+              💰 Profit: {formatRupiah(parseFloat(form.profit_price))} &nbsp;·&nbsp;
+              Jual: {formatRupiah(parseFloat(form.selling_price))} &nbsp;·&nbsp;
+              Margin: <strong>{form.margin}%</strong>
+            </div>
+          )}
+
+          <div className="form-row">
             <div className="form-group">
               <label>Icon Produk <span className="label-hint">(public/images/icon_product/)</span></label>
               <input name="icon_product_url" value={form.icon_product_url} onChange={handleChange} placeholder="diamond-100.webp" />
             </div>
           </div>
-
-          {profitMargin !== null && (
-            <div className="profit-preview">
-              💰 Profit: {formatRupiah(form.selling_price - form.base_price)} &nbsp;·&nbsp;
-              Margin: <strong>{profitMargin}%</strong>
-            </div>
-          )}
 
           <div className="form-row">
             <div className="form-group">

@@ -414,22 +414,22 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
         // Modal + Jual → Profit & Margin
         if (bp > 0 && sp > 0) {
           const profit = sp - bp;
-          updated.profit_price = profit.toFixed(2);
+          updated.profit_price = Math.round(profit);
           updated.margin = (Math.ceil((profit / sp) * 1000) / 10).toFixed(1);
         }
       } else if (name === 'margin') {
         // Modal + Margin → Jual & Profit
         if (bp > 0 && mg > 0) {
-          const sell = bp / (1 - mg / 100);
+          const sell = Math.round(bp / (1 - mg / 100));
           const profit = sell - bp;
-          updated.selling_price = sell.toFixed(2);
-          updated.profit_price  = profit.toFixed(2);
+          updated.selling_price = sell;
+          updated.profit_price  = profit;
         }
       } else if (name === 'profit_price') {
         // Modal + Profit → Jual & Margin
         if (bp > 0 && pp > 0) {
-          const sell = bp + pp;
-          updated.selling_price = sell.toFixed(2);
+          const sell = Math.round(bp + pp);
+          updated.selling_price = sell;
           updated.margin = (Math.ceil((pp / sell) * 1000) / 10).toFixed(1);
         }
       }
@@ -541,12 +541,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
             </div>
           )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Icon Produk <span className="label-hint">(public/images/icon_product/)</span></label>
-              <input name="icon_product_url" value={form.icon_product_url} onChange={handleChange} placeholder="diamond-100.webp" />
-            </div>
-          </div>
+
 
           <div className="form-row">
             <div className="form-group">
