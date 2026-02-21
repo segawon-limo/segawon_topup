@@ -239,7 +239,7 @@ exports.createProduct = async (req, res) => {
     const {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, icon_product_url
+      is_active, sort_order
     } = req.body;
 
     if (!game_id || !name || !sku || !selling_price) {
@@ -259,9 +259,9 @@ exports.createProduct = async (req, res) => {
       INSERT INTO products (
         game_id, name, description, sku,
         base_price, selling_price, profit_price,
-        is_active, sort_order, icon_product_url,
+        is_active, sort_order,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, NOW(), NOW())
       RETURNING *
     `, [
       game_id, name, description || null, sku,
@@ -269,8 +269,7 @@ exports.createProduct = async (req, res) => {
       parseFloat(selling_price),
       computedProfit,
       is_active !== false,
-      sort_order || 0,
-      icon_product_url || null
+      sort_order || 0
     ]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -290,7 +289,7 @@ exports.updateProduct = async (req, res) => {
     const {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, icon_product_url
+      is_active, sort_order
     } = req.body;
 
     // Cek SKU duplicate (exclude diri sendiri)
@@ -314,14 +313,13 @@ exports.updateProduct = async (req, res) => {
         profit_price     = COALESCE($7, profit_price),
         is_active        = COALESCE($8, is_active),
         sort_order       = COALESCE($9, sort_order),
-        icon_product_url = $10,
         updated_at       = NOW()
-      WHERE id = $11
+      WHERE id = $10
       RETURNING *
     `, [
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, icon_product_url,
+      is_active, sort_order,
       id
     ]);
 
