@@ -401,60 +401,51 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
-  const calculate = (name, value, f) => {
-    const updated = { ...f, [name]: value };
-    const bp = parseFloat(name === 'base_price'    ? value : f.base_price)    || 0;
-    const sp = parseFloat(name === 'selling_price' ? value : f.selling_price) || 0;
-    const pp = parseFloat(name === 'profit_price'  ? value : f.profit_price)  || 0;
-    const mg = parseFloat(name === 'margin'        ? value : f.margin)        || 0;
-
-    if (name === 'base_price' || name === 'selling_price') {
-      // Modal + Jual → Profit & Margin
-      if (bp > 0 && sp > 0) {
-        const profit = sp - bp;
-        updated.profit_price = Math.round(profit);
-        updated.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
-      }
-    } else if (name === 'margin') {
-      // Modal + Margin → Jual & Profit: bp * (1 + mg/100)
-      if (bp > 0 && mg > 0) {
-        const sell = Math.round(bp * (1 + mg / 100));
-        const profit = sell - bp;
-        updated.selling_price = sell;
-        updated.profit_price  = profit;
-      }
-    } else if (name === 'profit_price') {
-      // Modal + Profit → Jual & Margin (hanya saat selesai mengetik)
-      if (bp > 0 && pp > 0) {
-        const sell = Math.round(bp + pp);
-        updated.selling_price = sell;
-        updated.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
-      }
-    }
-    return updated;
-  };
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox') {
       setForm(f => ({ ...f, [name]: checked }));
       return;
     }
-    // For margin & profit_price: just update the value while typing, calculate on blur
-    if (name === 'margin' || name === 'profit_price') {
-      setForm(f => ({ ...f, [name]: value }));
-      return;
-    }
-    // For base_price & selling_price: calculate immediately
-    setForm(f => calculate(name, value, f));
+    setForm(f => {
+      const next = { ...f, [name]: value };
+      const bp = parseFloat(next.base_price)    || 0;
+      const sp = parseFloat(next.selling_price) || 0;
+      const pp = parseFloat(next.profit_price)  || 0;
+      const mg = parseFloat(next.margin)        || 0;
+
+      // Modal + Jual → auto Profit & Markup%
+      if ((name === 'base_price' || name === 'selling_price') && bp > 0 && sp > 0) {
+        const profit = sp - bp;
+        next.profit_price = Math.round(profit);
+        next.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
+      }
+      return next;
+    });
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    // Only trigger calculation on blur for margin and profit_price
-    if (name === 'margin' || name === 'profit_price') {
-      setForm(f => calculate(name, value, f));
-    }
+    if (name !== 'margin' && name !== 'profit_price') return;
+    setForm(f => {
+      const next = { ...f, [name]: value };
+      const bp = parseFloat(next.base_price)   || 0;
+      const mg = parseFloat(next.margin)       || 0;
+      const pp = parseFloat(next.profit_price) || 0;
+
+      if (name === 'margin' && bp > 0 && mg > 0) {
+        // Modal + Markup% → Jual & Profit
+        const sell = Math.round(bp * (1 + mg / 100));
+        next.selling_price = sell;
+        next.profit_price  = sell - bp;
+      } else if (name === 'profit_price' && bp > 0 && pp > 0) {
+        // Modal + Profit → Jual & Markup%
+        const sell = Math.round(bp + pp);
+        next.selling_price = sell;
+        next.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
