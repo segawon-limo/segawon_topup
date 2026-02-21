@@ -295,7 +295,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <ImageUploadField
               label="Header Image"
-              hint="(public/images/header/)"
+              hint="(public/images/header/) — 2560px x 1200 px"
               type="header"
               value={form.fc_header_image}
               onChange={(filename) => setForm(f => ({ ...f, fc_header_image: filename }))}
@@ -303,7 +303,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
             />
             <ImageUploadField
               label="Icon File"
-              hint="(public/images/games_icon/) — icon_url auto terisi"
+              hint="(public/images/games_icon/) — 1024px x 1024px — icon_url auto terisi"
               type="icon"
               value={form.fc_icon_file}
               onChange={(filename) => setForm(f => ({ ...f, fc_icon_file: filename }))}
@@ -314,7 +314,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <ImageUploadField
               label="Icon Product URL"
-              hint="(public/images/icon_product/) — simpan nama file saja"
+              hint="(public/images/icon_product/) — 64px x 64px — simpan nama file saja"
               type="icon_product"
               value={form.icon_product_url}
               onChange={(filename) => setForm(f => ({ ...f, icon_product_url: filename }))}
