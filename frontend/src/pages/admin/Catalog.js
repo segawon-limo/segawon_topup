@@ -414,32 +414,18 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
       const pp = parseFloat(next.profit_price)  || 0;
       const mg = parseFloat(next.margin)        || 0;
 
-      // Modal + Jual → auto Profit & Markup%
       if ((name === 'base_price' || name === 'selling_price') && bp > 0 && sp > 0) {
+        // Modal + Jual → Profit & Markup%
         const profit = sp - bp;
         next.profit_price = Math.round(profit);
         next.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
-      }
-      return next;
-    });
-  };
-
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    if (name !== 'margin' && name !== 'profit_price') return;
-    setForm(f => {
-      const next = { ...f, [name]: value };
-      const bp = parseFloat(next.base_price)   || 0;
-      const mg = parseFloat(next.margin)       || 0;
-      const pp = parseFloat(next.profit_price) || 0;
-
-      if (name === 'margin' && bp > 0 && mg > 0) {
-        // Modal + Markup% → Jual & Profit
+      } else if (name === 'margin' && bp > 0 && mg > 0) {
+        // Modal + Markup% → Jual & Profit (realtime)
         const sell = Math.round(bp * (1 + mg / 100));
         next.selling_price = sell;
         next.profit_price  = sell - bp;
       } else if (name === 'profit_price' && bp > 0 && pp > 0) {
-        // Modal + Profit → Jual & Markup%
+        // Modal + Profit → Jual & Markup% (realtime)
         const sell = Math.round(bp + pp);
         next.selling_price = sell;
         next.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
@@ -523,7 +509,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <div className="form-group">
               <label>Profit Price <span className="label-hint">(auto kalkulasi)</span></label>
-              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} onBlur={handleBlur} placeholder="0" />
+              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} placeholder="0" />
             </div>
             <div className="form-group">
               <label>Margin % <span className="label-hint">(isi salah satu: profit atau margin)</span></label>
@@ -536,7 +522,6 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
                   max="100"
                   value={form.margin}
                   onChange={handleChange}
-                  onBlur={handleBlur}
                   placeholder="Contoh: 5.5"
                   style={{ paddingRight: 28 }}
                 />
