@@ -36,8 +36,8 @@ app.use(cors({
 }));
 
 // 3. Body parser (BEFORE routes!)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 4. Logging
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
