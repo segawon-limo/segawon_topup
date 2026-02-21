@@ -401,40 +401,60 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
+  const calculate = (name, value, f) => {
+    const updated = { ...f, [name]: value };
+    const bp = parseFloat(name === 'base_price'    ? value : f.base_price)    || 0;
+    const sp = parseFloat(name === 'selling_price' ? value : f.selling_price) || 0;
+    const pp = parseFloat(name === 'profit_price'  ? value : f.profit_price)  || 0;
+    const mg = parseFloat(name === 'margin'        ? value : f.margin)        || 0;
+
+    if (name === 'base_price' || name === 'selling_price') {
+      // Modal + Jual → Profit & Margin
+      if (bp > 0 && sp > 0) {
+        const profit = sp - bp;
+        updated.profit_price = Math.round(profit);
+        updated.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
+      }
+    } else if (name === 'margin') {
+      // Modal + Margin → Jual & Profit: bp * (1 + mg/100)
+      if (bp > 0 && mg > 0) {
+        const sell = Math.round(bp * (1 + mg / 100));
+        const profit = sell - bp;
+        updated.selling_price = sell;
+        updated.profit_price  = profit;
+      }
+    } else if (name === 'profit_price') {
+      // Modal + Profit → Jual & Margin (hanya saat selesai mengetik)
+      if (bp > 0 && pp > 0) {
+        const sell = Math.round(bp + pp);
+        updated.selling_price = sell;
+        updated.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
+      }
+    }
+    return updated;
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(f => {
-      const updated = { ...f, [name]: type === 'checkbox' ? checked : value };
-      const bp = parseFloat(name === 'base_price'    ? value : updated.base_price)    || 0;
-      const sp = parseFloat(name === 'selling_price' ? value : updated.selling_price) || 0;
-      const pp = parseFloat(name === 'profit_price'  ? value : updated.profit_price)  || 0;
-      const mg = parseFloat(name === 'margin'        ? value : updated.margin)        || 0;
+    if (type === 'checkbox') {
+      setForm(f => ({ ...f, [name]: checked }));
+      return;
+    }
+    // For margin & profit_price: just update the value while typing, calculate on blur
+    if (name === 'margin' || name === 'profit_price') {
+      setForm(f => ({ ...f, [name]: value }));
+      return;
+    }
+    // For base_price & selling_price: calculate immediately
+    setForm(f => calculate(name, value, f));
+  };
 
-      if (name === 'base_price' || name === 'selling_price') {
-        // Modal + Jual → Profit & Margin
-        if (bp > 0 && sp > 0) {
-          const profit = sp - bp;
-          updated.profit_price = Math.round(profit);
-          updated.margin = (Math.ceil((profit / sp) * 1000) / 10).toFixed(1);
-        }
-      } else if (name === 'margin') {
-        // Modal + Margin → Jual & Profit
-        if (bp > 0 && mg > 0) {
-          const sell = Math.round(bp / (1 - mg / 100));
-          const profit = sell - bp;
-          updated.selling_price = sell;
-          updated.profit_price  = profit;
-        }
-      } else if (name === 'profit_price') {
-        // Modal + Profit → Jual & Margin
-        if (bp > 0 && pp > 0) {
-          const sell = Math.round(bp + pp);
-          updated.selling_price = sell;
-          updated.margin = (Math.ceil((pp / sell) * 1000) / 10).toFixed(1);
-        }
-      }
-      return updated;
-    });
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    // Only trigger calculation on blur for margin and profit_price
+    if (name === 'margin' || name === 'profit_price') {
+      setForm(f => calculate(name, value, f));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -512,7 +532,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <div className="form-group">
               <label>Profit Price <span className="label-hint">(auto kalkulasi)</span></label>
-              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} placeholder="0" />
+              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} onBlur={handleBlur} placeholder="0" />
             </div>
             <div className="form-group">
               <label>Margin % <span className="label-hint">(isi salah satu: profit atau margin)</span></label>
@@ -525,6 +545,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
                   max="100"
                   value={form.margin}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder="Contoh: 5.5"
                   style={{ paddingRight: 28 }}
                 />
@@ -863,7 +884,7 @@ function AdminCatalog() {
               )}
               {filteredProducts.map((p, i) => {
                 const profitMargin = p.selling_price > 0
-                  ? (Math.ceil((p.profit_price / p.selling_price) * 1000) / 10).toFixed(1)
+                  ? (Math.ceil((p.profit_price / p.base_price) * 1000) / 10).toFixed(1)
                   : 0;
                 return (
                   <tr key={p.id} style={{ opacity: p.is_active ? 1 : 0.5 }}>
