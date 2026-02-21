@@ -402,12 +402,14 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     margin:           product?.selling_price && product?.profit_price
                         ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.selling_price)) * 1000) / 10).toFixed(1)
                         : '',
-    icon_product_url: product?.icon_product_url || '',
     is_active:        product?.is_active !== false,
     sort_order:       product?.sort_order       ?? 0,
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
+
+  // Safe parse: strip thousand separators (titik) before parsing
+  const safeFloat = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -417,10 +419,10 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     }
     setForm(f => {
       const next = { ...f, [name]: value };
-      const bp = parseFloat(next.base_price)    || 0;
-      const sp = parseFloat(next.selling_price) || 0;
-      const pp = parseFloat(next.profit_price)  || 0;
-      const mg = parseFloat(next.margin)        || 0;
+      const bp = safeFloat(next.base_price);
+      const sp = safeFloat(next.selling_price);
+      const pp = safeFloat(next.profit_price);
+      const mg = safeFloat(next.margin);
 
       if ((name === 'base_price' || name === 'selling_price') && bp > 0 && sp > 0) {
         // Modal + Jual → Profit & Markup%
@@ -448,9 +450,9 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     setSaving(true);
     const payload = {
       ...form,
-      base_price:    parseFloat(form.base_price)    || 0,
-      selling_price: parseFloat(form.selling_price) || 0,
-      profit_price:  parseFloat(form.profit_price)  || 0,
+      base_price:    safeFloat(form.base_price),
+      selling_price: safeFloat(form.selling_price),
+      profit_price:  safeFloat(form.profit_price),
       sort_order:    parseInt(form.sort_order)       || 0,
     };
     try {
