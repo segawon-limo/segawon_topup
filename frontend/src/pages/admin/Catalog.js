@@ -55,15 +55,29 @@ function Toast({ toast, onClose }) {
 // ── Image Upload Helper ──────────────────────────────────────
 function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
   const [uploading, setUploading] = React.useState(false);
-  const [preview,   setPreview]   = React.useState(null);
+  const [localPreview, setLocalPreview] = React.useState(null);
+  const fileInputRef = React.useRef(null);
+
+  // Reset local preview when value changes from parent (e.g. modal reopened)
+  React.useEffect(() => { setLocalPreview(null); }, [value]);
+
+  const getServerPath = (filename) => {
+    if (!filename) return null;
+    if (type === 'header')       return `/images/header/${filename}`;
+    if (type === 'icon_product') return `/images/icon_product/${filename}`;
+    return `/images/games_icon/${filename}`;
+  };
+
+  // Show local preview first (just uploaded), fallback to server path
+  const previewSrc = localPreview || getServerPath(value);
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreview(ev.target.result);
-    reader.readAsDataURL(file);
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setLocalPreview(localUrl);
 
     setUploading(true);
     try {
@@ -73,30 +87,23 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
         r.onerror = reject;
         r.readAsDataURL(file);
       });
-      // Map frontend type to backend folder key
-      const backendType = type === 'icon_product' ? 'icon_product' : type;
-      const res  = await fetch(`${API_URL}/api/admin/catalog/upload-image`, {
+      const res = await fetch(`${API_URL}/api/admin/catalog/upload-image`, {
         method:  'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ type: backendType, filename: file.name, data: base64 }),
+        body:    JSON.stringify({ type, filename: file.name, data: base64 }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       onChange(data.filename);
+      // Reset file input so same file can be re-uploaded
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       alert('Upload gagal: ' + err.message);
-      setPreview(null);
+      setLocalPreview(null);
     } finally {
       setUploading(false);
     }
   };
-
-  const previewSrc = preview
-    || (value ? (
-        type === 'header'      ? `/images/header/${value}` :
-        type === 'icon_product'? `/images/icon_product/${value}` :
-                                 `/images/games_icon/${value}`
-    ) : null);
 
   return (
     <div className="form-group">
@@ -121,6 +128,7 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
           <label className={`btn-upload ${uploading ? 'btn-uploading' : ''}`}>
             {uploading ? '⏳ Uploading...' : '📁 Pilih File'}
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleFile}
@@ -295,7 +303,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <ImageUploadField
               label="Header Image"
-              hint="(public/images/header/) — 2560px x 1200 px"
+              hint="(public/images/header/)"
               type="header"
               value={form.fc_header_image}
               onChange={(filename) => setForm(f => ({ ...f, fc_header_image: filename }))}
@@ -303,7 +311,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
             />
             <ImageUploadField
               label="Icon File"
-              hint="(public/images/games_icon/) — 1024px x 1024px — icon_url auto terisi"
+              hint="(public/images/games_icon/) — icon_url auto terisi"
               type="icon"
               value={form.fc_icon_file}
               onChange={(filename) => setForm(f => ({ ...f, fc_icon_file: filename }))}
@@ -314,7 +322,7 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <ImageUploadField
               label="Icon Product URL"
-              hint="(public/images/icon_product/) — 64px x 64px — simpan nama file saja"
+              hint="(public/images/icon_product/) — simpan nama file saja"
               type="icon_product"
               value={form.icon_product_url}
               onChange={(filename) => setForm(f => ({ ...f, icon_product_url: filename }))}
