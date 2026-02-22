@@ -20,6 +20,7 @@ import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminOrders from './pages/admin/Orders';
 import AdminCatalog from './pages/admin/Catalog';
+import CekTransaksiPage from './pages/CekTransaksiPage';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/orders"    element={<AdminOrders />} />
             <Route path="/admin/catalog"   element={<AdminCatalog />} />
+            <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
           </Routes>
         </main>
         <Footer />

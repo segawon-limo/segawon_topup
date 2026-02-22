@@ -1,0 +1,320 @@
+/* ===================================================
+   CekTransaksiPage — Segawon Topup
+   Theme: dark / konsisten dengan SuccessPage
+   =================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+.ct-page {
+  min-height: 100vh;
+  background: #0e1117;
+  padding: 80px 20px 60px;
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  overflow: hidden;
+  color: #e2e8f0;
+}
+
+/* ── Background blobs ── */
+.ct-blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+.ct-blob-1 {
+  width: 500px; height: 500px;
+  background: #8b0000;
+  top: -100px; left: -150px;
+}
+.ct-blob-2 {
+  width: 400px; height: 400px;
+  background: #1e3a5f;
+  bottom: -100px; right: -100px;
+}
+
+/* ── Container ── */
+.ct-container {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ── */
+.ct-back {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.ct-back:hover { color: #e2e8f0; }
+
+.ct-header {
+  text-align: center;
+  padding-bottom: 8px;
+}
+.ct-logo {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: block;
+}
+.ct-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+.ct-subtitle {
+  color: #94a3b8;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* ── Search Card ── */
+.ct-search-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+}
+.ct-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.ct-search-row {
+  display: flex;
+  gap: 10px;
+}
+.ct-input {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 15px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  letter-spacing: 0.03em;
+}
+.ct-input::placeholder { color: #4a5568; }
+.ct-input:focus {
+  border-color: rgba(139,0,0,0.6);
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 0 0 3px rgba(139,0,0,0.15);
+}
+.ct-search-btn {
+  background: linear-gradient(135deg, #8b0000, #c0392b);
+  border: none;
+  border-radius: 10px;
+  padding: 13px 22px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s, transform 0.1s;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 100px;
+  justify-content: center;
+}
+.ct-search-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.ct-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ct-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ct-spin 0.7s linear infinite;
+}
+@keyframes ct-spin { to { transform: rotate(360deg); } }
+.ct-hint {
+  font-size: 12px;
+  color: #4a5568;
+  margin: 10px 0 0;
+}
+
+/* ── Error ── */
+.ct-error-card {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #fca5a5;
+  font-size: 15px;
+  animation: ct-fadein 0.3s ease;
+}
+.ct-error-icon { font-size: 24px; }
+
+/* ── Result ── */
+.ct-result {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: ct-fadein 0.4s ease;
+}
+@keyframes ct-fadein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Status Banner ── */
+.ct-status-banner {
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ct-status-icon { font-size: 32px; }
+.ct-status-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.ct-status-invoice {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-top: 2px;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+/* ── Info Grid ── */
+.ct-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 540px) {
+  .ct-info-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Cards ── */
+.ct-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.ct-timeline-card { grid-column: 1 / -1; }
+.ct-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.ct-info-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ct-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+}
+.ct-info-key {
+  color: #64748b;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.ct-info-val {
+  color: #e2e8f0;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-all;
+}
+.ct-mono { font-family: monospace; letter-spacing: 0.04em; }
+.ct-highlight {
+  color: #10b981;
+  background: rgba(16,185,129,0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.ct-total-row {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+.ct-total {
+  color: #10b981;
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+.ct-expires { color: #f59e0b; }
+
+/* ── Actions ── */
+.ct-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ct-btn-pay {
+  flex: 1;
+  background: linear-gradient(135deg, #059669, #10b981);
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: opacity 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.ct-btn-pay:hover { opacity: 0.9; }
+.ct-btn-secondary {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 13px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, color 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+.ct-btn-secondary:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }

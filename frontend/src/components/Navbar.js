@@ -138,6 +138,9 @@ function Navbar() {
             <a href="#games" className="text-white hover:text-pink-100 font-medium transition-colors duration-200 text-sm">
               Games
             </a>
+            <Link to="/cek-transaksi" className="text-white hover:text-pink-100 font-medium transition-colors duration-200 text-sm">
+              Cek Transaksi
+            </Link>
             <a
               href={`https://wa.me/${WA_NUMBER}`}
               target="_blank" rel="noopener noreferrer"
@@ -249,6 +252,13 @@ function Navbar() {
           >
             🎮 Games
           </a>
+          <Link
+            to="/cek-transaksi"
+            className="text-white font-medium py-3 px-4 rounded-lg hover:bg-white/10 transition-colors duration-200"
+            onClick={() => setMenuOpen(false)}
+          >
+            🔍 Cek Transaksi
+          </Link>
           <a
             href={`https://wa.me/${WA_NUMBER}`}
             target="_blank" rel="noopener noreferrer"
