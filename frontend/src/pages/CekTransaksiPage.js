@@ -140,7 +140,7 @@ function CekTransaksiPage() {
                 <div className="ct-card-title">🎮 Detail Produk</div>
                 <div className="ct-info-rows">
                   <div className="ct-info-row">
-                    <span className="ct-info-key">Game</span>
+                    <span className="ct-info-key">Produk</span>
                     <span className="ct-info-val">{order.gameName}</span>
                   </div>
                   <div className="ct-info-row">
@@ -149,16 +149,11 @@ function CekTransaksiPage() {
                   </div>
                   {order.gameUserId && (
                     <div className="ct-info-row">
-                      <span className="ct-info-key">User ID</span>
+                      <span className="ct-info-key">ID</span>
                       <span className="ct-info-val ct-mono">{order.gameUserId}{order.gameUserTag ? `#${order.gameUserTag}` : ''}</span>
                     </div>
                   )}
-                  {order.serialNumber && (
-                    <div className="ct-info-row">
-                      <span className="ct-info-key">Kode / SN</span>
-                      <span className="ct-info-val ct-mono ct-highlight">{order.serialNumber}</span>
-                    </div>
-                  )}
+
                 </div>
               </div>
 
