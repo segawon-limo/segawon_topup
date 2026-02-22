@@ -94,7 +94,7 @@ function CekTransaksiPage() {
             <input
               className="ct-input"
               type="text"
-              placeholder="Contoh: SGW-20260222-A3642"
+              placeholder="Contoh: SGW-20260101-XXXXX"
               value={invoice}
               onChange={e => setInvoice(e.target.value)}
               onKeyDown={handleKeyDown}
