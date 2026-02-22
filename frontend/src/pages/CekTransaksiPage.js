@@ -15,9 +15,10 @@ const STATUS_CONFIG = {
 
 const PAYMENT_STATUS_CONFIG = {
   pending:  { label: 'Belum Dibayar', color: '#f59e0b' },
-  paid:     { label: 'Sudah Dibayar', color: '#10b981' },
-  expired:  { label: 'Kadaluarsa',   color: '#ef4444' },
-  failed:   { label: 'Gagal',        color: '#ef4444' },
+  paid:     { label: 'Sudah Dibayar', color: '#16a34a' },
+  success:  { label: 'Sudah Dibayar', color: '#16a34a' },  // alias paid
+  expired:  { label: 'Kadaluarsa',   color: '#dc2626' },
+  failed:   { label: 'Gagal',        color: '#dc2626' },
 };
 
 const formatRupiah = (num) =>
