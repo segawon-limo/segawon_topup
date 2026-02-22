@@ -1,38 +1,38 @@
 /* ===================================================
    CekTransaksiPage — Segawon Topup
-   Theme: dark / konsisten dengan SuccessPage
+   Theme: merah-putih konsisten dengan homepage
    =================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
 .ct-page {
   min-height: 100vh;
-  background: #0e1117;
+  background: #f8f9fa;
   padding: 80px 20px 60px;
   font-family: 'DM Sans', sans-serif;
   position: relative;
   overflow: hidden;
-  color: #e2e8f0;
+  color: #1a202c;
 }
 
-/* ── Background blobs ── */
+/* ── Background decorative ── */
 .ct-blob {
   position: fixed;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
+  filter: blur(80px);
+  opacity: 0.12;
   pointer-events: none;
   z-index: 0;
 }
 .ct-blob-1 {
   width: 500px; height: 500px;
-  background: #8b0000;
-  top: -100px; left: -150px;
+  background: #c0392b;
+  top: -150px; left: -150px;
 }
 .ct-blob-2 {
-  width: 400px; height: 400px;
-  background: #1e3a5f;
-  bottom: -100px; right: -100px;
+  width: 350px; height: 350px;
+  background: #e74c3c;
+  bottom: -100px; right: -80px;
 }
 
 /* ── Container ── */
@@ -50,7 +50,7 @@
 .ct-back {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #718096;
   font-size: 14px;
   cursor: pointer;
   padding: 0;
@@ -61,7 +61,7 @@
   transition: color 0.2s;
   font-family: 'DM Sans', sans-serif;
 }
-.ct-back:hover { color: #e2e8f0; }
+.ct-back:hover { color: #c0392b; }
 
 .ct-header {
   text-align: center;
@@ -76,29 +76,29 @@
   font-family: 'Syne', sans-serif;
   font-size: 32px;
   font-weight: 800;
-  color: #fff;
+  color: #1a202c;
   margin: 0 0 8px;
   letter-spacing: -0.5px;
 }
 .ct-subtitle {
-  color: #94a3b8;
+  color: #718096;
   font-size: 15px;
   margin: 0;
 }
 
 /* ── Search Card ── */
 .ct-search-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 24px;
-  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .ct-label {
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #718096;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 10px;
@@ -109,25 +109,25 @@
 }
 .ct-input {
   flex: 1;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #f7fafc;
+  border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   padding: 13px 16px;
   font-size: 15px;
-  color: #fff;
+  color: #1a202c;
   font-family: 'DM Sans', sans-serif;
   outline: none;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   letter-spacing: 0.03em;
 }
-.ct-input::placeholder { color: #4a5568; }
+.ct-input::placeholder { color: #a0aec0; }
 .ct-input:focus {
-  border-color: rgba(139,0,0,0.6);
-  background: rgba(255,255,255,0.08);
-  box-shadow: 0 0 0 3px rgba(139,0,0,0.15);
+  border-color: #c0392b;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
 }
 .ct-search-btn {
-  background: linear-gradient(135deg, #8b0000, #c0392b);
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
   border: none;
   border-radius: 10px;
   padding: 13px 22px;
@@ -136,40 +136,47 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
   font-family: 'DM Sans', sans-serif;
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 100px;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(192,57,43,0.3);
 }
-.ct-search-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-.ct-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ct-search-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(192,57,43,0.35);
+}
+.ct-search-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
 .ct-spinner {
   width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255,255,255,0.4);
   border-top-color: #fff;
   border-radius: 50%;
   animation: ct-spin 0.7s linear infinite;
 }
 @keyframes ct-spin { to { transform: rotate(360deg); } }
+
 .ct-hint {
   font-size: 12px;
-  color: #4a5568;
+  color: #a0aec0;
   margin: 10px 0 0;
 }
 
 /* ── Error ── */
 .ct-error-card {
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.25);
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
   border-radius: 12px;
   padding: 20px 24px;
   display: flex;
   align-items: center;
   gap: 14px;
-  color: #fca5a5;
+  color: #c53030;
   font-size: 15px;
   animation: ct-fadein 0.3s ease;
 }
@@ -189,12 +196,14 @@
 
 /* ── Status Banner ── */
 .ct-status-banner {
-  border: 1px solid;
+  border: 1.5px solid;
   border-radius: 14px;
   padding: 18px 22px;
   display: flex;
   align-items: center;
   gap: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .ct-status-icon { font-size: 32px; }
 .ct-status-label {
@@ -204,7 +213,7 @@
 }
 .ct-status-invoice {
   font-size: 13px;
-  color: #94a3b8;
+  color: #718096;
   margin-top: 2px;
   font-family: monospace;
   letter-spacing: 0.05em;
@@ -222,16 +231,17 @@
 
 /* ── Cards ── */
 .ct-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #fff;
+  border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .ct-timeline-card { grid-column: 1 / -1; }
 .ct-card-title {
   font-size: 13px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #718096;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 14px;
@@ -248,37 +258,29 @@
   gap: 12px;
   font-size: 14px;
 }
-.ct-info-key {
-  color: #64748b;
-  flex-shrink: 0;
-  padding-top: 1px;
-}
-.ct-info-val {
-  color: #e2e8f0;
-  font-weight: 500;
-  text-align: right;
-  word-break: break-all;
-}
+.ct-info-key { color: #a0aec0; flex-shrink: 0; padding-top: 1px; }
+.ct-info-val { color: #2d3748; font-weight: 500; text-align: right; word-break: break-all; }
 .ct-mono { font-family: monospace; letter-spacing: 0.04em; }
 .ct-highlight {
-  color: #10b981;
-  background: rgba(16,185,129,0.1);
+  color: #276749;
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 13px;
 }
 .ct-total-row {
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid #e2e8f0;
   padding-top: 10px;
   margin-top: 4px;
 }
 .ct-total {
-  color: #10b981;
+  color: #c0392b;
   font-family: 'Syne', sans-serif;
   font-size: 16px;
   font-weight: 700;
 }
-.ct-expires { color: #f59e0b; }
+.ct-expires { color: #c05621; }
 
 /* ── Actions ── */
 .ct-actions {
@@ -288,7 +290,7 @@
 }
 .ct-btn-pay {
   flex: 1;
-  background: linear-gradient(135deg, #059669, #10b981);
+  background: linear-gradient(135deg, #276749, #38a169);
   border: none;
   border-radius: 10px;
   padding: 13px 20px;
@@ -298,23 +300,29 @@
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.1s;
   font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 12px rgba(56,161,105,0.3);
 }
-.ct-btn-pay:hover { opacity: 0.9; }
+.ct-btn-pay:hover { opacity: 0.9; transform: translateY(-1px); }
+
 .ct-btn-secondary {
   flex: 1;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   padding: 13px 20px;
-  color: #94a3b8;
+  color: #4a5568;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   text-align: center;
-  transition: background 0.2s, color 0.2s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
   font-family: 'DM Sans', sans-serif;
   white-space: nowrap;
 }
-.ct-btn-secondary:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+.ct-btn-secondary:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+  background: #fff5f5;
+}
