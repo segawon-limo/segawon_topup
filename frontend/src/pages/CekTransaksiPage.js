@@ -5,11 +5,12 @@ import './CekTransaksiPage.css';
 const API_URL = process.env.REACT_APP_API_URL || '';
 
 const STATUS_CONFIG = {
-  pending:    { label: 'Menunggu Pembayaran', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: '⏳' },
-  processing: { label: 'Sedang Diproses',    color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: '⚙️' },
-  success:    { label: 'Berhasil',            color: '#10b981', bg: 'rgba(16,185,129,0.12)', icon: '✅' },
-  failed:     { label: 'Gagal',              color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  icon: '❌' },
-  cancelled:  { label: 'Dibatalkan',          color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: '🚫' },
+  pending:    { label: 'Menunggu Pembayaran', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  icon: '⏳' },
+  processing: { label: 'Sedang Diproses',    color: '#3b82f6', bg: 'rgba(59,130,246,0.08)',  icon: '⚙️' },
+  success:    { label: 'Berhasil',            color: '#16a34a', bg: 'rgba(22,163,74,0.08)',   icon: '✅' },
+  completed:  { label: 'Berhasil',            color: '#16a34a', bg: 'rgba(22,163,74,0.08)',   icon: '✅' },
+  failed:     { label: 'Gagal',              color: '#dc2626', bg: 'rgba(220,38,38,0.08)',   icon: '❌' },
+  cancelled:  { label: 'Dibatalkan',          color: '#6b7280', bg: 'rgba(107,114,128,0.08)', icon: '🚫' },
 };
 
 const PAYMENT_STATUS_CONFIG = {
@@ -64,7 +65,10 @@ function CekTransaksiPage() {
     if (e.key === 'Enter') handleSearch();
   };
 
-  const orderStatus  = order ? (STATUS_CONFIG[order.orderStatus]  || STATUS_CONFIG.pending)  : null;
+  // Kalau payment sudah success tapi order masih processing → tetap tampil processing
+  // Kalau order completed/success → tampil berhasil
+  const effectiveStatus = order?.orderStatus || 'pending';
+  const orderStatus  = order ? (STATUS_CONFIG[effectiveStatus] || STATUS_CONFIG.pending) : null;
   const payStatus    = order ? (PAYMENT_STATUS_CONFIG[order.payment?.status] || PAYMENT_STATUS_CONFIG.pending) : null;
 
   return (
