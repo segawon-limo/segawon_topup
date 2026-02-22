@@ -408,8 +408,8 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
-  // Safe parse: strip thousand separators (titik) before parsing
-  const safeFloat = (v) => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
+  // Safe parse: strip thousand separators (titik diikuti 3 digit), bukan titik desimal
+  const safeFloat = (v) => parseFloat(String(v).replace(/\.(\d{3})/g, '$1').replace(',', '.')) || 0;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
