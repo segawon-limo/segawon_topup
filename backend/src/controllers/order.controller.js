@@ -388,7 +388,11 @@ exports.createOrder = async (req, res) => {
     const totalAmount = priceAfterDiscount + paymentFee;
 
     // 3. Generate order number
-    const orderNumber = 'INV' + Date.now();
+    // const orderNumber = 'INV' + Date.now();
+    const rand = Math.random().toString(36).substring(2, 4).toUpperCase();
+    const tail = Date.now().toString().slice(-3);
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const orderNumber = `SGW-${date}-${rand}${tail}`;
 
     // 4. Insert order
     const orderResult = await client.query(`
