@@ -86,7 +86,6 @@ async function expireOrders() {
 
     if (expired.length === 0) {
       log('Tidak ada order yang perlu di-expire. Selesai.');
-      await pool.end();
       return;
     }
 
