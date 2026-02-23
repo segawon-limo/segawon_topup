@@ -410,7 +410,14 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
   const [error,  setError]  = useState('');
 
   // Safe parse: strip thousand separators (titik diikuti 3 digit), bukan titik desimal
-  const safeFloat = (v) => parseFloat(String(v).replace(/\.(\d{3})/g, '$1').replace(',', '.')) || 0;
+  // safeFloat: untuk nilai FINAL (handleSubmit & onBlur)
+  // Strips semua thousand-separator dots, ganti koma desimal ke titik
+  const safeFloat = (v) => {
+    const s = String(v).trim().replace(/\./g, '').replace(',', '.');
+    return parseFloat(s) || 0;
+  };
+
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -440,6 +447,25 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
         const sell = Math.round(bp + pp);
         next.selling_price = sell;
         next.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
+      }
+      return next;
+    });
+  };
+
+  // onBlur: strip dot ribuan dari input (misal paste "1.469.838" → "1469838")
+  // lalu recalculate semua field terkait
+  const handlePriceBlur = (e) => {
+    const { name } = e.target;
+    setForm(f => {
+      const next = { ...f };
+      // Normalize nilai yang baru di-blur: strip dot ribuan
+      next[name] = safeFloat(next[name]) || next[name];
+      const bp = safeFloat(next.base_price);
+      const sp = safeFloat(next.selling_price);
+      if (bp > 0 && sp > 0) {
+        const profit = sp - bp;
+        next.profit_price = Math.round(profit);
+        next.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
       }
       return next;
     });
@@ -509,11 +535,11 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <div className="form-group">
               <label>Harga Modal (base_price)</label>
-              <input name="base_price" type="number" value={form.base_price} onChange={handleChange} placeholder="0" />
+              <input name="base_price" type="number" value={form.base_price} onChange={handleChange} onBlur={handlePriceBlur} placeholder="0" />
             </div>
             <div className="form-group">
               <label>Harga Jual (selling_price) *</label>
-              <input name="selling_price" type="number" value={form.selling_price} onChange={handleChange} placeholder="15000" required />
+              <input name="selling_price" type="number" value={form.selling_price} onChange={handleChange} onBlur={handlePriceBlur} placeholder="15000" required />
             </div>
           </div>
 
