@@ -62,6 +62,13 @@ router.get('/orders/:orderNumber', orderController.getOrderStatus);
 // Get order history (optional)
 router.get('/orders/history', orderController.getOrderHistory);
 
+// ========================================
+// TELEGRAM WEBHOOK
+// ========================================
+const telegramController = require('../controllers/telegram.controller');
+router.post('/telegram/webhook',   telegramController.handleWebhook);
+router.get ('/telegram/register',  telegramController.registerWebhook);  // panggil sekali untuk setup
+
 module.exports = router;
 
 // ══════════════════════════════════════════════════════════════
