@@ -599,6 +599,7 @@ function AdminCatalog() {
   const [filterGame,    setFilterGame]    = useState('');
   const [filterSearch,  setFilterSearch]  = useState('');
   const [filterActive,  setFilterActive]  = useState('all'); // 'all' | 'active' | 'inactive'
+  const [filterStock,   setFilterStock]   = useState('all'); // 'all' | 'oos' | 'ready'
 
   // Modals
   const [gameModal,    setGameModal]    = useState(null);  // null | 'new' | {game}
@@ -721,6 +722,8 @@ function AdminCatalog() {
         !p.sku.toLowerCase().includes(filterSearch.toLowerCase())) return false;
     if (filterActive === 'active'   && !p.is_active) return false;
     if (filterActive === 'inactive' &&  p.is_active) return false;
+    if (filterStock === 'oos'   &&  p.seller_available !== false) return false;
+    if (filterStock === 'ready' &&  p.seller_available === false) return false;
     return true;
   });
 
@@ -778,7 +781,15 @@ function AdminCatalog() {
           <option value="all">Semua Status</option>
           <option value="active">Aktif Saja</option>
           <option value="inactive">Nonaktif Saja</option>
+          <option value="oos">⚠ Out of Stock</option>
         </select>
+        {tab === 'products' && (
+          <select className="filter-select" value={filterStock} onChange={e => setFilterStock(e.target.value)}>
+            <option value="all">Semua Stock</option>
+            <option value="oos">⚠ Out of Stock</option>
+            <option value="ready">✓ Ready</option>
+          </select>
+        )}
         <button
           className="btn-primary"
           onClick={() => tab === 'games' ? setGameModal('new') : setProductModal('new')}
