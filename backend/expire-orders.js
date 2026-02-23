@@ -98,7 +98,7 @@ async function expireOrders() {
         order_status   = 'expired',
         payment_status = 'expired',
         updated_at     = NOW()
-      WHERE id = ANY($1::int[])
+      WHERE id = ANY($1::uuid[])
       RETURNING id
     `, [ids]);
 
