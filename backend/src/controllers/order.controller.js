@@ -93,7 +93,7 @@ exports.getProducts = async (req, res) => {
       SELECT 
         p.id, p.name, p.description, p.sku,
         p.base_price, p.selling_price, p.profit_price,
-        p.is_active, p.sort_order,
+        p.is_active, p.sort_order, p.seller_available,
         g.icon_product_url
       FROM products p
       JOIN games g ON g.id = p.game_id
@@ -113,13 +113,14 @@ exports.getProducts = async (req, res) => {
         form_config:  game.form_config  || null,  // JSONB dari DB, null jika belum diisi
       },
       products: productsResult.rows.map(p => ({
-        id:           p.id,
-        name:         p.name,
-        description:  p.description,
-        sku:          p.sku,
-        price:        parseFloat(p.selling_price),
-        displayPrice: `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`,
+        id:               p.id,
+        name:             p.name,
+        description:      p.description,
+        sku:              p.sku,
+        price:            parseFloat(p.selling_price),
+        displayPrice:     `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`,
         icon_product_url: p.icon_product_url || null,
+        seller_available: p.seller_available !== false,
       }))
     });
 

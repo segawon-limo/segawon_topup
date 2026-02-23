@@ -867,35 +867,39 @@ function OrderPage() {
               <div className="form-section">
                 <h2>1. Pilih Nominal</h2>
                 <div className="products-grid">
-                  {products.map(product => (
-                    <div
-                      key={product.id}
-                      className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''}`}
-                      onClick={() => handleProductSelect(product)}
-                    >
-                      <div className="product-name">
-                        {/* icon_product_url = filename dari games, load dari /images/icon_product/ */}
-                        {(product.icon_product_url || currentGameConfig.iconFile || game?.icon_url) && (
-                          <img
-                            src={
-                              product.icon_product_url
-                                ? `${process.env.PUBLIC_URL}/images/icon_product/${product.icon_product_url}`
-                                : currentGameConfig.iconFile
-                                  ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
-                                  : game.icon_url
-                            }
-                            alt=""
-                            className="product-card-icon"
-                          />
+                  {products.map(product => {
+                    const isOutOfStock = product.seller_available === false;
+                    return (
+                      <div
+                        key={product.id}
+                        className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''} ${isOutOfStock ? 'out-of-stock' : ''}`}
+                        onClick={() => !isOutOfStock && handleProductSelect(product)}
+                      >
+                        {isOutOfStock && (
+                          <span className="badge-oos">Out of Stock</span>
                         )}
-                        {product.name}
+                        <div className="product-name">
+                          {(product.icon_product_url || currentGameConfig.iconFile || game?.icon_url) && (
+                            <img
+                              src={
+                                product.icon_product_url
+                                  ? `${process.env.PUBLIC_URL}/images/icon_product/${product.icon_product_url}`
+                                  : currentGameConfig.iconFile
+                                    ? `${process.env.PUBLIC_URL}/images/games_icon/${currentGameConfig.iconFile}`
+                                    : game.icon_url
+                              }
+                              alt=""
+                              className="product-card-icon"
+                            />
+                          )}
+                          {product.name}
+                        </div>
+                        <div className="product-price">
+                          {isOutOfStock ? <span className="oos-price">{product.displayPrice}</span> : product.displayPrice}
+                        </div>
                       </div>
-                      <div className="product-price">
-                        {product.displayPrice}
-                      </div>
-                      {/* <div className="product-description">{product.description}</div> */}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {errors.product && <div className="error">{errors.product}</div>}
               </div>

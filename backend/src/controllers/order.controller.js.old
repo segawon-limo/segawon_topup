@@ -72,9 +72,9 @@ exports.getProducts = async (req, res) => {
   try {
     const { gameSlug } = req.params;
 
-    // Get game — include category & product_type
+    // Get game — include category, product_type & form_config
     const gameResult = await pool.query(
-      `SELECT id, name, slug, icon_url, category, product_type
+      `SELECT id, name, slug, icon_url, category, product_type, form_config
        FROM games WHERE slug = $1 AND is_active = true`,
       [gameSlug]
     );
@@ -109,7 +109,8 @@ exports.getProducts = async (req, res) => {
         slug:         game.slug,
         icon_url:     game.icon_url,
         category:     game.category     || 'games',
-        product_type: game.product_type || 'topup_game'
+        product_type: game.product_type || 'topup_game',
+        form_config:  game.form_config  || null,  // JSONB dari DB, null jika belum diisi
       },
       products: productsResult.rows.map(p => ({
         id:           p.id,
@@ -387,7 +388,11 @@ exports.createOrder = async (req, res) => {
     const totalAmount = priceAfterDiscount + paymentFee;
 
     // 3. Generate order number
-    const orderNumber = 'INV' + Date.now();
+    // const orderNumber = 'INV' + Date.now();
+    const rand = Math.random().toString(36).substring(2, 4).toUpperCase();
+    const tail = Date.now().toString().slice(-3);
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const orderNumber = `SGW-${date}-${rand}${tail}`;
 
     // 4. Insert order
     const orderResult = await client.query(`

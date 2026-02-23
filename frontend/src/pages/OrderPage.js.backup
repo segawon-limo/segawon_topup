@@ -32,249 +32,43 @@ const VA_BANKS = [
   { code: 'BT', name: 'Permata Bank Virtual Account', logo: 'BT' },
 ];
 
-// Page title per game slug (currency names)
-const PAGE_TITLES = {
-  'valorant':           'Points',
-  'mobile-legends':     'Diamonds',
-  'free-fire':          'Diamonds',
-  'arena-of-valor':     'Vouchers',
-  'genshin-impact':     'Genesis Crystals',
-  'haikyu-fly-high':    'Diamonds',
-  'honor-of-kings':     'Tokens',
-  'league-of-legends':  'Riot Points',
-  'marvel-rivals':      'Lattices',
-  'punishing-gray-raven': 'Rainbow Cards',
-  'zenless-zone-zero':  'Monochrome',
-  'honkai-star-rail':   'Oneiric Shards',
-  'pubg-mobile':        'UC',
-  'steam-wallet':       'Steam Wallet',
-  'token-pln':          'Token PLN',
-  'telkomsel':          'Pulsa & Paket Data Telkomsel',
-  'indosat':            'Pulsa & Paket Data Indosat',
-  'xl-axis':            'Pulsa & Paket Data XL/Axis',
+// ── buildDisplayFormat ────────────────────────────────────────
+// Mengkonversi string template dari DB menjadi fungsi displayFormat.
+// Template yang didukung: "userId", "userId#zoneId", "userId (zoneId)", "—"
+const buildDisplayFormat = (template) => {
+  if (!template || template === '—') return () => '—';
+  if (template === 'userId#zoneId')   return (userId, zoneId) => `${userId}#${zoneId}`;
+  if (template === 'userId (zoneId)') return (userId, zoneId) => `${userId} (${zoneId})`;
+  return (userId) => userId; // default: hanya userId
 };
 
-// ── Product type configs ─────────────────────────────────────
-// Menentukan form Step 2 berdasarkan product_type dari API.
-// Ini menggantikan kebutuhan hardcode per-slug untuk produk baru.
-const productTypeConfigs = {
-  // Game topup biasa — pakai gameConfigs[slug] yang sudah ada
-  topup_game: null,
-
-  // Voucher (Steam Wallet, dll) — tidak ada form Step 2 sama sekali
-  voucher_code: {
-    showStep2: false,
-    fields: [],
-    displayFormat: () => '—',   // tidak ada ID, tampilkan dash
-  },
-
-  // Token PLN — input Nomor Meter / ID Pelanggan
-  token_pln: {
-    showStep2: true,
-    fields: [
-      { name: 'userId', label: 'Nomor Meter / ID Pelanggan', placeholder: 'Contoh: 515300012345', type: 'text' }
-    ],
-    displayFormat: (userId) => userId,
-  },
-
-  // Pulsa — input Nomor HP
-  pulsa: {
-    showStep2: true,
-    fields: [
-      { name: 'userId', label: 'Nomor HP', placeholder: 'Contoh: 08123456789', type: 'text' }
-    ],
-    displayFormat: (userId) => userId,
-  },
-
-  // Paket Data — input Nomor HP (sama dengan pulsa, provider dari slug)
-  data_package: {
-    showStep2: true,
-    fields: [
-      { name: 'userId', label: 'Nomor HP', placeholder: 'Contoh: 08123456789', type: 'text' }
-    ],
-    displayFormat: (userId) => userId,
-  },
-};
-
-// Game configurations
-const gameConfigs = {
-  'valorant': {
-    fields: [
-      { name: 'userId', label: 'Riot ID', placeholder: 'Contoh: segawon', type: 'text' },
-      { name: 'zoneId', label: 'Tagline', placeholder: 'Contoh: limo', type: 'text' }
-    ],
-    validation: {
+// ── buildValidation ───────────────────────────────────────────
+// Mengkonversi string validation dari DB menjadi object validation
+// yang dipakai validateUserId(). null = tidak perlu validasi API.
+const buildValidation = (validationKey) => {
+  if (validationKey === 'riot_id') {
+    return {
       endpoint: '/api/validate-riot-id',
-      bodyFormat: (userId, zoneId) => ({ riotId: userId, riotTag: zoneId })
-    },
-    displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
-    headerImage: 'valorant-header.jpg',
-    iconFile: 'val.webp'
-  },
-  
-  'arena-of-valor': {
-    fields: [
-      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 123456789', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId) => userId,
-    headerImage: 'arena-of-valor-header.jpg',
-    iconFile: 'aov.webp'
-  },
-
-  'mobile-legends': {
-    fields: [
-      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 123456789', type: 'number' },
-      { name: 'zoneId', label: 'Zone ID', placeholder: 'Contoh: 1234', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'mobile-legends-header.jpg',
-    iconFile: 'mlb.webp'
-  },
-  
-  'free-fire': {
-    fields: [
-      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 1234567890', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId) => userId,
-    headerImage: 'free-fire-header.jpg',
-    iconFile: 'ffr.webp'
-  },
-  
-  'pubg-mobile': {
-    fields: [
-      { name: 'userId', label: 'User ID', placeholder: 'Contoh: 5123456789', type: 'number' },
-      { name: 'zoneId', label: 'Zone ID', placeholder: 'Contoh: 1234', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'pubg-mobile-header.jpg',
-    iconFile: null
-  },
-  
-  'genshin-impact': {
-    fields: [
-      { name: 'userId', label: 'UID', placeholder: 'Contoh: 800123456', type: 'number' },
-      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'genshin-impact-header.jpg',
-    iconFile: 'gip.webp'
-  },
-  
-  'league-of-legends': {
-    fields: [
-      { name: 'userId', label: 'Riot ID', placeholder: 'Contoh: segawon', type: 'text' },
-      { name: 'zoneId', label: 'Tagline', placeholder: 'Contoh: limo', type: 'text' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId}#${zoneId}`,
-    headerImage: 'league-of-leagends-header.jpg',
-    iconFile: 'lol.webp'
-  },
-
-  'honkai-star-rail': {
-    fields: [
-      { name: 'userId', label: 'UID', placeholder: 'Contoh: 800123456', type: 'number' },
-      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'honkai-star-rail-header.jpg',
-    iconFile: 'hsr.webp'
-  },
-
-  'honor-of-kings': {
-    fields: [
-      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId) => userId,
-    headerImage: 'honor-of-kings-header.jpg',
-    iconFile: 'hok.webp'
-  },
-
-  'punishing-gray-raven': {
-    fields: [
-      { name: 'userId', label: 'RoleID', placeholder: 'Contoh: 800123456', type: 'number' },
-      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'punishing-gray-raven-header.jpg',
-    iconFile: 'pgr.webp'
-  },
-
-  'zenless-zone-zero': {
-    fields: [
-      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 800123456', type: 'number' },
-      { name: 'zoneId', label: 'Server', placeholder: 'Asia / America / Europe', type: 'text' }
-    ],
-    validation: null,
-    displayFormat: (userId, zoneId) => `${userId} (${zoneId})`,
-    headerImage: 'zenless-zone-zero-header.jpg',
-    iconFile: 'zzz.webp'
-  },
-
-  'marvel-rivals': {
-    fields: [
-      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId) => userId,
-    headerImage: 'marvel-rivals-header.jpg',
-    iconFile: 'mrv.webp'
-  },
-
-  'haikyu-fly-high': {
-    fields: [
-      { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
-    ],
-    validation: null,
-    displayFormat: (userId) => userId,
-    headerImage: 'haikyu-fly-high-header.jpg',
-    iconFile: 'hfh.webp'
-  },
-
-  'steam-wallet': {
-    // fields: [
-    //   { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
-    // ],
-    // validation: null,
-    // displayFormat: (userId) => userId,
-    headerImage: 'steam-wallet-header.jpg',
-    iconFile: 'stm.webp'
-  },
-
-  'pln': {
-    // fields: [
-    //   { name: 'userId', label: 'UserID', placeholder: 'Contoh: 1234567890', type: 'number' }
-    // ],
-    // validation: null,
-    // displayFormat: (userId) => userId,
-    headerImage: 'pln.jpg',
-    iconFile: 'pln.webp'
-  },
-
-  'default': {
-    fields: [
-      { name: 'userId', label: 'User ID', placeholder: 'Masukkan ID Anda', type: 'text' }
-    ],
-    validation: null,
-    displayFormat: (userId) => userId,
-    headerImage: 'default-header.jpg',
-    iconFile: null
+      bodyFormat: (userId, zoneId) => ({ riotId: userId, riotTag: zoneId }),
+    };
   }
+  // 'pln_meter' ditangani langsung di validateUserId() via productType === 'token_pln'
+  return null;
+};
+
+// ── DEFAULT CONFIG FALLBACK ───────────────────────────────────
+// Dipakai hanya jika game belum punya form_config di DB.
+const DEFAULT_GAME_CONFIG = {
+  fields: [{ name: 'userId', label: 'User ID', placeholder: 'Masukkan ID Anda', type: 'text' }],
+  validation: null,
+  displayFormat: (userId) => userId,
+  headerImage: 'default-header.jpg',
+  iconFile: null,
+  pageTitle: null,
 };
 
 function OrderPage() {
   const { gameSlug } = useParams();
-
-  // gameConfigs tetap dipakai sebagai fallback untuk game yang sudah ada
-  const legacyConfig = gameConfigs[gameSlug] || gameConfigs['default'];
 
   const [game, setGame] = useState(null);
   const [products, setProducts] = useState([]);
@@ -283,25 +77,28 @@ function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
-  // ── Derived: pilih config aktif berdasarkan product_type dari API ──
-  // Kalau API sudah return product_type, pakai productTypeConfigs.
-  // Fallback ke legacyConfig (gameConfigs[slug]) untuk game yang sudah ada.
+  // ── Derived dari data API ─────────────────────────────────────
   const productType = game?.product_type || 'topup_game';
-  const ptConfig = productTypeConfigs[productType]; // null = pakai legacy
 
-  // Config akhir: form fields dari ptConfig, visual assets (header/icon) dari legacyConfig
-  const currentGameConfig = ptConfig
-    ? {
-        ...ptConfig,
-        headerImage: legacyConfig.headerImage || ptConfig.headerImage || 'default-header.jpg',
-        iconFile:    legacyConfig.iconFile    || ptConfig.iconFile    || null,
-      }
-    : legacyConfig;
+  // Bangun currentGameConfig dari form_config yang datang dari API.
+  // form_config adalah JSONB dari DB — sudah include fields, headerImage, iconFile, pageTitle.
+  // displayFormat & validation dikonversi dari string/key ke fungsi.
+  const currentGameConfig = React.useMemo(() => {
+    const raw = game?.form_config;
+    if (!raw) return DEFAULT_GAME_CONFIG;
+
+    return {
+      fields:        raw.fields        || DEFAULT_GAME_CONFIG.fields,
+      displayFormat: buildDisplayFormat(raw.displayFormat),
+      validation:    buildValidation(raw.validation),
+      headerImage:   raw.headerImage   || DEFAULT_GAME_CONFIG.headerImage,
+      iconFile:      raw.iconFile      || DEFAULT_GAME_CONFIG.iconFile,
+      pageTitle:     raw.pageTitle     || null,
+    };
+  }, [game]);
 
   // Apakah Step 2 perlu ditampilkan?
-  const showStep2 = productType === 'voucher_code'
-    ? false
-    : true;
+  const showStep2 = productType !== 'voucher_code';
 
   // Riot ID validation state
   // const [riotIdValidated, setRiotIdValidated] = useState(false);
@@ -539,12 +336,11 @@ function OrderPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      // NEW API STRUCTURE: /api/products/:gameSlug
       const response = await fetch(`${API_URL}/api/products/${gameSlug}`);
       const data = await response.json();
 
       if (data.success) {
-        // NEW: Response has { game: {...}, products: [...] }
+        // Response: { game: { ..., form_config: {...} }, products: [...] }
         setGame(data.game);
         setProducts(data.products);
       }
@@ -1059,7 +855,7 @@ function OrderPage() {
             </div>
           )}
           <h1 className="page-title">
-            Order {PAGE_TITLES[gameSlug] || game?.name || 'Game'}
+            Order {currentGameConfig.pageTitle || game?.name || 'Game'}
           </h1>
         </div>
 

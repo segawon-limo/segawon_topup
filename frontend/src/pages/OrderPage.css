@@ -231,6 +231,46 @@ body {
   text-transform: uppercase;
 }
 
+
+/* ── Out of Stock ── */
+.product-card.out-of-stock {
+  position: relative;
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f7f7f7;
+  border-color: #e2e8f0;
+  pointer-events: none;
+}
+
+.product-card.out-of-stock:hover {
+  background: #f7f7f7;
+  border-color: #e2e8f0;
+  color: #2d3748;
+  transform: none;
+  box-shadow: none;
+}
+
+.badge-oos {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+.oos-price {
+  color: #a0aec0;
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
 /* Form Groups */
 .form-group {
   margin-bottom: 20px;
