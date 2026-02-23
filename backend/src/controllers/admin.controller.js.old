@@ -248,12 +248,12 @@ exports.getOrders = async (req, res) => {
 
     if (status) {
       params.push(status);
-      whereClause += ` AND o.order_status = $${params.length}`;
+      whereClause += ` AND LOWER(o.order_status) = LOWER($${params.length})`;
     }
 
     if (search) {
       params.push(`%${search}%`);
-      whereClause += ` AND (o.order_number ILIKE $${params.length} OR o.customer_email ILIKE $${params.length}})`;
+      whereClause += ` AND (o.order_number ILIKE $${params.length} OR o.customer_email ILIKE $${params.length})`;
     }
 
     // Count total
@@ -269,9 +269,12 @@ exports.getOrders = async (req, res) => {
     params.push(limit, offset);
     const result = await pool.query(`
       SELECT 
-        o.id, o.order_number, o.game_user_id, o.customer_name, o.customer_email,
-        o.amount, o.payment_fee,
-        o.order_status, o.payment_method, o.voucher_code, o.voucher_discount,
+        o.id, o.order_number, o.game_user_id, o.game_user_tag,
+        o.customer_name, o.customer_email, o.customer_phone,
+        o.amount, o.payment_fee, o.subtotal, o.total_amount,
+        o.order_status, o.payment_status, o.payment_method, o.payment_gateway,
+        o.voucher_code, o.voucher_discount,
+        o.provider_serial_number, o.payment_url,
         o.created_at, o.updated_at,
         p.name as product_name, p.sku, p.base_price,
         g.name as game_name
@@ -327,8 +330,8 @@ exports.retryFailedOrders = async (req, res) => {
       try {
         // Get order details
         const orderResult = await pool.query(
-          'SELECT * FROM orders WHERE id = $1 AND order_status IN ($2, $3)',
-          [orderId, 'FAILED', 'PENDING_RETRY']
+          'SELECT * FROM orders WHERE id = $1 AND order_status IN ($2, $3, $4, $5)',
+          [orderId, 'failed', 'FAILED', 'pending_retry', 'PENDING_RETRY']
         );
 
         if (orderResult.rows.length === 0) {

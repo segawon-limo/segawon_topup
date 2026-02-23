@@ -14,18 +14,19 @@ const formatDate = (d) => new Date(d).toLocaleString('id-ID', {
 });
 
 const STATUS_CONFIG = {
-  completed:     { label: 'Completed',     cls: 'badge-success', icon: '✅' },
-  success:       { label: 'Success',       cls: 'badge-success', icon: '✅' },
-  pending:       { label: 'Pending',       cls: 'badge-pending', icon: '⏳' },
-  failed:        { label: 'Failed',        cls: 'badge-failed',  icon: '❌' },
-  pending_retry: { label: 'Pending Retry', cls: 'badge-warning', icon: '🔄' },
-  cancelled:     { label: 'Cancelled',     cls: 'badge-default', icon: '🚫' },
+  completed:     { label: 'Completed',     cls: 'badge-success',  icon: '✅' },
+  success:       { label: 'Success',       cls: 'badge-success',  icon: '✅' },
+  pending:       { label: 'Pending',       cls: 'badge-pending',  icon: '⏳' },
+  failed:        { label: 'Failed',        cls: 'badge-failed',   icon: '❌' },
+  pending_retry: { label: 'Pending Retry', cls: 'badge-warning',  icon: '🔄' },
+  expired:       { label: 'Expired',       cls: 'badge-expired',  icon: '⏰' },
+  cancelled:     { label: 'Cancelled',     cls: 'badge-default',  icon: '🚫' },
 };
 const PAY_CONFIG = {
   success: { label: 'Lunas',       cls: 'badge-success' },
   paid:    { label: 'Lunas',       cls: 'badge-success' },
   pending: { label: 'Belum Bayar', cls: 'badge-pending' },
-  expired: { label: 'Kadaluarsa', cls: 'badge-failed'  },
+  expired: { label: 'Kadaluarsa', cls: 'badge-expired' },
 };
 const VA_NAMES = {
   BR:'BRI', M2:'Mandiri', NC:'BNC', I1:'BNI', BV:'BSI', B1:'CIMB', DM:'Danamon', BT:'Permata',
@@ -273,6 +274,7 @@ function AdminOrders() {
           <option value="pending">⏳ Pending</option>
           <option value="failed">❌ Failed</option>
           <option value="pending_retry">🔄 Pending Retry</option>
+          <option value="expired">⏰ Expired</option>
         </select>
       </div>
 

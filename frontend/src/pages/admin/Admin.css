@@ -581,3 +581,5 @@
 .badge-default { background: #edf2f7; color: #4a5568; }
 .badge-danger  { background: #fed7d7; color: #742a2a; }
 .badge-success-soft { background: #c6f6d5; color: #22543d; }
+
+.badge-expired  { background: #e9d8fd; color: #553c9a; }
