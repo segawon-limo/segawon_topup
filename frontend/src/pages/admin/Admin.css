@@ -409,3 +409,23 @@
     overflow-x: auto;
   }
 }
+
+/* ── Toast notification ── */
+.toast-notif {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  animation: toast-in 0.3s ease;
+}
+.toast-success { background: #10b981; color: #fff; }
+.toast-error   { background: #ef4444; color: #fff; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
