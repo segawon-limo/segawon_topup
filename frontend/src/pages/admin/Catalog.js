@@ -54,12 +54,19 @@ function Toast({ toast, onClose }) {
 // ══════════════════════════════════════════════════════════════
 // ── Image Upload Helper ──────────────────────────────────────
 function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
-  const [uploading, setUploading] = React.useState(false);
+  const [uploading,    setUploading]    = React.useState(false);
   const [localPreview, setLocalPreview] = React.useState(null);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef   = React.useRef(null);
+  const justUploadedRef = React.useRef(false); // flag: value change berasal dari upload kita sendiri
 
-  // Reset local preview when value changes from parent (e.g. modal reopened)
-  React.useEffect(() => { setLocalPreview(null); }, [value]);
+  // Reset localPreview hanya saat value berubah dari LUAR (bukan dari upload sendiri)
+  React.useEffect(() => {
+    if (justUploadedRef.current) {
+      justUploadedRef.current = false; // sudah dihandle, skip reset
+    } else {
+      setLocalPreview(null); // modal dibuka ulang / value diset dari parent
+    }
+  }, [value]);
 
   const getServerPath = (filename) => {
     if (!filename) return null;
@@ -68,14 +75,14 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
     return `/images/games_icon/${filename}`;
   };
 
-  // Show local preview first (just uploaded), fallback to server path
+  // Prioritas: localPreview (baru diupload) → server path
   const previewSrc = localPreview || getServerPath(value);
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Show local preview immediately
+    // Tampilkan preview lokal langsung
     const localUrl = URL.createObjectURL(file);
     setLocalPreview(localUrl);
 
@@ -94,8 +101,8 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
+      justUploadedRef.current = true; // tandai: value akan berubah dari upload ini
       onChange(data.filename);
-      // Reset file input so same file can be re-uploaded
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       alert('Upload gagal: ' + err.message);
@@ -109,14 +116,22 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
     <div className="form-group">
       <label>{label} <span className="label-hint">{hint}</span></label>
       <div className="upload-field">
-        {previewSrc && (
-          <img
-            src={previewSrc}
-            alt="preview"
-            className={type === 'header' ? 'upload-preview-header' : 'upload-preview-icon'}
-            onError={e => { e.target.style.display = 'none'; }}
-          />
-        )}
+        <div className="upload-preview-wrapper">
+          {previewSrc && (
+            <img
+              src={previewSrc}
+              alt="preview"
+              className={type === 'header' ? 'upload-preview-header' : 'upload-preview-icon'}
+              onError={e => { e.target.style.display = 'none'; }}
+            />
+          )}
+          {uploading && (
+            <div className="upload-loading-overlay">
+              <div className="upload-spinner" />
+              <span>Uploading...</span>
+            </div>
+          )}
+        </div>
         <div className="upload-controls">
           <input
             type="text"
