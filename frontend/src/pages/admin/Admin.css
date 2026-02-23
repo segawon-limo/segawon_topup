@@ -429,3 +429,155 @@
   from { opacity: 0; transform: translateX(40px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* ── Order row clickable ── */
+.order-row-clickable { cursor: pointer; transition: background 0.15s; }
+.order-row-clickable:hover { background: #f0f4ff; }
+
+/* ── Order Detail Modal ── */
+.order-detail-modal {
+  width: 580px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-detail-body {
+  overflow-y: auto;
+  padding: 0 24px;
+  flex: 1;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.detail-section:last-child { border-bottom: none; }
+
+.detail-section h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a0aec0;
+  margin: 0 0 10px 0;
+}
+
+.order-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  gap: 16px;
+}
+
+.order-detail-label {
+  font-size: 13px;
+  color: #718096;
+  flex-shrink: 0;
+}
+
+.order-detail-value {
+  font-size: 13px;
+  color: #2d3748;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-all;
+}
+
+.order-detail-value.mono {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #f7fafc;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.total-row {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 2px solid #e2e8f0;
+}
+
+.total-row .order-detail-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.total-value {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #667eea !important;
+}
+
+/* ── Retry Confirm Modal ── */
+.retry-confirm-modal {
+  width: 440px;
+  max-width: 95vw;
+}
+
+.retry-confirm-body {
+  padding: 8px 24px 16px;
+  text-align: center;
+}
+
+.retry-confirm-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.retry-confirm-body p {
+  color: #4a5568;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.retry-info-box {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.retry-info-box div {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  gap: 12px;
+}
+
+.retry-info-box div span {
+  color: #718096;
+  flex-shrink: 0;
+}
+
+.retry-info-box div strong {
+  color: #2d3748;
+  font-family: monospace;
+  text-align: right;
+  word-break: break-all;
+}
+
+.retry-warning {
+  color: #c05621 !important;
+  font-size: 12px !important;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 !important;
+}
+
+/* ── Order row hover ── */
+.order-row-hover:hover { background: #f8fafc; transition: background 0.15s; }
+
+/* ── badge-default & badge-danger ── */
+.badge-default { background: #edf2f7; color: #4a5568; }
+.badge-danger  { background: #fed7d7; color: #742a2a; }
+.badge-success-soft { background: #c6f6d5; color: #22543d; }
