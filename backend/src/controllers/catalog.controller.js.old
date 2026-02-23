@@ -239,7 +239,7 @@ exports.createProduct = async (req, res) => {
     const {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, icon_product_url
+      is_active, sort_order
     } = req.body;
 
     if (!game_id || !name || !sku || !selling_price) {
@@ -259,9 +259,9 @@ exports.createProduct = async (req, res) => {
       INSERT INTO products (
         game_id, name, description, sku,
         base_price, selling_price, profit_price,
-        is_active, sort_order, icon_product_url,
+        is_active, sort_order,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, NOW(), NOW())
       RETURNING *
     `, [
       game_id, name, description || null, sku,
@@ -269,8 +269,7 @@ exports.createProduct = async (req, res) => {
       parseFloat(selling_price),
       computedProfit,
       is_active !== false,
-      sort_order || 0,
-      icon_product_url || null
+      sort_order || 0
     ]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -290,7 +289,7 @@ exports.updateProduct = async (req, res) => {
     const {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, icon_product_url
+      is_active, sort_order
     } = req.body;
 
     // Cek SKU duplicate (exclude diri sendiri)
@@ -314,14 +313,13 @@ exports.updateProduct = async (req, res) => {
         profit_price     = COALESCE($7, profit_price),
         is_active        = COALESCE($8, is_active),
         sort_order       = COALESCE($9, sort_order),
-        icon_product_url = $10,
         updated_at       = NOW()
-      WHERE id = $11
+      WHERE id = $10
       RETURNING *
     `, [
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, icon_product_url,
+      is_active, sort_order,
       id
     ]);
 
@@ -429,8 +427,8 @@ exports.uploadImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'type, filename, dan data wajib diisi' });
     }
 
-    if (!['header', 'icon'].includes(type)) {
-      return res.status(400).json({ success: false, message: 'type harus "header" atau "icon"' });
+    if (!['header', 'icon', 'icon_product'].includes(type)) {
+      return res.status(400).json({ success: false, message: 'type harus "header", "icon", atau "icon_product"' });
     }
 
     // Sanitize filename — only allow safe chars
@@ -454,14 +452,15 @@ exports.uploadImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Ukuran file maksimal 5MB' });
     }
 
-    // Resolve target folder — relative to backend, go up to frontend/public/images
+    // Resolve target folder — pakai env variable IMAGES_PATH atau fallback relative
     const folderMap = {
-      header: 'header',
-      icon:   'games_icon',
+      header:       'header',
+      icon:         'games_icon',
+      icon_product: 'icon_product',
     };
-    const targetDir = path.resolve(
-      __dirname, '..', '..', '..', '..', 'frontend', 'public', 'images', folderMap[type]
-    );
+    const imagesBase = process.env.IMAGES_PATH
+      || path.resolve(__dirname, '..', '..', '..', '..', 'frontend', 'public', 'images');
+    const targetDir = path.join(imagesBase, folderMap[type]);
 
     // Make sure dir exists
     fs.mkdirSync(targetDir, { recursive: true });

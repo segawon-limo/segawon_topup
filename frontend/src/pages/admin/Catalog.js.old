@@ -55,15 +55,29 @@ function Toast({ toast, onClose }) {
 // ── Image Upload Helper ──────────────────────────────────────
 function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
   const [uploading, setUploading] = React.useState(false);
-  const [preview,   setPreview]   = React.useState(null);
+  const [localPreview, setLocalPreview] = React.useState(null);
+  const fileInputRef = React.useRef(null);
+
+  // Reset local preview when value changes from parent (e.g. modal reopened)
+  React.useEffect(() => { setLocalPreview(null); }, [value]);
+
+  const getServerPath = (filename) => {
+    if (!filename) return null;
+    if (type === 'header')       return `/images/header/${filename}`;
+    if (type === 'icon_product') return `/images/icon_product/${filename}`;
+    return `/images/games_icon/${filename}`;
+  };
+
+  // Show local preview first (just uploaded), fallback to server path
+  const previewSrc = localPreview || getServerPath(value);
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreview(ev.target.result);
-    reader.readAsDataURL(file);
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setLocalPreview(localUrl);
 
     setUploading(true);
     try {
@@ -73,30 +87,23 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
         r.onerror = reject;
         r.readAsDataURL(file);
       });
-      // Map frontend type to backend folder key
-      const backendType = type === 'icon_product' ? 'icon_product' : type;
-      const res  = await fetch(`${API_URL}/api/admin/catalog/upload-image`, {
+      const res = await fetch(`${API_URL}/api/admin/catalog/upload-image`, {
         method:  'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ type: backendType, filename: file.name, data: base64 }),
+        body:    JSON.stringify({ type, filename: file.name, data: base64 }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       onChange(data.filename);
+      // Reset file input so same file can be re-uploaded
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       alert('Upload gagal: ' + err.message);
-      setPreview(null);
+      setLocalPreview(null);
     } finally {
       setUploading(false);
     }
   };
-
-  const previewSrc = preview
-    || (value ? (
-        type === 'header'      ? `/images/header/${value}` :
-        type === 'icon_product'? `/images/icon_product/${value}` :
-                                 `/images/games_icon/${value}`
-    ) : null);
 
   return (
     <div className="form-group">
@@ -121,6 +128,7 @@ function ImageUploadField({ label, hint, type, value, onChange, authHeader }) {
           <label className={`btn-upload ${uploading ? 'btn-uploading' : ''}`}>
             {uploading ? '⏳ Uploading...' : '📁 Pilih File'}
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleFile}
@@ -394,46 +402,45 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     margin:           product?.selling_price && product?.profit_price
                         ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.selling_price)) * 1000) / 10).toFixed(1)
                         : '',
-    icon_product_url: product?.icon_product_url || '',
     is_active:        product?.is_active !== false,
     sort_order:       product?.sort_order       ?? 0,
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
+  // Safe parse: strip thousand separators (titik diikuti 3 digit), bukan titik desimal
+  const safeFloat = (v) => parseFloat(String(v).replace(/\.(\d{3})/g, '$1').replace(',', '.')) || 0;
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      setForm(f => ({ ...f, [name]: checked }));
+      return;
+    }
     setForm(f => {
-      const updated = { ...f, [name]: type === 'checkbox' ? checked : value };
-      const bp = parseFloat(name === 'base_price'    ? value : updated.base_price)    || 0;
-      const sp = parseFloat(name === 'selling_price' ? value : updated.selling_price) || 0;
-      const pp = parseFloat(name === 'profit_price'  ? value : updated.profit_price)  || 0;
-      const mg = parseFloat(name === 'margin'        ? value : updated.margin)        || 0;
+      const next = { ...f, [name]: value };
+      const bp = safeFloat(next.base_price);
+      const sp = safeFloat(next.selling_price);
+      const pp = safeFloat(next.profit_price);
+      const mg = safeFloat(next.margin);
 
-      if (name === 'base_price' || name === 'selling_price') {
-        // Modal + Jual → Profit & Margin
-        if (bp > 0 && sp > 0) {
-          const profit = sp - bp;
-          updated.profit_price = profit.toFixed(2);
-          updated.margin = (Math.ceil((profit / sp) * 1000) / 10).toFixed(1);
-        }
-      } else if (name === 'margin') {
-        // Modal + Margin → Jual & Profit
-        if (bp > 0 && mg > 0) {
-          const sell = bp / (1 - mg / 100);
-          const profit = sell - bp;
-          updated.selling_price = sell.toFixed(2);
-          updated.profit_price  = profit.toFixed(2);
-        }
-      } else if (name === 'profit_price') {
-        // Modal + Profit → Jual & Margin
-        if (bp > 0 && pp > 0) {
-          const sell = bp + pp;
-          updated.selling_price = sell.toFixed(2);
-          updated.margin = (Math.ceil((pp / sell) * 1000) / 10).toFixed(1);
-        }
+      if ((name === 'base_price' || name === 'selling_price') && bp > 0 && sp > 0) {
+        // Modal + Jual → Profit & Markup%
+        const profit = sp - bp;
+        next.profit_price = Math.round(profit);
+        next.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
+      } else if (name === 'margin' && bp > 0 && mg > 0) {
+        // Modal + Markup% → Jual & Profit (realtime)
+        const sell = Math.round(bp * (1 + mg / 100));
+        next.selling_price = sell;
+        next.profit_price  = sell - bp;
+      } else if (name === 'profit_price' && bp > 0 && pp > 0) {
+        // Modal + Profit → Jual & Markup% (realtime)
+        const sell = Math.round(bp + pp);
+        next.selling_price = sell;
+        next.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
       }
-      return updated;
+      return next;
     });
   };
 
@@ -443,9 +450,9 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     setSaving(true);
     const payload = {
       ...form,
-      base_price:    parseFloat(form.base_price)    || 0,
-      selling_price: parseFloat(form.selling_price) || 0,
-      profit_price:  parseFloat(form.profit_price)  || 0,
+      base_price:    safeFloat(form.base_price),
+      selling_price: safeFloat(form.selling_price),
+      profit_price:  safeFloat(form.profit_price),
       sort_order:    parseInt(form.sort_order)       || 0,
     };
     try {
@@ -541,12 +548,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
             </div>
           )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Icon Produk <span className="label-hint">(public/images/icon_product/)</span></label>
-              <input name="icon_product_url" value={form.icon_product_url} onChange={handleChange} placeholder="diamond-100.webp" />
-            </div>
-          </div>
+
 
           <div className="form-row">
             <div className="form-group">
@@ -868,7 +870,7 @@ function AdminCatalog() {
               )}
               {filteredProducts.map((p, i) => {
                 const profitMargin = p.selling_price > 0
-                  ? (Math.ceil((p.profit_price / p.selling_price) * 1000) / 10).toFixed(1)
+                  ? (Math.ceil((p.profit_price / p.base_price) * 1000) / 10).toFixed(1)
                   : 0;
                 return (
                   <tr key={p.id} style={{ opacity: p.is_active ? 1 : 0.5 }}>

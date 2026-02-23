@@ -403,6 +403,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
                         ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.selling_price)) * 1000) / 10).toFixed(1)
                         : '',
     is_active:        product?.is_active !== false,
+    seller_available: product?.seller_available !== false,
     sort_order:       product?.sort_order       ?? 0,
   });
   const [saving, setSaving] = useState(false);
@@ -561,9 +562,15 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
             </div>
           </div>
 
-          <div className="checkbox-group" style={{ marginBottom: 16 }}>
+          <div className="checkbox-group" style={{ marginBottom: 8 }}>
             <input type="checkbox" id="is_active_p" name="is_active" checked={form.is_active} onChange={handleChange} />
             <label htmlFor="is_active_p">Produk Aktif (tampil di OrderPage)</label>
+          </div>
+          <div className="checkbox-group" style={{ marginBottom: 16 }}>
+            <input type="checkbox" id="seller_avail_p" name="seller_available" checked={form.seller_available} onChange={handleChange} />
+            <label htmlFor="seller_avail_p">
+              Seller Available <span className="label-hint">(uncheck = Out of Stock, override manual)</span>
+            </label>
           </div>
 
           <div className="modal-footer">
@@ -794,6 +801,7 @@ function AdminCatalog() {
                 <th>Format Key</th>
                 <th>Products</th>
                 <th>Status</th>
+                <th>Stock</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -892,6 +900,12 @@ function AdminCatalog() {
                       >
                         {p.is_active ? '● Aktif' : '○ Nonaktif'}
                       </button>
+                    </td>
+                    <td>
+                      {p.seller_available === false
+                        ? <span className="badge badge-danger">⚠ OOS</span>
+                        : <span className="badge badge-success">✓ Ready</span>
+                      }
                     </td>
                     <td>
                       <div className="action-btns">
