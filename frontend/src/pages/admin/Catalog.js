@@ -426,9 +426,32 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
 
   // Safe parse: strip thousand separators (titik diikuti 3 digit), bukan titik desimal
   // safeFloat: untuk nilai FINAL (handleSubmit & onBlur)
-  // Strips semua thousand-separator dots, ganti koma desimal ke titik
+  // - Koma selalu dianggap desimal: "2,1" → 2.1
+  // - Dot dianggap ribuan jika ada 2+ dot, atau jika ada tepat 3 digit setelah dot
+  // - "724.000" → 724000, "152.040" → 152040, "2.1" → 2.1, "2,1" → 2.1
   const safeFloat = (v) => {
-    const s = String(v).trim().replace(/\./g, '').replace(',', '.');
+    let s = String(v).trim();
+    // Koma → titik dulu
+    s = s.replace(',', '.');
+    const dotCount = (s.match(/\./g) || []).length;
+    if (dotCount === 0) return parseFloat(s) || 0;
+    if (dotCount >= 2) {
+      // Semua dot = ribuan separator: "1.469.838" → 1469838
+      return parseFloat(s.replace(/\./g, '')) || 0;
+    }
+    // Tepat 1 dot — cek apakah ribuan atau desimal
+    const afterDot = s.split('.')[1] || '';
+    if (afterDot.length === 3 && /^\d+$/.test(afterDot)) {
+      // "724.000", "152.040" → ribuan
+      return parseFloat(s.replace('.', '')) || 0;
+    }
+    // "2.1", "5.5" → desimal biasa
+    return parseFloat(s) || 0;
+  };
+
+  // safeFloatMargin: khusus field margin, selalu desimal
+  const safeFloatMargin = (v) => {
+    const s = String(v).trim().replace(',', '.');
     return parseFloat(s) || 0;
   };
 
@@ -445,7 +468,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
       const bp = safeFloat(next.base_price);
       const sp = safeFloat(next.selling_price);
       const pp = safeFloat(next.profit_price);
-      const mg = safeFloat(next.margin);
+      const mg = safeFloatMargin(next.margin);
 
       if ((name === 'base_price' || name === 'selling_price') && bp > 0 && sp > 0) {
         // Modal + Jual → Profit & Markup%
@@ -550,31 +573,29 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
           <div className="form-row">
             <div className="form-group">
               <label>Harga Modal (base_price)</label>
-              <input name="base_price" type="number" value={form.base_price} onChange={handleChange} onBlur={handlePriceBlur} placeholder="0" />
+              <input name="base_price" type="text" inputMode="numeric" value={form.base_price} onChange={handleChange} onBlur={handlePriceBlur} placeholder="0" />
             </div>
             <div className="form-group">
               <label>Harga Jual (selling_price) *</label>
-              <input name="selling_price" type="number" value={form.selling_price} onChange={handleChange} onBlur={handlePriceBlur} placeholder="15000" required />
+              <input name="selling_price" type="text" inputMode="numeric" value={form.selling_price} onChange={handleChange} onBlur={handlePriceBlur} placeholder="15000" required />
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>Profit Price <span className="label-hint">(auto kalkulasi)</span></label>
-              <input name="profit_price" type="number" value={form.profit_price} onChange={handleChange} placeholder="0" />
+              <input name="profit_price" type="text" inputMode="numeric" value={form.profit_price} onChange={handleChange} placeholder="0" />
             </div>
             <div className="form-group">
               <label>Margin % <span className="label-hint">(isi salah satu: profit atau margin)</span></label>
               <div style={{ position: 'relative' }}>
                 <input
                   name="margin"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
+                  type="text"
+                  inputMode="decimal"
                   value={form.margin}
                   onChange={handleChange}
-                  placeholder="Contoh: 5.5"
+                  placeholder="Contoh: 5.5 atau 5,5"
                   style={{ paddingRight: 28 }}
                 />
                 <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#718096', fontSize: 14, pointerEvents: 'none' }}>%</span>
