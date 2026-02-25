@@ -122,20 +122,31 @@ export default function AdminTerminal() {
   }
 
   // Submit input panel
+  function buildPayload(key, value) {
+    switch(key) {
+      case 'psql': return { type:'run_psql', query: value };
+      case 'rm':   return { type:'run_rm',   path:  value };
+      case 'cat':  return { type:'run_cat',  path:  value };
+      case 'head': return { type:'run_head', path:  value };
+      case 'tail': return { type:'run_tail', path:  value };
+      case 'grep': return { type:'run_grep', path:  value };
+      default:     return null;
+    }
+  }
+
   function submitInput() {
     if (!inputPanel) return;
     const { key, value, label } = inputPanel;
     if (!value.trim()) return;
 
+    const payload = buildPayload(key, value);
+    if (!payload) return;
+
     if (inputPanel.confirm) {
-      const payload = key === 'psql'
-        ? { type:'run_psql', query: value }
-        : { type:'run_rm',   path:  value };
       setInputPanel(null);
       setConfirmCmd({ key, label, msgType:'input', payload });
       return;
     }
-    const payload = key === 'psql' ? { type:'run_psql', query:value } : { type:'run_rm', path:value };
     setInputPanel(null);
     send(payload);
   }

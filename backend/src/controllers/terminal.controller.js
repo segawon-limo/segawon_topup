@@ -46,6 +46,26 @@ const INPUT_COMMANDS = {
     inputLabel:'Path file (relatif dari /home/segawon/apps/segawon_topup/)',
     placeholder:'frontend/public/images/header/old-header.jpg',
   },
+  cat: {
+    label:'Cat File', icon:'📖', group:'Files', color:'#68d391', confirm:false,
+    inputLabel:'Path file (absolut atau relatif dari /home/segawon/)',
+    placeholder:'/home/segawon/apps/segawon_topup/backend/.env',
+  },
+  head: {
+    label:'Head File', icon:'⬆️', group:'Files', color:'#63b3ed', confirm:false,
+    inputLabel:'Path file : jumlah baris (opsional, default 20)',
+    placeholder:'/home/segawon/apps/segawon_topup/backend/src/server.js : 30',
+  },
+  tail: {
+    label:'Tail File', icon:'⬇️', group:'Files', color:'#63b3ed', confirm:false,
+    inputLabel:'Path file : jumlah baris (opsional, default 50)',
+    placeholder:'/var/log/nginx/error.log : 50',
+  },
+  grep: {
+    label:'Grep File', icon:'🔎', group:'Files', color:'#f6ad55', confirm:false,
+    inputLabel:'pattern : path file (pisah dengan " : ")',
+    placeholder:'JWT_SECRET : /home/segawon/apps/segawon_topup/backend/.env',
+  },
 };
 
 const toPublic = (map) => Object.entries(map).reduce((acc, [k, v]) => {
@@ -126,6 +146,61 @@ function initWebSocket(server) {
         ws.send(JSON.stringify({ type:'start', command:'rm', label:'Remove File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`Menghapus: ${resolved}\n` }));
         runProc(ws, 'rm', ['-v', resolved], APP_ROOT);
+        return;
+      }
+
+      // cat
+      if (msg.type === 'run_cat') {
+        const filePath = (msg.path || '').trim();
+        if (!filePath) { ws.send(JSON.stringify({ type:'error', message:'Path kosong' })); return; }
+        const resolved = path.resolve('/home/segawon', filePath.startsWith('/') ? filePath.slice(1) : filePath);
+        ws.send(JSON.stringify({ type:'start', command:'cat', label:'Cat File' }));
+        ws.send(JSON.stringify({ type:'stdout', data:`File: ${filePath}\n` }));
+        runProc(ws, 'cat', [filePath], '/home/segawon');
+        return;
+      }
+
+      // head
+      if (msg.type === 'run_head') {
+        const input = (msg.path || '').trim();
+        const parts = input.split(':').map(s => s.trim());
+        const filePath = parts[0];
+        const lines    = parts[1] ? parts[1] : '20';
+        if (!filePath) { ws.send(JSON.stringify({ type:'error', message:'Path kosong' })); return; }
+        ws.send(JSON.stringify({ type:'start', command:'head', label:'Head File' }));
+        ws.send(JSON.stringify({ type:'stdout', data:`File: ${filePath} (${lines} baris pertama)\n` }));
+        runProc(ws, 'head', ['-n', lines, filePath], '/home/segawon');
+        return;
+      }
+
+      // tail
+      if (msg.type === 'run_tail') {
+        const input = (msg.path || '').trim();
+        const parts = input.split(':').map(s => s.trim());
+        const filePath = parts[0];
+        const lines    = parts[1] ? parts[1] : '50';
+        if (!filePath) { ws.send(JSON.stringify({ type:'error', message:'Path kosong' })); return; }
+        ws.send(JSON.stringify({ type:'start', command:'tail', label:'Tail File' }));
+        ws.send(JSON.stringify({ type:'stdout', data:`File: ${filePath} (${lines} baris terakhir)\n` }));
+        runProc(ws, 'tail', ['-n', lines, filePath], '/home/segawon');
+        return;
+      }
+
+      // grep
+      if (msg.type === 'run_grep') {
+        const input = (msg.path || '').trim();
+        const colonIdx = input.indexOf(' : ');
+        if (colonIdx === -1) {
+          ws.send(JSON.stringify({ type:'error', message:'Format: pattern : /path/file' })); return;
+        }
+        const pattern  = input.slice(0, colonIdx).trim();
+        const filePath = input.slice(colonIdx + 3).trim();
+        if (!pattern || !filePath) {
+          ws.send(JSON.stringify({ type:'error', message:'Pattern atau path kosong' })); return;
+        }
+        ws.send(JSON.stringify({ type:'start', command:'grep', label:'Grep File' }));
+        ws.send(JSON.stringify({ type:'stdout', data:`grep "${pattern}" ${filePath}\n` }));
+        runProc(ws, 'grep', ['-n', '--color=never', pattern, filePath], '/home/segawon');
         return;
       }
     });
