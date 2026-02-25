@@ -1,10 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const { initWebSocket } = require('./controllers/terminal.controller');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
 
 const { pool } = require('./config/database');
 
