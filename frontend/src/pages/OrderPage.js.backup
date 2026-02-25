@@ -855,7 +855,7 @@ function OrderPage() {
             </div>
           )}
           <h1 className="page-title">
-            Order {currentGameConfig.pageTitle || game?.name || 'Game'}
+            Order {game?.name || 'Game'}{currentGameConfig.pageTitle ? ` ${currentGameConfig.pageTitle}` : ''}
           </h1>
         </div>
 

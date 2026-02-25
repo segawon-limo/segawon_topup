@@ -831,13 +831,26 @@ function OrderPage() {
       >
       </div> */}
       
-      <div
-        className="game-header-image"
-        id="game-header-image"
-        style={{
-          backgroundImage: `url(${process.env.PUBLIC_URL}/images/header/${currentGameConfig.headerImage})`
-        }}
-      />
+      {currentGameConfig.headerImage && currentGameConfig.headerImage !== 'default-header.jpg' && (
+        <div
+          className="game-header-image"
+          id="game-header-image"
+          style={{
+            backgroundImage: `url(${process.env.PUBLIC_URL}/images/header/${currentGameConfig.headerImage})`
+          }}
+        >
+          {/* Hidden img untuk detect 404 dan hide header kalau tidak ada */}
+          <img
+            src={`${process.env.PUBLIC_URL}/images/header/${currentGameConfig.headerImage}`}
+            alt=""
+            style={{ display: 'none' }}
+            onError={e => {
+              const parent = e.target.parentElement;
+              if (parent) parent.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
 
       <div className="container">
         <div className="page-title-wrapper">
@@ -867,12 +880,18 @@ function OrderPage() {
               <div className="form-section">
                 <h2>1. Pilih Nominal</h2>
                 <div className="products-grid">
-                  {products.map(product => (
+                  {products.map(product => {
+                    const isOos = product.seller_available === false;
+                    return (
                     <div
                       key={product.id}
-                      className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''}`}
-                      onClick={() => handleProductSelect(product)}
+                      className={`product-card ${selectedProduct?.id === product.id ? 'selected' : ''} ${isOos ? 'out-of-stock' : ''}`}
+                      onClick={() => !isOos && handleProductSelect(product)}
+                      style={isOos ? { cursor: 'not-allowed', opacity: 0.55, position: 'relative' } : {}}
                     >
+                      {isOos && (
+                        <div className="badge-oos">OUT OF STOCK</div>
+                      )}
                       <div className="product-name">
                         {/* icon_product_url = filename dari games, load dari /images/icon_product/ */}
                         {(product.icon_product_url || currentGameConfig.iconFile || game?.icon_url) && (
@@ -890,12 +909,12 @@ function OrderPage() {
                         )}
                         {product.name}
                       </div>
-                      <div className="product-price">
+                      <div className={`product-price ${isOos ? 'oos-price' : ''}`}>
                         {product.displayPrice}
                       </div>
-                      {/* <div className="product-description">{product.description}</div> */}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {errors.product && <div className="error">{errors.product}</div>}
               </div>
