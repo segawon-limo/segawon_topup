@@ -38,8 +38,18 @@ export default function AdminTerminal() {
     return () => { wsRef.current?.close(); clearTimeout(reconnTimer.current); };
   }, []);
 
+  // Auto-scroll hanya kalau user sedang di bawah (tidak lagi scroll ke atas)
+  const isAtBottom = useRef(true);
+
+  const handleOutputScroll = () => {
+    const el = outputRef.current;
+    if (!el) return;
+    // Anggap "di bawah" kalau jarak dari bottom < 60px
+    isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
+
   useEffect(() => {
-    if (outputRef.current)
+    if (outputRef.current && isAtBottom.current)
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
   }, [output]);
 
@@ -75,6 +85,8 @@ export default function AdminTerminal() {
           break;
         case 'start':
           setRunning(msg.command);
+          isAtBottom.current = true; // reset scroll ke bawah saat command baru
+          outputRef.current && (outputRef.current.scrollTop = outputRef.current.scrollHeight);
           append(`\n▶ ${msg.label}`, 'system');
           append('─'.repeat(55), 'divider');
           break;
@@ -296,7 +308,7 @@ export default function AdminTerminal() {
             </span>
             <button className="btn-clear" onClick={() => setOutput([])} disabled={!!running}>🗑 Clear</button>
           </div>
-          <div className="term-output" ref={outputRef}>
+          <div className="term-output" ref={outputRef} onScroll={handleOutputScroll}>
             {output.length === 0 && (
               <div className="term-empty">Pilih command di kiri untuk menjalankannya</div>
             )}
