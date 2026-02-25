@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import './Admin.css';
 import AdminPageHeader from '../../components/AdminPageHeader';
 
+const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
+
 const formatRupiah = (n) => new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', minimumFractionDigits: 0
 }).format(n || 0);
