@@ -276,7 +276,17 @@ export default function AdminTerminal() {
       <div className="term-header">
         <div className="term-header-left">
           <button className="term-back" onClick={() => navigate('/admin/dashboard')}>← Dashboard</button>
-          <h1 className="term-title"><span>⌨️</span> Server Control</h1>
+          <div className="term-brand">
+            <img
+              src="/images/logo/logo-navbar.png"
+              alt="Segawon"
+              className="term-brand-logo"
+            />
+            <div className="term-brand-text">
+              <span className="term-brand-name">Segawon</span>
+              <h1 className="term-title">Server Control</h1>
+            </div>
+          </div>
         </div>
         <div className="term-status">
           <span className={`status-dot ${connected ? (authed ? 'dot-green' : 'dot-yellow') : 'dot-red'}`} />

@@ -42,14 +42,44 @@
   color: #dce6f0;
 }
 
+.term-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.term-brand-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
+  flex-shrink: 0;
+}
+
+.term-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+
+.term-brand-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7c6bf0;
+}
+
 .term-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #dce6f0;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  line-height: 1.2;
 }
 
 .term-title-icon { font-size: 20px; }
