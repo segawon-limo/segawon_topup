@@ -1,0 +1,63 @@
+/* ── AdminPageHeader ─────────────────────────────────────── */
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.aph-left {
+  display: flex;
+  align-items: center;
+}
+
+.aph-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.aph-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.aph-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+
+.aph-brand-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7c6bf0;
+}
+
+.aph-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.aph-subtitle {
+  font-size: 13px;
+  color: #718096;
+  margin: 2px 0 0;
+}
+
+.aph-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
