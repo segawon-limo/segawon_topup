@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Admin.css';
 import './Catalog.css';
+import AdminPageHeader from '../../components/AdminPageHeader';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
@@ -794,17 +795,11 @@ function AdminCatalog() {
   return (
     <div className="admin-dashboard">
       {/* Header */}
-      <div className="dashboard-header">
-        <div className="header-left">
-          <h1>🗂️ Catalog Manager</h1>
-          <p>Kelola Games &amp; Products</p>
-        </div>
-        <div className="header-right">
-          <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
-          <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
-          <button onClick={handleLogout} className="btn-danger">Logout</button>
-        </div>
-      </div>
+      <AdminPageHeader title="Catalog Manager" subtitle="Kelola Games &amp; Products">
+        <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
+        <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
+        <button onClick={handleLogout} className="btn-danger">Logout</button>
+      </AdminPageHeader>
 
       {/* Stats bar */}
       <div className="catalog-stats">
