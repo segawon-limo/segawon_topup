@@ -12,8 +12,11 @@ const PORT = process.env.PORT || 5000;
 
 // ========================================
 // IMPORTANT: Trust proxy (for Nginx)
+// '1' = trust one hop (Nginx sebagai reverse proxy langsung)
+// Ini membuat express-rate-limit bisa baca IP asli dari X-Forwarded-For
+// tanpa bisa di-spoof dari luar
 // ========================================
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // ========================================
 // MIDDLEWARE (order matters!)
@@ -33,8 +36,8 @@ app.use(cors({
 }));
 
 // 3. Body parser (BEFORE routes!)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 4. Logging
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
@@ -54,12 +57,14 @@ app.use('/api', limiter);
 // ========================================
 
 // Import routes
-const routes = require('./routes/index');
-const duitkuRoutes = require('./routes/duitku.routes');
+const routes          = require('./routes/index');
+const duitkuRoutes    = require('./routes/duitku.routes');
+const digiflazzRoutes = require('./routes/digiflazz.routes');
 
 // Register routes
 app.use('/api', routes);
 app.use('/api/duitku', duitkuRoutes);
+app.use('/api/digiflazz', digiflazzRoutes);
 
 // ========================================
 // ROOT ENDPOINT
@@ -75,8 +80,10 @@ app.get('/', (req, res) => {
       products: '/api/products/:gameSlug',
       createOrder: 'POST /api/orders/create',
       orderStatus: '/api/orders/:orderNumber',
-      duitkuCallback: 'POST /api/duitku/callback',
-      duitkuTest: '/api/duitku/test'
+      duitkuCallback:      'POST /api/duitku/callback',
+      duitkuTest:          '/api/duitku/test',
+      digiflazzWebhook:    'POST /api/digiflazz/webhook',
+      digiflazzWebhookGet: 'GET /api/digiflazz/webhook'
     }
   });
 });

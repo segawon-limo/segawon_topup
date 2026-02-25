@@ -1,4 +1,5 @@
 const express = require('express');
+const { initWebSocket } = require('./controllers/terminal.controller');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -132,6 +133,9 @@ const server = app.listen(PORT, () => {
     console.log('✓ Duitku configured');
   }
 });
+
+// Init WebSocket terminal
+initWebSocket(server);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
