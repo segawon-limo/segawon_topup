@@ -8,7 +8,6 @@ const WS_URL = (() => {
 })();
 
 const GROUP_ICONS = { PM2:'⚙️', Build:'🔨', Scripts:'📜', System:'🖥️', Nginx:'🌐', Logs:'📄', Database:'🐘', Files:'🗑️' };
-const GROUP_ORDER = ['PM2','Build','Scripts','System','Nginx','Logs','Database','Files'];
 
 function stripAnsi(s) { return s.replace(/\x1B\[[0-9;]*[mGKHF]/g, ''); }
 
@@ -24,11 +23,8 @@ export default function AdminTerminal() {
   const [inputCmds,    setInputCmds]    = useState({});
   const [running,      setRunning]      = useState(null);
   const [output,       setOutput]       = useState([{ line:'Menghubungkan ke server...', type:'system' }]);
-  const [confirmCmd,   setConfirmCmd]   = useState(null);
-  const [inputPanel,   setInputPanel]   = useState(null);
-
-  // Collapsible state: semua group terbuka by default
-  const [openGroups,   setOpenGroups]   = useState({});
+  const [confirmCmd,   setConfirmCmd]   = useState(null); // { key, label, msgType, payload }
+  const [inputPanel,   setInputPanel]   = useState(null); // { key, ...def, value:'' }
 
   const token = localStorage.getItem('admin_token');
 
@@ -42,23 +38,13 @@ export default function AdminTerminal() {
     return () => { wsRef.current?.close(); clearTimeout(reconnTimer.current); };
   }, []);
 
-  // Semua group tertutup by default, buka hanya PM2 pertama kali
-  useEffect(() => {
-    const groups = {};
-    [...Object.values(commands), ...Object.values(inputCmds)].forEach(cmd => {
-      const g = cmd.group || 'Other';
-      if (!(g in groups)) groups[g] = false; // false = tertutup by default
-    });
-    // Buka group PM2 saja by default
-    if ('PM2' in groups) groups['PM2'] = true;
-    setOpenGroups(groups);
-  }, [commands, inputCmds]);
-
+  // Auto-scroll hanya kalau user sedang di bawah (tidak lagi scroll ke atas)
   const isAtBottom = useRef(true);
 
   const handleOutputScroll = () => {
     const el = outputRef.current;
     if (!el) return;
+    // Anggap "di bawah" kalau jarak dari bottom < 60px
     isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
   };
 
@@ -99,7 +85,7 @@ export default function AdminTerminal() {
           break;
         case 'start':
           setRunning(msg.command);
-          isAtBottom.current = true;
+          isAtBottom.current = true; // reset scroll ke bawah saat command baru
           outputRef.current && (outputRef.current.scrollTop = outputRef.current.scrollHeight);
           append(`\n▶ ${msg.label}`, 'system');
           append('─'.repeat(55), 'divider');
@@ -132,6 +118,7 @@ export default function AdminTerminal() {
     wsRef.current.send(JSON.stringify(payload));
   }
 
+  // Klik tombol command biasa
   function clickCmd(key) {
     const cmd = commands[key];
     if (!cmd || running || !authed) return;
@@ -139,12 +126,14 @@ export default function AdminTerminal() {
     send({ type:'run', command:key });
   }
 
+  // Klik tombol input command (psql / rm)
   function clickInputCmd(key) {
     const cmd = inputCmds[key];
     if (!cmd || running || !authed) return;
     setInputPanel({ key, ...cmd, value:'' });
   }
 
+  // Submit input panel
   function buildPayload(key, value) {
     switch(key) {
       case 'psql': return { type:'run_psql', query: value };
@@ -174,16 +163,14 @@ export default function AdminTerminal() {
     send(payload);
   }
 
+  // Confirm dialog OK
   function execConfirm() {
     if (!confirmCmd) return;
     send(confirmCmd.payload);
     setConfirmCmd(null);
   }
 
-  function toggleGroup(group) {
-    setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
-  }
-
+  // Group commands by group
   function groupBy(obj) {
     return Object.entries(obj).reduce((acc, [k, v]) => {
       const g = v.group || 'Other';
@@ -201,6 +188,7 @@ export default function AdminTerminal() {
     allGroups[g].push(...items.map(i => ({ ...i, isInput:true })));
   });
 
+  const GROUP_ORDER = ['PM2','Build','Scripts','System','Nginx','Logs','Database','Files'];
   const sortedGroups = Object.entries(allGroups).sort(([a],[b]) => {
     const ai = GROUP_ORDER.indexOf(a), bi = GROUP_ORDER.indexOf(b);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
@@ -289,45 +277,27 @@ export default function AdminTerminal() {
       <div className="term-layout">
         {/* Sidebar */}
         <div className="term-sidebar">
-          {sortedGroups.map(([group, items]) => {
-            const isOpen = openGroups[group] !== false; // default terbuka
-            return (
-              <div key={group} className="cmd-group">
-                {/* Accordion Header */}
+          {sortedGroups.map(([group, items]) => (
+            <div key={group} className="cmd-group">
+              <div className="cmd-group-label">{GROUP_ICONS[group] || '⚡'} {group}</div>
+              {items.map(cmd => (
                 <button
-                  className="cmd-group-label cmd-group-toggle"
-                  onClick={() => toggleGroup(group)}
-                  title={isOpen ? 'Tutup' : 'Buka'}
+                  key={cmd.key}
+                  className={`cmd-btn ${running === cmd.key ? 'cmd-running' : ''} ${cmd.isInput ? 'cmd-input-type' : ''}`}
+                  style={{ '--cmd-color': cmd.color }}
+                  onClick={() => cmd.isInput ? clickInputCmd(cmd.key) : clickCmd(cmd.key)}
+                  disabled={!!running || !authed}
+                  title={cmd.label}
                 >
-                  <span className="cmd-group-left">
-                    <span className="cmd-group-icon">{GROUP_ICONS[group] || '⚡'}</span>
-                    <span>{group}</span>
-                  </span>
-                  <span className={`cmd-group-chevron ${isOpen ? 'chevron-open' : ''}`}>›</span>
+                  <span className="cmd-icon">{cmd.icon}</span>
+                  <span className="cmd-label">{cmd.label}</span>
+                  {running === cmd.key && <span className="cmd-spinner" />}
+                  {cmd.confirm && !cmd.isInput && <span className="cmd-warn" title="Butuh konfirmasi">!</span>}
+                  {cmd.isInput && <span className="cmd-input-indicator" title="Butuh input">✎</span>}
                 </button>
-
-                {/* Accordion Content */}
-                <div className={`cmd-group-items ${isOpen ? 'cmd-group-items-open' : ''}`}>
-                  {items.map(cmd => (
-                    <button
-                      key={cmd.key}
-                      className={`cmd-btn ${running === cmd.key ? 'cmd-running' : ''} ${cmd.isInput ? 'cmd-input-type' : ''}`}
-                      style={{ '--cmd-color': cmd.color }}
-                      onClick={() => cmd.isInput ? clickInputCmd(cmd.key) : clickCmd(cmd.key)}
-                      disabled={!!running || !authed}
-                      title={cmd.label}
-                    >
-                      <span className="cmd-icon">{cmd.icon}</span>
-                      <span className="cmd-label">{cmd.label}</span>
-                      {running === cmd.key && <span className="cmd-spinner" />}
-                      {cmd.confirm && !cmd.isInput && <span className="cmd-warn" title="Butuh konfirmasi">!</span>}
-                      {cmd.isInput && <span className="cmd-input-indicator" title="Butuh input">✎</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          ))}
         </div>
 
         {/* Output */}

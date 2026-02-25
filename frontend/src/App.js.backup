@@ -19,7 +19,8 @@ import Footer from './components/Footer';
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminOrders from './pages/admin/Orders';
-import AdminCatalog from './pages/admin/Catalog';
+import AdminCatalog  from './pages/admin/Catalog';
+import AdminTerminal from './pages/admin/Terminal';
 import CekTransaksiPage from './pages/CekTransaksiPage';
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
             <Route path="/admin/login"     element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/orders"    element={<AdminOrders />} />
+            <Route path="/admin/terminal"  element={<AdminTerminal />} />
             <Route path="/admin/catalog"   element={<AdminCatalog />} />
             <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
           </Routes>
