@@ -16,15 +16,15 @@ const https  = require('https');
 
 // ── Konfigurasi ──────────────────────────────────────────────
 const USERNAME = process.env.DIGIFLAZZ_USERNAME;
-const API_KEY  = process.env.DIGIFLAZZ_API_KEY;
+const MODE     = (process.env.DIGIFLAZZ_MODE || 'production').toLowerCase();
+const API_KEY  = MODE === 'production'
+  ? process.env.DIGIFLAZZ_PRODUCTION_KEY
+  : process.env.DIGIFLAZZ_DEVELOPMENT_KEY;
 const ENDPOINT = 'https://api.digiflazz.com/v1/inquiry-pln';
 
 // ── Validasi env ─────────────────────────────────────────────
 if (!USERNAME || !API_KEY) {
-  console.error('\n❌ ERROR: DIGIFLAZZ_USERNAME atau DIGIFLAZZ_API_KEY belum diisi di .env\n');
-  console.error('Tambahkan ke backend/.env:');
-  console.error('  DIGIFLAZZ_USERNAME=username_kamu');
-  console.error('  DIGIFLAZZ_API_KEY=api_key_kamu\n');
+  console.error('\n❌ ERROR: DIGIFLAZZ_USERNAME atau DIGIFLAZZ_PRODUCTION_KEY/DEVELOPMENT_KEY belum diisi di .env\n');
   process.exit(1);
 }
 
@@ -49,6 +49,7 @@ console.log('\n⚡ Digiflazz PLN Inquiry');
 console.log('═'.repeat(45));
 console.log(`  Customer No : ${customer_no}`);
 console.log(`  Username    : ${USERNAME}`);
+console.log(`  Mode        : ${MODE.toUpperCase()}`);
 console.log(`  Signature   : ${sign}`);
 console.log('─'.repeat(45));
 console.log('  Menghubungi Digiflazz API...\n');
