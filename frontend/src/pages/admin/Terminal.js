@@ -220,8 +220,11 @@ export default function AdminTerminal() {
             {confirmCmd.payload?.query && (
               <code className="term-confirm-code">{confirmCmd.payload.query}</code>
             )}
-            {confirmCmd.payload?.path && (
+            {confirmCmd.payload?.path && confirmCmd.payload?.type === 'run_rm' && (
               <code className="term-confirm-code">rm {confirmCmd.payload.path}</code>
+            )}
+            {confirmCmd.payload?.path && confirmCmd.payload?.type === 'run_node_exec' && (
+              <code className="term-confirm-code">$ {confirmCmd.payload.path}</code>
             )}
             <div className="term-confirm-btns">
               <button className="btn-cancel" onClick={() => setConfirmCmd(null)}>Batal</button>
