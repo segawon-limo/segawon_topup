@@ -42,14 +42,44 @@
   color: #dce6f0;
 }
 
+.term-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.term-brand-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
+  flex-shrink: 0;
+}
+
+.term-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+
+.term-brand-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7c6bf0;
+}
+
 .term-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #dce6f0;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  line-height: 1.2;
 }
 
 .term-title-icon { font-size: 20px; }
@@ -106,7 +136,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #5a6a82;
+  color: #8a9bb5;
   padding: 6px 8px 4px;
 }
 
@@ -468,4 +498,69 @@
   font-size: 11px;
   color: #58a6ff;
   flex-shrink: 0;
+}
+/* ============================
+   COLLAPSIBLE SIDEBAR GROUPS
+   ============================ */
+
+.cmd-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  text-align: left;
+  border-radius: 5px;
+  transition: background 0.15s;
+  /* inherits .cmd-group-label styles */
+}
+
+.cmd-group-toggle:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.cmd-group-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cmd-group-icon {
+  font-size: 13px;
+}
+
+.cmd-group-chevron {
+  font-size: 16px;
+  color: #4a5568;
+  transition: transform 0.22s ease, color 0.15s;
+  line-height: 1;
+  display: inline-block;
+  transform: rotate(0deg);
+  user-select: none;
+}
+
+.cmd-group-chevron.chevron-open {
+  transform: rotate(90deg);
+  color: #7c6bf0;
+}
+
+/* Accordion items container */
+.cmd-group-items {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.28s ease, opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 4px;
+}
+
+.cmd-group-items-open {
+  max-height: 800px;
+  opacity: 1;
+  padding-top: 4px;
 }

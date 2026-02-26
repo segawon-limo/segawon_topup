@@ -276,10 +276,8 @@ export default function AdminTerminal() {
         </div>
       )}
 
-      {/* Header */}
       <div className="term-header">
         <div className="term-header-left">
-          <button className="term-back" onClick={() => navigate('/admin/dashboard')}>← Dashboard</button>
           <div className="term-brand">
             <img
               src="/images/logo/logo-navbar.png"
@@ -292,11 +290,17 @@ export default function AdminTerminal() {
             </div>
           </div>
         </div>
-        <div className="term-status">
-          <span className={`status-dot ${connected ? (authed ? 'dot-green' : 'dot-yellow') : 'dot-red'}`} />
-          <span className="status-text">
-            {!connected ? 'Disconnected' : !authed ? 'Authenticating...' : 'Connected'}
-          </span>
+        <div className="term-header-right">
+          <button className="term-nav-btn" onClick={() => navigate('/admin/dashboard')}>📊 Dashboard</button>
+          <button className="term-nav-btn" onClick={() => navigate('/admin/orders')}>📋 Orders</button>
+          <button className="term-nav-btn" onClick={() => navigate('/admin/catalog')}>🗂️ Catalog</button>
+          <button className="term-nav-btn term-nav-logout" onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_user'); navigate('/admin/login'); }}>Logout</button>
+          <div className="term-status">
+            <span className={`status-dot ${connected ? (authed ? 'dot-green' : 'dot-yellow') : 'dot-red'}`} />
+            <span className="status-text">
+              {!connected ? 'Disconnected' : !authed ? 'Authenticating...' : 'Connected'}
+            </span>
+          </div>
         </div>
       </div>
 
