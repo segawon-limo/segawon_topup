@@ -306,6 +306,29 @@
 }
 .ct-btn-pay:hover { opacity: 0.9; transform: translateY(-1px); }
 
+.ct-btn-wa {
+  flex: 1;
+  background: linear-gradient(135deg, #1a7a3c, #25d366);
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: opacity 0.2s, transform 0.1s;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 12px rgba(37,211,102,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.ct-btn-wa:hover { opacity: 0.9; transform: translateY(-1px); }
+.ct-wa-icon { font-size: 16px; }
+
 .ct-btn-secondary {
   flex: 1;
   background: #fff;

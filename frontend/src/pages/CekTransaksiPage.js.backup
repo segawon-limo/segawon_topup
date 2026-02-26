@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CekTransaksiPage.css';
 
-const API_URL   = process.env.REACT_APP_API_URL  || '';
-const WA_NUMBER = process.env.REACT_APP_WHATSAPP || '';
+const API_URL = process.env.REACT_APP_API_URL || '';
 
 const STATUS_CONFIG = {
   pending:    { label: 'Menunggu Pembayaran', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  icon: '⏳' },
@@ -212,16 +211,6 @@ function CekTransaksiPage() {
               {order.payment?.url && order.payment?.status === 'pending' && (
                 <a href={order.payment.url} className="ct-btn-pay" target="_blank" rel="noreferrer">
                   💳 Bayar Sekarang
-                </a>
-              )}
-              {effectiveStatus === 'failed' && WA_NUMBER && (
-                <a
-                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi, aku ingin menanyakan terkait invoice ${order.orderNumber}, kenapa gagal ya?`)}`}
-                  className="ct-btn-wa"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className="ct-wa-icon">💬</span> Hubungi Support
                 </a>
               )}
               <button className="ct-btn-secondary" onClick={() => { setOrder(null); setInvoice(''); setSearched(false); }}>
