@@ -66,6 +66,11 @@ const INPUT_COMMANDS = {
     inputLabel:'pattern : path file (pisah dengan " : ")',
     placeholder:'JWT_SECRET : /home/segawon/apps/segawon_topup/backend/.env',
   },
+  node_exec: {
+    label:'Execute Script', icon:'▶️', group:'Scripts', color:'#68d391', confirm:true,
+    inputLabel:'Path file script + argument (opsional). Mendukung .js, .sh, dll.',
+    placeholder:'test/inquiry-pln.js 1234554321',
+  },
 };
 
 const toPublic = (map) => Object.entries(map).reduce((acc, [k, v]) => {
@@ -201,6 +206,48 @@ function initWebSocket(server) {
         ws.send(JSON.stringify({ type:'start', command:'grep', label:'Grep File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`grep "${pattern}" ${filePath}\n` }));
         runProc(ws, 'grep', ['-n', '--color=never', pattern, filePath], '/home/segawon');
+        return;
+      }
+
+      // node_exec — jalankan script .js, .sh, atau executable lain
+      if (msg.type === 'run_node_exec') {
+        const input = (msg.path || '').trim();
+        if (!input) { ws.send(JSON.stringify({ type:'error', message:'Path script kosong' })); return; }
+
+        // Pisah path dan argumen
+        const parts    = input.split(/\s+/);
+        const filePath = parts[0];
+        const args     = parts.slice(1);
+
+        // Resolve path — bisa absolut atau relatif dari BACKEND_DIR
+        const resolved = filePath.startsWith('/')
+          ? filePath
+          : path.resolve(BACKEND_DIR, filePath);
+
+        // Security: harus dalam APP_ROOT
+        if (!resolved.startsWith(APP_ROOT + '/')) {
+          ws.send(JSON.stringify({ type:'error', message:`❌ Akses ditolak: path harus dalam ${APP_ROOT}` })); return;
+        }
+
+        // Tentukan runtime berdasarkan ekstensi
+        const ext = path.extname(resolved).toLowerCase();
+        let runner, runnerArgs;
+        if (ext === '.js') {
+          runner = 'node'; runnerArgs = [resolved, ...args];
+        } else if (ext === '.sh') {
+          runner = 'bash'; runnerArgs = [resolved, ...args];
+        } else if (ext === '') {
+          // Executable langsung (binary / script dengan shebang)
+          runner = resolved; runnerArgs = args;
+        } else {
+          ws.send(JSON.stringify({ type:'error', message:`❌ Ekstensi "${ext}" tidak didukung. Gunakan .js, .sh, atau executable.` })); return;
+        }
+
+        const displayCmd = ext === '' ? `${resolved} ${args.join(' ')}` : `${runner} ${resolved} ${args.join(' ')}`;
+        console.log(`[Terminal] exec: ${displayCmd}`);
+        ws.send(JSON.stringify({ type:'start', command:'node_exec', label:`▶ ${path.basename(resolved)} ${args.join(' ')}`.trim() }));
+        ws.send(JSON.stringify({ type:'stdout', data:`$ ${displayCmd}\n` }));
+        runProc(ws, runner, runnerArgs, BACKEND_DIR);
         return;
       }
     });
