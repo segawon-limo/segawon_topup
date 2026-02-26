@@ -575,7 +575,7 @@ function OrderPage() {
         const data = await res.json();
 
         if (data.success) {
-          setPlnInfo({ idpel: data.idpel, nama: data.nama, tarif: data.tarif, daya: data.daya });
+          setPlnInfo({ idpel: data.idpel, nama: data.nama, tarif: data.tarif, daya: data.daya, noMeter: data.noMeter });
           setUserIdValidated(true);
           setValidationError('');
         } else {
@@ -941,8 +941,8 @@ function OrderPage() {
                       </div>
                       <div className="pln-check-rows">
                         <div className="pln-check-row">
-                          <span className="pln-check-label">ID Pelanggan</span>
-                          <span className="pln-check-value">{plnInfo.idpel}</span>
+                          <span className="pln-check-label">No. Meter</span>
+                          <span className="pln-check-value">{plnInfo.noMeter}</span>
                         </div>
                         <div className="pln-check-row">
                           <span className="pln-check-label">Nama</span>
