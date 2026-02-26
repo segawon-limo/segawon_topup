@@ -37,7 +37,6 @@ router.get('/validate-riot-id', (req, res) => {
   res.status(405).json({ success: false, message: 'Method Not Allowed. Use POST.' });
 });
 router.post('/check-pln-meter', orderController.checkPlnMeter);
-router.get('/check-pln-meter/:refId', orderController.getPlnMeterResult);
 
 // ========================================
 // VOUCHER MANAGEMENT

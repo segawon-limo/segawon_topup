@@ -560,66 +560,33 @@ function OrderPage() {
       return;
     }
 
-    // ── Khusus Token PLN: cek nomor meter via Digiflazz (async + polling) ──
+    // ── Khusus Token PLN: cek nomor meter via Digiflazz (direct, synchronous) ──
     if (productType === 'token_pln') {
       try {
         setValidating(true);
         setValidationError('');
         setPlnInfo(null);
 
-        // Step 1: POST → Digiflazz buat transaksi PLNCEK, dapat refId
-        const postRes  = await fetch(`${API_URL}/api/check-pln-meter`, {
+        const res  = await fetch(`${API_URL}/api/check-pln-meter`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ nomorMeter: userId.trim() }),
         });
-        const postData = await postRes.json();
+        const data = await res.json();
 
-        if (!postData.success) {
-          setValidationError(postData.message || 'Gagal mengirim permintaan');
+        if (data.success) {
+          setPlnInfo({ idpel: data.idpel, nama: data.nama, tarif: data.tarif, daya: data.daya });
+          setUserIdValidated(true);
+          setValidationError('');
+        } else {
+          setValidationError(data.message || 'Nomor meter tidak ditemukan');
           setUserIdValidated(false);
-          setValidating(false);
-          return;
         }
-
-        const { refId } = postData;
-
-        // Step 2: Polling GET sampai status = success / failed (max 30 detik)
-        const MAX_POLL = 15;
-        let pollCount  = 0;
-
-        const pollInterval = setInterval(async () => {
-          pollCount++;
-          try {
-            const pollRes  = await fetch(`${API_URL}/api/check-pln-meter/${refId}`);
-            const pollData = await pollRes.json();
-
-            if (pollData.status === 'success') {
-              clearInterval(pollInterval);
-              setPlnInfo({ idpel: pollData.idpel, nama: pollData.nama, tarif: pollData.tarif, daya: pollData.daya });
-              setUserIdValidated(true);
-              setValidationError('');
-              setValidating(false);
-            } else if (pollData.status === 'failed') {
-              clearInterval(pollInterval);
-              setValidationError(pollData.message || 'Nomor meter tidak ditemukan');
-              setUserIdValidated(false);
-              setValidating(false);
-            } else if (pollCount >= MAX_POLL) {
-              clearInterval(pollInterval);
-              setValidationError('Timeout — coba lagi beberapa saat');
-              setUserIdValidated(false);
-              setValidating(false);
-            }
-          } catch (err) {
-            console.error('PLN poll error:', err);
-          }
-        }, 2000); // poll setiap 2 detik
-
       } catch (err) {
         console.error('PLN check error:', err);
         setValidationError('Gagal mengecek nomor meter. Coba lagi.');
         setUserIdValidated(false);
+      } finally {
         setValidating(false);
       }
       return;
