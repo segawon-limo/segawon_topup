@@ -147,13 +147,14 @@ export default function AdminTerminal() {
 
   function buildPayload(key, value) {
     switch(key) {
-      case 'psql': return { type:'run_psql', query: value };
-      case 'rm':   return { type:'run_rm',   path:  value };
-      case 'cat':  return { type:'run_cat',  path:  value };
-      case 'head': return { type:'run_head', path:  value };
-      case 'tail': return { type:'run_tail', path:  value };
-      case 'grep': return { type:'run_grep', path:  value };
-      default:     return null;
+      case 'psql':       return { type:'run_psql',       query: value };
+      case 'rm':         return { type:'run_rm',         path:  value };
+      case 'cat':        return { type:'run_cat',        path:  value };
+      case 'head':       return { type:'run_head',       path:  value };
+      case 'tail':       return { type:'run_tail',       path:  value };
+      case 'grep':       return { type:'run_grep',       path:  value };
+      case 'node_exec':  return { type:'run_node_exec',  path:  value };
+      default:           return null;
     }
   }
 
