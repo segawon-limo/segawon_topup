@@ -184,9 +184,9 @@ exports.validateRiotId = async (req, res) => {
  * Cek Nomor Meter / ID Pelanggan PLN via Digiflazz PLNCEK
  * POST /api/check-pln-meter
  * Body: { nomorMeter: "45107107679" }
+ * Direct call ke Digiflazz /v1/inquiry-pln — synchronous, tidak perlu polling
  */
 // POST /api/check-pln-meter
-// Buat transaksi PLNCEK ke Digiflazz, return refId untuk polling
 exports.checkPlnMeter = async (req, res) => {
   try {
     const { nomorMeter } = req.body;
@@ -205,21 +205,65 @@ exports.checkPlnMeter = async (req, res) => {
       });
     }
 
-    const digiflazzService = require('../services/digiflazz.service');
-    const result = await digiflazzService.checkPlnMeter(meter);
+    const crypto  = require('crypto');
+    const https   = require('https');
 
-    if (!result.success) {
+    const username = process.env.DIGIFLAZZ_USERNAME;
+    const mode     = (process.env.DIGIFLAZZ_MODE || 'production').toLowerCase();
+    const apiKey   = mode === 'production'
+      ? process.env.DIGIFLAZZ_PRODUCTION_KEY
+      : process.env.DIGIFLAZZ_DEVELOPMENT_KEY;
+
+    if (!username || !apiKey) {
+      console.error('checkPlnMeter: DIGIFLAZZ_USERNAME atau API KEY belum diisi di .env');
+      return res.status(500).json({ success: false, message: 'Konfigurasi Digiflazz belum lengkap' });
+    }
+
+    const sign    = crypto.createHash('md5').update(username + apiKey + meter).digest('hex');
+    const payload = JSON.stringify({ username, customer_no: meter, sign });
+
+    // Direct HTTPS call ke Digiflazz inquiry-pln
+    const data = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'api.digiflazz.com',
+        path:     '/v1/inquiry-pln',
+        method:   'POST',
+        headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+      };
+      const reqHttp = https.request(options, (response) => {
+        let body = '';
+        response.on('data', chunk => body += chunk);
+        response.on('end', () => {
+          try { resolve(JSON.parse(body)); }
+          catch (e) { reject(new Error('Invalid JSON response dari Digiflazz')); }
+        });
+      });
+      reqHttp.on('error', reject);
+      reqHttp.write(payload);
+      reqHttp.end();
+    });
+
+    const d = data.data || data;
+    console.log(`[PLN Inquiry] ${meter} → status: ${d.status}, rc: ${d.rc}, nama: ${d.name}`);
+
+    if (d.status === 'Sukses' || d.rc === '00') {
+      return res.json({
+        success: true,
+        idpel:   d.customer_no || meter,
+        nama:    d.name        || null,
+        tarif:   d.segment_power?.split('/')?.[0]?.trim() || null,
+        daya:    d.segment_power?.split('/')?.[1]?.trim() || null,
+        noMeter: d.meter_no    || meter,
+      });
+    } else {
       return res.status(400).json({
         success: false,
-        message: result.message || 'Gagal mengirim permintaan ke Digiflazz',
+        message: d.message || 'Nomor meter tidak ditemukan',
       });
     }
 
-    // Return refId — frontend akan polling dengan ini
-    return res.json({ success: true, refId: result.refId });
-
   } catch (error) {
-    console.error('checkPlnMeter Error:', error);
+    console.error('checkPlnMeter Error:', error.message);
     res.status(500).json({ success: false, message: 'Gagal mengecek nomor meter' });
   }
 };

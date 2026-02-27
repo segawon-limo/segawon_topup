@@ -88,12 +88,13 @@ exports.getProducts = async (req, res) => {
 
     const game = gameResult.rows[0];
 
-    // Get products
+    // Get products — include compare_price & compare_percentage untuk harga coret
     const productsResult = await pool.query(`
       SELECT 
         p.id, p.name, p.description, p.sku,
         p.base_price, p.selling_price, p.profit_price,
         p.is_active, p.sort_order, p.seller_available,
+        p.compare_price, p.compare_percentage,
         g.icon_product_url
       FROM products p
       JOIN games g ON g.id = p.game_id
@@ -121,6 +122,8 @@ exports.getProducts = async (req, res) => {
         displayPrice:     `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`,
         icon_product_url: p.icon_product_url || null,
         seller_available: p.seller_available !== false,
+        compare_price:      p.compare_price ? parseFloat(p.compare_price) : null,
+        compare_percentage: p.compare_percentage || null,
       }))
     });
 
@@ -433,7 +436,6 @@ exports.createOrder = async (req, res) => {
     const totalAmount = priceAfterDiscount + paymentFee;
 
     // 3. Generate order number
-    // const orderNumber = 'INV' + Date.now();
     const rand = Math.random().toString(36).substring(2, 4).toUpperCase();
     const tail = Date.now().toString().slice(-3);
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -549,7 +551,6 @@ exports.createOrder = async (req, res) => {
         customerName: customerName,
         customerEmail: customerEmail,
         productName: product.description,
-        // gameName dihapus - tidak perlu!
         userId: userId,
         zoneId: zoneId || null,
         amount: productPrice,
@@ -570,31 +571,6 @@ exports.createOrder = async (req, res) => {
     } catch (emailErr) {
       console.error('Email service error:', emailErr);
     }
-    // const emailData = {
-    //   orderNumber: orderNumber,
-    //   customerName: customerName,
-    //   customerEmail: customerEmail,
-    //   productName: product.description,
-    //   // gameName: game.name,
-    //   userId: userId,
-    //   zoneId: zoneId || null,
-    //   amount: productPrice,
-    //   voucherDiscount: voucherDiscount,
-    //   paymentFee: paymentFee,
-    //   totalAmount: totalAmount,
-    //   paymentMethod: paymentMethod,
-    //   paymentUrl: paymentResult.paymentUrl,
-    //   qrUrl: paymentResult.qrString || null,
-    //   vaNumber: paymentResult.vaNumber || null,
-    //   expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    // };
-
-    // // Kirim email secara async (tidak menunggu)
-    // emailService.sendInvoiceEmail(emailData).catch(err => {
-    //   console.error('Email sending error (non-blocking):', err);
-    // });
-
-
 
     // 7. Return success WITH PAYMENT INFO
     res.json({
