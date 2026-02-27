@@ -798,6 +798,7 @@ function AdminCatalog() {
       <AdminPageHeader title="Catalog Manager" subtitle="Kelola Games &amp; Products">
         <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
+        <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
         <button onClick={handleLogout} className="btn-danger">Logout</button>
       </AdminPageHeader>
 

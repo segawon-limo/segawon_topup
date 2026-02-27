@@ -239,7 +239,8 @@ exports.createProduct = async (req, res) => {
     const {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, seller_available
+      is_active, sort_order, seller_available,
+      compare_price, compare_percentage
     } = req.body;
 
     if (!game_id || !name || !sku || !selling_price) {
@@ -260,8 +261,9 @@ exports.createProduct = async (req, res) => {
         game_id, name, description, sku,
         base_price, selling_price, profit_price,
         is_active, sort_order, seller_available,
+        compare_price, compare_percentage,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW(), NOW())
       RETURNING *
     `, [
       game_id, name, description || null, sku,
@@ -271,6 +273,8 @@ exports.createProduct = async (req, res) => {
       is_active !== false,
       sort_order || 0,
       seller_available !== false,
+      compare_price ? parseFloat(compare_price) : null,
+      compare_percentage ? parseFloat(compare_percentage) : null,
     ]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -290,7 +294,8 @@ exports.updateProduct = async (req, res) => {
     const {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
-      is_active, sort_order, seller_available
+      is_active, sort_order, seller_available,
+      compare_price, compare_percentage
     } = req.body;
 
     // Cek SKU duplicate (exclude diri sendiri)
@@ -315,14 +320,18 @@ exports.updateProduct = async (req, res) => {
         is_active        = COALESCE($8, is_active),
         sort_order       = COALESCE($9, sort_order),
         seller_available = COALESCE($10, seller_available),
+        compare_price      = $11,
+        compare_percentage = $12,
         updated_at       = NOW()
-      WHERE id = $11
+      WHERE id = $13
       RETURNING *
     `, [
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
       is_active, sort_order,
       seller_available !== undefined ? seller_available : null,
+      compare_price ? parseFloat(compare_price) : null,
+      compare_percentage ? parseFloat(compare_percentage) : null,
       id
     ]);
 

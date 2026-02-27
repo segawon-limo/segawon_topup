@@ -849,6 +849,7 @@ function OrderPage() {
                 <div className="products-grid">
                   {products.map(product => {
                     const isOos = product.seller_available === false;
+                    const hasDiscount = product.compare_price && parseFloat(product.compare_price) > parseFloat(product.selling_price);
                     return (
                     <div
                       key={product.id}
@@ -858,6 +859,9 @@ function OrderPage() {
                     >
                       {isOos && (
                         <div className="badge-oos">OUT OF STOCK</div>
+                      )}
+                      {hasDiscount && !isOos && (
+                        <div className="badge-discount">-{product.compare_percentage}%</div>
                       )}
                       <div className="product-name">
                         {/* icon_product_url = filename dari games, load dari /images/icon_product/ */}
@@ -877,6 +881,9 @@ function OrderPage() {
                         {product.name}
                       </div>
                       <div className={`product-price ${isOos ? 'oos-price' : ''}`}>
+                        {hasDiscount && (
+                          <span className="product-price-compare">{formatRupiah(product.compare_price)}</span>
+                        )}
                         {product.displayPrice}
                       </div>
                     </div>

@@ -899,15 +899,30 @@ function OrderPage() {
                   {currentGameConfig.fields.map((field) => (
                     <div className="form-group" key={field.name}>
                       <label>{field.label} *</label>
-                      <input
-                        type={field.type}
-                        name={field.name}
-                        value={formData[field.name]}
-                        onChange={handleInputChange}
-                        placeholder={field.placeholder}
-                        className={errors[field.name] ? 'error' : ''}
-                        disabled={userIdValidated}
-                      />
+                      {field.type === 'select' ? (
+                        <select
+                          name={field.name}
+                          value={formData[field.name]}
+                          onChange={handleInputChange}
+                          className={errors[field.name] ? 'error' : ''}
+                          disabled={userIdValidated}
+                        >
+                          <option value="">{field.placeholder || 'Pilih...'}</option>
+                          {(field.options || []).map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={field.type}
+                          name={field.name}
+                          value={formData[field.name]}
+                          onChange={handleInputChange}
+                          placeholder={field.placeholder}
+                          className={errors[field.name] ? 'error' : ''}
+                          disabled={userIdValidated}
+                        />
+                      )}
                       {errors[field.name] && (
                         <div className="error">{errors[field.name]}</div>
                       )}
