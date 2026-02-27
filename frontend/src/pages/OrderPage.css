@@ -279,9 +279,29 @@ body {
   text-align: center;
   letter-spacing: 0.05em;
   pointer-events: none;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
   transform: rotate(45deg);
   z-index: 10;
+}
+.badge-discount::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-top: 13px solid #7b1a1a;
+  border-left: 6px solid transparent;
+}
+.badge-discount::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 0;
+  height: 0;
+  border-top: 13px solid #7b1a1a;
+  border-right: 6px solid transparent;
 }
 
 .product-price-compare {
