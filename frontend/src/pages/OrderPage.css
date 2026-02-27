@@ -268,8 +268,8 @@ body {
 
 .badge-discount {
   position: absolute;
-  top: 16px;
-  right: -28px;
+  top: 10px;
+  right: -32px;
   width: 110px;
   background: linear-gradient(180deg, #e53e3e, #c53030);
   color: #fff;
