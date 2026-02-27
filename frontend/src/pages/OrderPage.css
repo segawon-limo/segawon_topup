@@ -267,17 +267,29 @@ body {
 
 .badge-discount {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 12px;
+  right: -8px;
   background: linear-gradient(135deg, #e53e3e, #c53030);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 4px 10px;
   letter-spacing: 0.03em;
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(229,62,62,0.35);
+  box-shadow: -2px 2px 6px rgba(229,62,62,0.45);
+  transform: rotate(15deg);
+  transform-origin: right center;
+  border-radius: 3px 0 0 3px;
+}
+.badge-discount::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -5px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid #7b1a1a;
+  border-bottom: 5px solid transparent;
 }
 
 .product-price-compare {
