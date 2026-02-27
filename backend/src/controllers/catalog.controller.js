@@ -213,6 +213,7 @@ exports.getProducts = async (req, res) => {
         p.id, p.name, p.description, p.sku,
         p.base_price, p.selling_price, p.profit_price,
         p.is_active, p.sort_order, p.seller_available,
+        p.compare_price, p.compare_percentage,
         g.icon_product_url,
         p.game_id,
         p.created_at, p.updated_at,
