@@ -849,7 +849,7 @@ function OrderPage() {
                 <div className="products-grid">
                   {products.map(product => {
                     const isOos = product.seller_available === false;
-                    const hasDiscount = product.compare_price && parseFloat(product.compare_price) > parseFloat(product.selling_price);
+                    const hasDiscount = product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price);
                     return (
                     <div
                       key={product.id}
