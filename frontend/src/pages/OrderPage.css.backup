@@ -144,7 +144,6 @@ body {
   transition: all 0.25s ease;
   background: white;
   color: #2d3748;
-  overflow: hidden;
 }
 
 /* Hover */
@@ -266,42 +265,54 @@ body {
   pointer-events: none;
 }
 
-.badge-discount {
+/* Ribbon wrapper — posisi di luar card supaya ribbon menonjol di atas */
+.ribbon-wrapper {
   position: absolute;
-  top: 10px;
-  right: -32px;
-  width: 110px;
-  background: linear-gradient(180deg, #e53e3e, #c53030);
+  top: -9px;
+  right: -6px;
+  width: 90px;
+  height: 90px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Ribbon strip diagonal */
+.ribbon-badge {
+  position: absolute;
+  top: 18px;
+  right: -22px;
+  width: 100px;
+  background: linear-gradient(180deg, #e53e3e 0%, #c53030 100%);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 5px 0;
   text-align: center;
-  letter-spacing: 0.05em;
-  pointer-events: none;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  padding: 5px 0;
+  letter-spacing: 0.04em;
   transform: rotate(45deg);
-  z-index: 10;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3),
+              inset 0 1px 0 rgba(255,255,255,0.2);
 }
-.badge-discount::before {
+
+/* Tekukan atas */
+.ribbon-badge::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: -6px;
-  width: 0;
-  height: 0;
-  border-top: 13px solid #7b1a1a;
-  border-left: 6px solid transparent;
+  bottom: -5px;
+  left: 0;
+  border-left: 5px solid #7b1a1a;
+  border-bottom: 5px solid transparent;
 }
-.badge-discount::after {
+
+/* Tekukan kanan */
+.ribbon-badge::after {
   content: '';
   position: absolute;
-  top: 0;
-  right: -6px;
-  width: 0;
-  height: 0;
-  border-top: 13px solid #7b1a1a;
-  border-right: 6px solid transparent;
+  bottom: -5px;
+  right: 0;
+  border-right: 5px solid #7b1a1a;
+  border-bottom: 5px solid transparent;
 }
 
 .product-price-compare {

@@ -428,6 +428,9 @@ exports.createOrder = async (req, res) => {
     } else if (duitkuVaLainnya.includes(paymentMethod)) {
       // VA lainnya (BRI, BNC, BNI, BSI, CIMB, Danamon, Permata) - Rp 3.000
       paymentFee = 3000;
+    } else if (paymentMethod === 'SA') {
+      // ShopeePay — 2% dari harga setelah diskon
+      paymentFee = Math.ceil(priceAfterDiscount * 0.02);
     } else {
       // Default fallback
       paymentFee = 3000;

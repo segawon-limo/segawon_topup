@@ -15,9 +15,11 @@ const paymentLogos = {
   'B1': '/images/cimb-logo.png',
   'DM': '/images/danamon-logo.png',
   'BT': '/images/permata-logo.png',
+  // E-Wallet aktif
+  'SA': '/images/shopeepay-logo.png',
   // Coming soon
-  'qris':      '/images/qris-logo.png',
-  'ewallet':   '/images/dana-logo.png',
+  'qris':    '/images/qris-logo.png',
+  'ewallet': '/images/dana-logo.png',
 };
 
 // VA yang aktif dan bisa dipilih
@@ -30,6 +32,11 @@ const VA_BANKS = [
   { code: 'B1', name: 'CIMB Niaga Virtual Account',   logo: 'B1' },
   { code: 'DM', name: 'Danamon Virtual Account',      logo: 'DM' },
   { code: 'BT', name: 'Permata Bank Virtual Account', logo: 'BT' },
+];
+
+// E-Wallet aktif
+const EWALLET_METHODS = [
+  { code: 'SA', name: 'ShopeePay', logo: 'SA', feeType: 'percent', feeValue: 2 },
 ];
 
 // ── buildDisplayFormat ────────────────────────────────────────
@@ -356,6 +363,8 @@ function OrderPage() {
     // Kode Duitku: M2=Mandiri, BR=BRI, NC=BNC, I1=BNI, BV=BSI, B1=CIMB, DM=Danamon, BT=Permata
     if (method === 'M2') return 4000;
     if (['BR','NC','I1','BV','B1','DM','BT'].includes(method)) return 3000;
+    // E-Wallet SA (ShopeePay) — 2% dari harga setelah diskon
+    if (method === 'SA') return Math.ceil(priceAfterDiscount * 0.02);
     return 3000; // default
   };
 
@@ -1178,18 +1187,47 @@ function OrderPage() {
                     </div>
 
                     {/* QRIS & E-Wallet — Coming Soon */}
-                    {['QRIS', 'E-Wallet'].map(cat => (
+                    {['QRIS'].map(cat => (
                       <div key={cat} className="payment-category payment-category-disabled">
                         <h3>{cat} <span className="badge-coming-soon-inline">Coming Soon</span></h3>
                         <div className="payment-option payment-option-disabled">
                           <div className="payment-info">
                             <span className="payment-name coming-soon-text">
-                              🔒 {cat === 'QRIS' ? 'QRIS (Semua E-Wallet)' : 'OVO, GoPay, ShopeePay, DANA'} — Segera Hadir
+                              🔒 QRIS (Semua E-Wallet) — Segera Hadir
                             </span>
                           </div>
                         </div>
                       </div>
                     ))}
+
+                    {/* E-Wallet aktif */}
+                    <div className="payment-category">
+                      <h3>E-Wallet</h3>
+                      {EWALLET_METHODS.map(ew => (
+                        <label
+                          key={ew.code}
+                          className={`payment-option ${selectedPaymentMethod === ew.code ? 'selected' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value={ew.code}
+                            checked={selectedPaymentMethod === ew.code}
+                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                          />
+                          <div className="payment-info">
+                            <img
+                              src={`${process.env.PUBLIC_URL}${paymentLogos[ew.logo]}`}
+                              alt={ew.name}
+                              className="payment-logo"
+                              onError={e => { e.target.style.display='none'; }}
+                            />
+                            <span className="payment-name">{ew.name}</span>
+                          </div>
+                          <span className="payment-fee-badge">+2%</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   {errors.payment && <div className="error">{errors.payment}</div>}
@@ -1302,7 +1340,9 @@ function OrderPage() {
                     <div className="summary-item">
                       <span>Metode Pembayaran</span>
                       <span>
-                        {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name || selectedPaymentMethod}
+                        {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name ||
+                         EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name ||
+                         selectedPaymentMethod}
                       </span>
                     </div>
  

@@ -47,6 +47,7 @@ const generateInvoiceHTML = async (orderData) => {
     'B1': 'CIMB Niaga Virtual Account',
     'DM': 'Danamon Virtual Account',
     'BT': 'Permata Bank Virtual Account',
+    'SA': 'ShopeePay',
   };
 
   const VA_BANK_NAMES = {
@@ -102,6 +103,28 @@ const generateInvoiceHTML = async (orderData) => {
             <strong>Alternatif:</strong> Anda juga bisa scan QR Code di atas menggunakan aplikasi ${walletName}
           </p>
           ` : ''}
+        </div>
+      `;
+    }
+
+    // ShopeePay App (SA)
+    if (methodUpper === 'SA') {
+      return `
+        <div class="instructions">
+          <h3>📱 Cara Pembayaran ShopeePay:</h3>
+          <ol>
+            <li>Klik tombol <strong>"Bayar Sekarang dengan ShopeePay"</strong> di atas</li>
+            <li>Di smartphone: aplikasi Shopee akan terbuka otomatis</li>
+            <li>Di PC/laptop: scan QR Code yang tampil menggunakan kamera Shopee</li>
+            <li>Periksa detail pembayaran (<strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong>)</li>
+            <li>Konfirmasi pembayaran dengan PIN ShopeePay</li>
+            <li>Tunggu notifikasi pembayaran berhasil</li>
+          </ol>
+          <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 14px; margin-top: 12px;">
+            <p style="font-size: 12px; color: #92400e; margin: 0;">
+              💡 <strong>Tips:</strong> Pastikan saldo ShopeePay Anda mencukupi sebelum melanjutkan pembayaran.
+            </p>
+          </div>
         </div>
       `;
     }
@@ -502,6 +525,19 @@ const generateInvoiceHTML = async (orderData) => {
       ${qrImageTag && !vaNumber ? `
       <div style="font-size: 12px; margin-top: 10px; color: rgba(255,255,255,0.8);">
         Scan QR Code untuk membayar
+      </div>
+      ` : ''}
+
+      ${paymentMethod === 'SA' && paymentUrl ? `
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${paymentUrl}" 
+           style="display: inline-block; background: #ee4d2d; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(238,77,45,0.35);">
+          💳 Bayar Sekarang dengan ShopeePay
+        </a>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 10px;">
+          Klik tombol di atas atau buka link berikut:<br>
+          <a href="${paymentUrl}" style="color: rgba(255,255,255,0.9); word-break: break-all;">${paymentUrl}</a>
+        </p>
       </div>
       ` : ''}
     </div>

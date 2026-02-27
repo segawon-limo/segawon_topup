@@ -861,7 +861,9 @@ function OrderPage() {
                         <div className="badge-oos">OUT OF STOCK</div>
                       )}
                       {hasDiscount && !isOos && (
-                        <div className="badge-discount">-{product.compare_percentage}%</div>
+                        <div className="ribbon-wrapper">
+                          <div className="ribbon-badge">-{product.compare_percentage}%</div>
+                        </div>
                       )}
                       <div className="product-name">
                         {/* icon_product_url = filename dari games, load dari /images/icon_product/ */}

@@ -37,21 +37,27 @@ const generateInvoiceHTML = async (orderData) => {
   const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-header.png';
   const logoSmallUrl = process.env.LOGO_EMAIL_SMALL_URL || 'https://res.cloudinary.com/yourname/image/upload/logo-small.png';
 
+  // Kode Duitku VA aktif: BR=BRI | M2=Mandiri | NC=BNC | I1=BNI | BV=BSI | B1=CIMB | DM=Danamon | BT=Permata
   const paymentMethodNames = {
-    'qris': 'QRIS',
-    'SP': 'ShopeePay',
-    'OV': 'OVO',
-    'DA': 'DANA',
-    'LA': 'LinkAja',
-    'I1': 'Indomaret',
-    'A1': 'Alfamart',
-    'BT': 'BCA Virtual Account',
-    'va_bca': 'BCA Virtual Account',
+    'BR': 'BRI Virtual Account',
     'M2': 'Mandiri Virtual Account',
-    'va_mandiri': 'Mandiri Virtual Account',
-    'B1': 'BRI Virtual Account',
-    'va_bri': 'BRI Virtual Account',
-    'VA': 'BNI Virtual Account',
+    'NC': 'Bank Neo Commerce (BNC) Virtual Account',
+    'I1': 'BNI Virtual Account',
+    'BV': 'BSI Virtual Account',
+    'B1': 'CIMB Niaga Virtual Account',
+    'DM': 'Danamon Virtual Account',
+    'BT': 'Permata Bank Virtual Account',
+  };
+
+  const VA_BANK_NAMES = {
+    'BR': 'BRI',
+    'M2': 'Mandiri',
+    'NC': 'BNC',
+    'I1': 'BNI',
+    'BV': 'BSI',
+    'B1': 'CIMB Niaga',
+    'DM': 'Danamon',
+    'BT': 'Permata',
   };
 
   const paymentMethodDisplay = paymentMethodNames[paymentMethod] || paymentMethod;
@@ -100,12 +106,9 @@ const generateInvoiceHTML = async (orderData) => {
       `;
     }
     
-    // Virtual Account (BCA, Mandiri, BRI, BNI)
-    if (['BT', 'VA_BCA', 'M2', 'VA_MANDIRI', 'B1', 'VA_BRI', 'VA', 'VA_BNI'].includes(methodUpper)) {
-      let bankName = 'BCA';
-      if (methodUpper.includes('MANDIRI') || methodUpper === 'M2') bankName = 'Mandiri';
-      if (methodUpper.includes('BRI') || methodUpper === 'B1') bankName = 'BRI';
-      if (methodUpper.includes('BNI') || methodUpper === 'VA') bankName = 'BNI';
+    // Virtual Account — semua kode aktif
+    if (['BR', 'M2', 'NC', 'I1', 'BV', 'B1', 'DM', 'BT'].includes(methodUpper)) {
+      const bankName = VA_BANK_NAMES[methodUpper] || methodUpper;
       
       return `
         <div class="instructions">
@@ -465,7 +468,7 @@ const generateInvoiceHTML = async (orderData) => {
         <span class="price-label">Biaya Admin</span>
         <span class="price-value">Rp ${paymentFee.toLocaleString('id-ID')}</span>
       </div>
-      ${['M2', 'va_mandiri'].includes(paymentMethod) ? `
+      ${paymentMethod === 'M2' ? `
       <div class="price-row" style="background: #fffbeb; border-radius: 6px; padding: 8px 12px; margin: 4px 0; border: 1px solid #fde68a;">
         <span class="price-label" style="color: #92400e; font-size: 12px;">
           ⚠️ Biaya Bank Mandiri*

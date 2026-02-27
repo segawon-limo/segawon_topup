@@ -223,7 +223,7 @@ function PaymentPage() {
   // Determine payment type
   const isQRIS = false; // QRIS belum aktif
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
-  const isEwallet = false; // E-Wallet belum aktif
+  const isEwallet = ['SA'].includes(paymentData?.payment?.method);
 
   return (
     <div className="payment-page">
@@ -453,7 +453,10 @@ function PaymentPage() {
               <div className="payment-section ewallet-section">
                 <h2>Pembayaran {getPaymentMethodName(paymentData.payment.method)}</h2>
                 <p className="ewallet-info">
-                  Klik tombol di bawah untuk melanjutkan pembayaran
+                  Klik tombol di bawah untuk melanjutkan pembayaran.<br/>
+                  <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                    📱 Di smartphone akan langsung membuka aplikasi ShopeePay.
+                  </span>
                 </p>
                 <a 
                   href={paymentData.payment.url} 
@@ -461,13 +464,13 @@ function PaymentPage() {
                   rel="noopener noreferrer"
                   className="btn-open-payment"
                 >
-                  Lanjutkan Pembayaran
+                  💳 Bayar Sekarang dengan ShopeePay
                 </a>
                 
                 <div className="payment-instructions">
-                  <h3>📱 Cara Pembayaran {getPaymentMethodName(paymentData.payment.method)}:</h3>
+                  <h3>📱 Cara Pembayaran ShopeePay:</h3>
                   <ol>
-                    <li>Klik tombol <strong>"Lanjutkan Pembayaran"</strong> di atas</li>
+                    <li>Klik tombol <strong>"Bayar Sekarang dengan ShopeePay"</strong> di atas</li>
                     <li>Anda akan diarahkan ke aplikasi {getPaymentMethodName(paymentData.payment.method)}</li>
                     <li>Login ke akun Anda</li>
                     <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
