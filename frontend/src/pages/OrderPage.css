@@ -268,8 +268,8 @@ body {
 /* Ribbon wrapper — posisi di luar card supaya ribbon menonjol di atas */
 .ribbon-wrapper {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -12px;
+  right: -12px;
   width: 90px;
   height: 90px;
   overflow: hidden;
