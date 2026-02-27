@@ -144,7 +144,7 @@ body {
   transition: all 0.25s ease;
   background: white;
   color: #2d3748;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Hover */
@@ -268,9 +268,9 @@ body {
 
 .badge-discount {
   position: absolute;
-  top: 18px;
-  right: -30px;
-  width: 120px;
+  top: 16px;
+  right: -28px;
+  width: 110px;
   background: linear-gradient(180deg, #e53e3e, #c53030);
   color: #fff;
   font-size: 11px;
