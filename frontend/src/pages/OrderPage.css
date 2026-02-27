@@ -265,17 +265,16 @@ body {
   pointer-events: none;
 }
 
-/* Ribbon wrapper — overflow hidden supaya ribbon terpotong di tepi card */
+/* Ribbon wrapper — posisi di luar card supaya ribbon menonjol di atas */
 .ribbon-wrapper {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 85px;
-  height: 85px;
+  top: -6px;
+  right: -6px;
+  width: 90px;
+  height: 90px;
   overflow: hidden;
-  border-radius: 0 12px 0 0;
   pointer-events: none;
-  z-index: 10;
+  z-index: 20;
 }
 
 /* Ribbon strip diagonal */
