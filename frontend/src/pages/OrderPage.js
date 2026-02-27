@@ -364,7 +364,7 @@ function OrderPage() {
     if (method === 'M2') return 4000;
     if (['BR','NC','I1','BV','B1','DM','BT'].includes(method)) return 3000;
     // E-Wallet SA (ShopeePay) — 2% dari harga setelah diskon
-    if (method === 'SA') return Math.ceil(priceAfterDiscount * 0.02);
+    if (method === 'SA') return Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
     return 3000; // default
   };
 
