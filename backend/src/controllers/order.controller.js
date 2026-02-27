@@ -430,7 +430,9 @@ exports.createOrder = async (req, res) => {
       paymentFee = 3000;
     } else if (paymentMethod === 'SA') {
       // ShopeePay — 2% dari harga setelah diskon
-      paymentFee = Math.ceil(priceAfterDiscount * 0.02);
+      // paymentFee = Math.ceil(priceAfterDiscount * 0.02);
+      const totalharga = Math.round(priceAfterDiscount / 0.98)
+      paymentFee = totalharga - priceAfterDiscount
     } else {
       // Default fallback
       paymentFee = 3000;

@@ -320,6 +320,7 @@ class DuitkuService {
       // Pass-through kode Duitku langsung dari frontend
       'BR': 'BR', 'M2': 'M2', 'NC': 'NC', 'I1': 'I1',
       'BV': 'BV', 'B1': 'B1', 'DM': 'DM', 'BT': 'BT',
+      'SA': 'SA', // ShopeePay App
     };
 
     if (channel) {
