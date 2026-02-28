@@ -418,6 +418,10 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     margin:           product?.selling_price && product?.profit_price
                         ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.selling_price)) * 1000) / 10).toFixed(1)
                         : '',
+    compare_price:      product?.compare_price      || '',
+    compare_percentage: product?.compare_price && product?.selling_price
+                        ? Math.round((parseFloat(product.compare_price) - parseFloat(product.selling_price)) / parseFloat(product.compare_price) * 100)
+                        : '',
     is_active:        product?.is_active !== false,
     seller_available: product?.seller_available !== false,
     sort_order:       product?.sort_order       ?? 0,
@@ -487,6 +491,21 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
         next.selling_price = sell;
         next.margin = (Math.ceil((pp / bp) * 1000) / 10).toFixed(1);
       }
+
+      // compare_price ↔ compare_percentage (2 arah, Opsi A: % terhadap compare_price)
+      const cp  = parseFloat(next.compare_price);
+      const cpct = parseFloat(next.compare_percentage);
+      const curSp = safeFloat(next.selling_price);
+      if (name === 'compare_price' && cp > 0 && curSp > 0) {
+        // Isi compare_price → hitung % otomatis
+        next.compare_percentage = Math.round((cp - curSp) / cp * 100);
+      } else if (name === 'selling_price' && cp > 0 && safeFloat(value) > 0) {
+        // selling_price berubah → update % berdasarkan compare_price yang ada
+        next.compare_percentage = Math.round((cp - safeFloat(value)) / cp * 100);
+      } else if (name === 'compare_percentage' && cpct > 0 && curSp > 0) {
+        // Isi % → hitung compare_price otomatis
+        next.compare_price = Math.round(curSp / (1 - cpct / 100));
+      }
       return next;
     });
   };
@@ -506,6 +525,11 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
         next.profit_price = Math.round(profit);
         next.margin = (Math.ceil((profit / bp) * 1000) / 10).toFixed(1);
       }
+      // Recalc compare_percentage jika compare_price ada
+      const cp = safeFloat(next.compare_price);
+      if (cp > 0 && sp > 0) {
+        next.compare_percentage = Math.round((cp - sp) / cp * 100);
+      }
       return next;
     });
   };
@@ -519,6 +543,8 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
       base_price:    safeFloat(form.base_price),
       selling_price: safeFloat(form.selling_price),
       profit_price:  safeFloat(form.profit_price),
+      compare_price:      safeFloat(form.compare_price) || null,
+      compare_percentage: safeFloat(form.compare_percentage) || null,
       sort_order:    parseInt(form.sort_order)       || 0,
     };
     try {
@@ -609,6 +635,40 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
               💰 Profit: {formatRupiah(parseFloat(form.profit_price))} &nbsp;·&nbsp;
               Jual: {formatRupiah(parseFloat(form.selling_price))} &nbsp;·&nbsp;
               Margin: <strong>{form.margin}%</strong>
+            </div>
+          )}
+
+          {/* Harga Coret */}
+          <div className="form-row" style={{ marginTop: 16 }}>
+            <div className="form-group">
+              <label>Harga Coret <span className="label-hint">(compare_price, opsional)</span></label>
+              <input
+                name="compare_price"
+                type="text"
+                inputMode="numeric"
+                value={form.compare_price}
+                onChange={handleChange}
+                onBlur={handlePriceBlur}
+                placeholder="0"
+              />
+            </div>
+            <div className="form-group">
+              <label>Diskon % <span className="label-hint">(isi salah satu, otomatis sinkron)</span></label>
+              <input
+                name="compare_percentage"
+                type="text"
+                inputMode="numeric"
+                value={form.compare_percentage}
+                onChange={handleChange}
+                placeholder="0"
+              />
+            </div>
+          </div>
+          {form.compare_price && form.selling_price && parseFloat(form.compare_price) > parseFloat(form.selling_price) && (
+            <div className="profit-preview" style={{ background: 'rgba(237,137,54,0.1)', borderColor: '#ed8936', color: '#c05621' }}>
+              🏷️ Harga coret: {formatRupiah(parseFloat(form.compare_price))} &nbsp;·&nbsp;
+              Harga jual: {formatRupiah(parseFloat(form.selling_price))} &nbsp;·&nbsp;
+              Badge: <strong>-{form.compare_percentage}%</strong>
             </div>
           )}
 
@@ -794,7 +854,6 @@ function AdminCatalog() {
 
   return (
     <div className="admin-dashboard">
-      {/* Header */}
       <AdminPageHeader title="Catalog Manager" subtitle="Kelola Games &amp; Products">
         <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
