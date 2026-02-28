@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import './Admin.css';
+import AdminPageHeader from '../../components/AdminPageHeader';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
@@ -135,18 +136,15 @@ function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       {/* Header */}
-      <div className="dashboard-header">
-        <div className="header-left">
-          <h1>📊 Admin Dashboard</h1>
-          <p>Welcome back, {JSON.parse(localStorage.getItem('admin_user') || '{}').full_name}</p>
-        </div>
-        <div className="header-right">
-          <button onClick={() => navigate('/admin/orders')}   className="btn-secondary">📋 Orders</button>
-          <button onClick={() => navigate('/admin/catalog')}  className="btn-secondary">🗂️ Catalog</button>
-          <button onClick={() => navigate('/admin/terminal')} className="btn-secondary">⌨️ Server</button>
-          <button onClick={handleLogout} className="btn-danger">Logout</button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Admin Dashboard"
+        subtitle={`Welcome back, ${JSON.parse(localStorage.getItem('admin_user') || '{}').full_name || 'Admin'}`}
+      >
+        <button onClick={() => navigate('/admin/orders')}   className="btn-secondary">📋 Orders</button>
+        <button onClick={() => navigate('/admin/catalog')}  className="btn-secondary">🗂️ Catalog</button>
+        <button onClick={() => navigate('/admin/terminal')} className="btn-secondary">⌨️ Server</button>
+        <button onClick={handleLogout} className="btn-danger">Logout</button>
+      </AdminPageHeader>
 
       {/* Overview Cards */}
       <div className="stats-grid">
