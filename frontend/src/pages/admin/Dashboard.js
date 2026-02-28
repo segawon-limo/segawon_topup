@@ -233,20 +233,24 @@ function AdminDashboard() {
             <PieChart>
               <Pie
                 data={paymentStats
-                  .filter(d => d.success_count > 0)
-                  .map(d => ({ ...d, display_name: METHOD_NAMES[d.payment_method] || d.payment_method }))}
-                dataKey="success_count"
-                nameKey="display_name"
+                  .filter(d => parseInt(d.success_count) > 0)
+                  .map(d => ({
+                    name: METHOD_NAMES[d.payment_method] || d.payment_method,
+                    value: parseInt(d.success_count),
+                  }))}
+                dataKey="value"
+                nameKey="name"
                 cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label={({ display_name, percent }) => `${display_name} ${(percent * 100).toFixed(0)}%`}
+                cy="45%"
+                outerRadius={90}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={true}
               >
-                {paymentStats.filter(d => d.success_count > 0).map((entry, index) => (
+                {paymentStats.filter(d => parseInt(d.success_count) > 0).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value, name) => [value + ' transaksi', name]} />
+              <Tooltip formatter={(value) => [value + ' transaksi sukses']} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
