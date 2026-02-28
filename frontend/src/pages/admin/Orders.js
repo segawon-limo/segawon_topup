@@ -129,7 +129,7 @@ function OrderDetailModal({ order, onClose, onRetry, retrying }) {
           {[
             { label:'ORDER', content: <span className={`badge ${status.cls}`}>{status.icon} {status.label}</span> },
             { label:'PAYMENT', content: <span className={`badge ${payStatus.cls}`}>{payStatus.label}</span> },
-            { label:'TOTAL', content: <strong style={{ fontSize:15, color:'#2d3748' }}>{formatRupiah(order.total_amount || order.amount)}</strong> },
+            { label:'TOTAL', content: <strong style={{ fontSize:15, color:'#2d3748' }}>{formatRupiah((order.amount - (order.voucher_discount || 0)) + (order.payment_fee || 0))}</strong> },
           ].map(({ label, content }) => (
             <div key={label} style={{ flex:1, background:'#f8fafc', border:'1px solid #edf2f7', borderRadius:10, padding:'10px 14px', textAlign:'center' }}>
               <div style={{ fontSize:10, color:'#a0aec0', fontWeight:700, letterSpacing:'0.08em', marginBottom:6 }}>{label}</div>
@@ -143,10 +143,10 @@ function OrderDetailModal({ order, onClose, onRetry, retrying }) {
           <Row label="Produk"       value={order.product_name} highlight />
           <Row label="SKU"          value={order.sku} mono />
           <Row label="Harga Modal"  value={formatRupiah(order.base_price)} />
-          <Row label="Harga Jual"   value={formatRupiah(order.subtotal || order.amount)} />
+          <Row label="Harga Jual"   value={formatRupiah(order.amount)} />
           {order.voucher_discount > 0 && <Row label={`Diskon (${order.voucher_code})`} value={`- ${formatRupiah(order.voucher_discount)}`} green />}
           <Row label="Biaya Layanan" value={formatRupiah(order.payment_fee)} />
-          <Row label="Total Bayar"   value={formatRupiah(order.total_amount || order.amount)} highlight />
+          <Row label="Total Bayar"   value={formatRupiah((order.amount - (order.voucher_discount || 0)) + (order.payment_fee || 0))} highlight />
         </Section>
 
         <Section title="Customer">
