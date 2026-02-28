@@ -663,6 +663,8 @@ function OrderPage() {
 
     if (!formData.customerPhone.trim()) {
       newErrors.customerPhone = 'Nomor HP wajib diisi';
+    } else if (!/^(\+62|62|0)[0-9]{7,12}$/.test(formData.customerPhone.trim().replace(/\s|-/g, ''))) {
+      newErrors.customerPhone = 'Format nomor HP tidak valid (contoh: 08123456789)';
     }
 
     if (!formData.customerName.trim()) {
@@ -765,6 +767,7 @@ function OrderPage() {
 
     if (!formData.customerEmail.trim()) return false;
     if (!formData.customerPhone.trim()) return false;
+    if (!/^(\+62|62|0)[0-9]{7,12}$/.test(formData.customerPhone.trim().replace(/\s|-/g, ''))) return false;
     if (!formData.customerName.trim()) return false;
 
     // zoneId wajib hanya jika form punya 2 fields (misal ML: userId + zoneId)

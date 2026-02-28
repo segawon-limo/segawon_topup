@@ -354,26 +354,44 @@ exports.retryFailedOrders = async (req, res) => {
 
         const sku = productResult.rows[0].sku;
 
-        // Retry Digiflazz transaction
+        // Generate retry order number dengan suffix _r{n}
+        // Strip suffix lama dulu kalau sudah ada (misal _r1 → base)
+        const baseOrderNumber = order.order_number.replace(/_r\d+$/, '');
+
+        // Hitung berapa kali sudah retry dari retry_count atau cek suffix
+        const retryCount = (order.retry_count || 0) + 1;
+        const retryOrderNumber = `${baseOrderNumber}_r${retryCount}`;
+
+        // Retry Digiflazz transaction — pakai retryOrderNumber
         const digiflazzRes = await digiflazzService.createTransaction({
           sku,
           customerNo: order.game_user_id,
-          orderNumber: order.order_number
+          orderNumber: retryOrderNumber
         });
 
         if (digiflazzRes.success && digiflazzRes.data.rc === '00') {
-          // Success! Update order
+          // Berhasil — simpan SN, kembalikan order_number ke base (tanpa suffix)
           await pool.query(
             `UPDATE orders 
-             SET order_status = $1, provider_serial_number = $2, updated_at = NOW()
-             WHERE id = $3`,
-            ['SUCCESS', digiflazzRes.data.sn, orderId]
+             SET order_status = $1, 
+                 provider_serial_number = $2, 
+                 order_number = $3,
+                 retry_count = $4,
+                 updated_at = NOW()
+             WHERE id = $5`,
+            ['SUCCESS', digiflazzRes.data.sn, baseOrderNumber, retryCount, orderId]
           );
 
-          // TODO: Send email/voucher to customer
-          
-          results.success.push({ orderId, sn: digiflazzRes.data.sn });
+          results.success.push({ orderId, sn: digiflazzRes.data.sn, orderNumber: baseOrderNumber });
         } else {
+          // Gagal — update retry_count dan simpan suffix sementara di DB
+          await pool.query(
+            `UPDATE orders 
+             SET retry_count = $1, updated_at = NOW()
+             WHERE id = $2`,
+            [retryCount, orderId]
+          );
+
           results.failed.push({ 
             orderId, 
             reason: digiflazzRes.data?.message || 'Digiflazz error' 
