@@ -260,7 +260,10 @@ function AdminOrders() {
       {confirmOrder && <ConfirmModal     order={confirmOrder} onConfirm={() => doRetry(confirmOrder)} onCancel={() => setConfirmOrder(null)} />}
 
       <AdminPageHeader title="Orders Management">
-        <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">← Dashboard</button>
+        <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
+        <button onClick={() => navigate('/admin/catalog')}   className="btn-secondary">🗂️ Catalog</button>
+        <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
+        <button onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_user'); navigate('/admin/login'); }} className="btn-danger">Logout</button>
       </AdminPageHeader>
 
       <div className="filters-bar">
