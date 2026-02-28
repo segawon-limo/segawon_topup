@@ -1224,7 +1224,6 @@ function OrderPage() {
                             />
                             <span className="payment-name">{ew.name}</span>
                           </div>
-                          <span className="payment-fee-badge">+2%</span>
                         </label>
                       ))}
                     </div>

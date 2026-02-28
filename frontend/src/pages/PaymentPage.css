@@ -888,3 +888,31 @@
     text-align: left;
   }
 }
+/* ── ShopeePay / E-Wallet button ─────────────────────── */
+.btn-open-payment {
+  display: block;
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #ee4d2d, #d73211);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(238, 77, 45, 0.4);
+  transition: all 0.2s ease;
+  margin: 16px 0;
+  letter-spacing: 0.02em;
+}
+
+.btn-open-payment:hover {
+  background: linear-gradient(135deg, #d73211, #b82a0e);
+  box-shadow: 0 6px 20px rgba(238, 77, 45, 0.5);
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+.btn-open-payment:active {
+  transform: translateY(0);
+}
