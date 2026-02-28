@@ -131,7 +131,13 @@ function AdminDashboard() {
     );
   }
 
-  const COLORS = ['#667eea', '#f56565', '#48bb78', '#ed8936', '#4299e1'];
+  const COLORS = ['#667eea', '#f56565', '#48bb78', '#ed8936', '#4299e1', '#9f7aea', '#38b2ac', '#fc8181'];
+
+  const METHOD_NAMES = {
+    'SA': 'ShopeePay', 'qris': 'QRIS', 'ovo': 'OVO', 'shopeepay': 'ShopeePay (lama)',
+    'va_bri': 'BRI VA', 'va_mandiri': 'Mandiri VA', 'va_bca': 'BCA VA',
+    'va_bni': 'BNI VA', 'va_bsi': 'BSI VA', 'NC': 'BNC VA',
+  };
 
   return (
     <div className="admin-dashboard">
@@ -226,19 +232,21 @@ function AdminDashboard() {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={paymentStats}
-                dataKey="total_transactions"
-                nameKey="payment_method"
+                data={paymentStats
+                  .filter(d => d.success_count > 0)
+                  .map(d => ({ ...d, display_name: METHOD_NAMES[d.payment_method] || d.payment_method }))}
+                dataKey="success_count"
+                nameKey="display_name"
                 cx="50%"
                 cy="50%"
                 outerRadius={80}
-                label
+                label={({ display_name, percent }) => `${display_name} ${(percent * 100).toFixed(0)}%`}
               >
-                {paymentStats.map((entry, index) => (
+                {paymentStats.filter(d => d.success_count > 0).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip formatter={(value, name) => [value + ' transaksi', name]} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

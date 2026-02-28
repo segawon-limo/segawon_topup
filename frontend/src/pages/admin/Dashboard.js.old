@@ -212,10 +212,10 @@ function AdminDashboard() {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={topProducts}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+              <XAxis dataKey="product_name" angle={-45} textAnchor="end" height={100} />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="total_sales" fill="#667eea" name="Sales" />
+              <Bar dataKey="total_orders" fill="#667eea" name="Orders" />
             </BarChart>
           </ResponsiveContainer>
         </div>
