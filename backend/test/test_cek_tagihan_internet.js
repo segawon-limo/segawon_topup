@@ -72,7 +72,8 @@ const req = https.request(options, (res) => {
     console.log('\n📥 HTTP Status:', res.statusCode);
     try {
       const json = JSON.parse(data);
-      console.log('\n✅ Response:\n', JSON.stringify(json, null, 2));
+      console.log("\n📦 Raw Response:\n", data);
+      console.log("\n✅ Parsed Response:\n", JSON.stringify(json, null, 2));
 
       // Parse internet-specific fields
       if (json.data) {
