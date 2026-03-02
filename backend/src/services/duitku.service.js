@@ -321,6 +321,7 @@ class DuitkuService {
       'BR': 'BR', 'M2': 'M2', 'NC': 'NC', 'I1': 'I1',
       'BV': 'BV', 'B1': 'B1', 'DM': 'DM', 'BT': 'BT',
       'SA': 'SA', // ShopeePay App
+      'OV': 'OV', // OVO
     };
 
     if (channel) {
@@ -343,7 +344,7 @@ class DuitkuService {
       'I1': { percentage: 0.7, fixed: 1000 },  // BNI VA
       'BR': { percentage: 0.7, fixed: 1000 },  // BRI VA
       'BT': { percentage: 0.7, fixed: 0 },     // QRIS
-      'OV': { percentage: 2.0, fixed: 0 },     // OVO/GoPay
+      'OV': { percentage: 3.03, fixed: 0 },     // OVO/GoPay
       'SA': { percentage: 2.0, fixed: 0 },     // ShopeePay
       'DA': { percentage: 2.0, fixed: 0 }      // DANA
     };

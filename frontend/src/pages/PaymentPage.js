@@ -147,6 +147,9 @@ function PaymentPage() {
       'B1': 'CIMB Niaga Virtual Account',
       'DM': 'Danamon Virtual Account',
       'BT': 'Permata Bank Virtual Account',
+      // E-Wallet
+      'SA': 'ShopeePay',
+      'OV': 'OVO',
       // legacy keys
       'va_bri':     'BRI Virtual Account',
       'va_mandiri': 'Mandiri Virtual Account',
@@ -223,7 +226,24 @@ function PaymentPage() {
   // Determine payment type
   const isQRIS = false; // QRIS belum aktif
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
-  const isEwallet = ['SA'].includes(paymentData?.payment?.method);
+  const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
+
+  // Untuk OVO: transform paymentUrl dari halaman konfirmasi Duitku ke URL OVO langsung
+  // topupdirectv2.aspx?ref=OV26XXX → TopUpOVOPaymentDirect.aspx?reference=OV26XXX
+  const getOVODirectUrl = (url) => {
+    if (!url) return url;
+    try {
+      const refMatch = url.match(/[?&]ref=([^&]+)/);
+      if (refMatch) {
+        return `https://passport.duitku.com/topup/v2/TopUpOVOPaymentDirect.aspx?reference=${refMatch[1]}`;
+      }
+    } catch (e) {}
+    return url; // fallback ke url asli
+  };
+
+  const ewalletPaymentUrl = paymentData?.payment?.method === 'OV'
+    ? getOVODirectUrl(paymentData?.payment?.url)
+    : paymentData?.payment?.url;
 
   return (
     <div className="payment-page">
@@ -449,34 +469,44 @@ function PaymentPage() {
             )}
 
             {/* E-Wallet */}
-            {isEwallet && paymentData.payment.url && (
+            {isEwallet && ewalletPaymentUrl && (
               <div className="payment-section ewallet-section">
                 <h2>Pembayaran {getPaymentMethodName(paymentData.payment.method)}</h2>
                 <p className="ewallet-info">
-                  Klik tombol di bawah untuk melanjutkan pembayaran.<br/>
-                  <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                    📱 Di smartphone akan langsung membuka aplikasi ShopeePay.
-                  </span>
+                  {paymentData.payment.method === 'OV'
+                    ? 'Klik tombol di bawah untuk langsung membuka aplikasi OVO dan menyelesaikan pembayaran'
+                    : 'Klik tombol di bawah untuk melanjutkan pembayaran'}
                 </p>
                 <a 
-                  href={paymentData.payment.url} 
+                  href={ewalletPaymentUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="btn-open-payment"
                 >
-                  💳 Bayar Sekarang dengan ShopeePay
+                  {paymentData.payment.method === 'OV' ? '💜 Bayar dengan OVO' : '🧡 Bayar dengan ShopeePay'}
                 </a>
                 
                 <div className="payment-instructions">
-                  <h3>📱 Cara Pembayaran ShopeePay:</h3>
-                  <ol>
-                    <li>Klik tombol <strong>"Bayar Sekarang dengan ShopeePay"</strong> di atas</li>
-                    <li>Anda akan diarahkan ke aplikasi {getPaymentMethodName(paymentData.payment.method)}</li>
-                    <li>Login ke akun Anda</li>
-                    <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
-                    <li>Konfirmasi pembayaran dengan PIN</li>
-                    <li>Tunggu notifikasi pembayaran berhasil</li>
-                  </ol>
+                  <h3>📱 Cara Pembayaran {getPaymentMethodName(paymentData.payment.method)}:</h3>
+                  {paymentData.payment.method === 'OV' ? (
+                    <ol>
+                      <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
+                      <li>Aplikasi OVO akan terbuka dengan notifikasi pembayaran</li>
+                      <li>Pilih metode: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
+                      <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
+                      <li>Klik <strong>"Bayar"</strong> dan konfirmasi dengan PIN OVO</li>
+                      <li>Selesaikan dalam <strong>30 detik</strong> setelah notifikasi muncul</li>
+                    </ol>
+                  ) : (
+                    <ol>
+                      <li>Klik tombol <strong>"Bayar dengan ShopeePay"</strong> di atas</li>
+                      <li>Anda akan diarahkan ke aplikasi ShopeePay</li>
+                      <li>Login ke akun Anda</li>
+                      <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
+                      <li>Konfirmasi pembayaran dengan PIN</li>
+                      <li>Tunggu notifikasi pembayaran berhasil</li>
+                    </ol>
+                  )}
                   <div className="note-box">
                     <strong>💡 Tips:</strong> Jangan tutup halaman ini. Kembali ke sini setelah pembayaran selesai.
                   </div>

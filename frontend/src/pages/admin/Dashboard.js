@@ -134,7 +134,7 @@ function AdminDashboard() {
   const COLORS = ['#667eea', '#f56565', '#48bb78', '#ed8936', '#4299e1', '#9f7aea', '#38b2ac', '#fc8181'];
 
   const METHOD_NAMES = {
-    'SA': 'ShopeePay', 'qris': 'QRIS', 'ovo': 'OVO', 'shopeepay': 'ShopeePay (lama)',
+    'SA': 'ShopeePay', 'qris': 'QRIS', 'OV': 'OVO', 'shopeepay': 'ShopeePay (lama)',
     'va_bri': 'BRI VA', 'va_mandiri': 'Mandiri VA', 'va_bca': 'BCA VA',
     'va_bni': 'BNI VA', 'va_bsi': 'BSI VA', 'NC': 'BNC VA',
   };

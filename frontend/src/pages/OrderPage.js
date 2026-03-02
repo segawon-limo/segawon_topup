@@ -17,6 +17,7 @@ const paymentLogos = {
   'BT': '/images/permata-logo.png',
   // E-Wallet aktif
   'SA': '/images/shopeepay-logo.png',
+  'OV': '/images/ovo-logo.png',
   // Coming soon
   'qris':    '/images/qris-logo.png',
   'ewallet': '/images/dana-logo.png',
@@ -36,6 +37,7 @@ const VA_BANKS = [
 
 // E-Wallet aktif
 const EWALLET_METHODS = [
+  { code: 'OV', name: 'OVO',       logo: 'OV', feeType: 'percent', feeValue: 3.03 },
   { code: 'SA', name: 'ShopeePay', logo: 'SA', feeType: 'percent', feeValue: 2 },
 ];
 
@@ -365,6 +367,8 @@ function OrderPage() {
     if (['BR','NC','I1','BV','B1','DM','BT'].includes(method)) return 3000;
     // E-Wallet SA (ShopeePay) — 2% dari harga setelah diskon
     if (method === 'SA') return Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
+    // E-Wallet OVO — 3.03% dari harga setelah diskon
+    if (method === 'OV') return Math.round(priceAfterDiscount / 0.9697) - priceAfterDiscount;
     return 3000; // default
   };
 
@@ -1138,7 +1142,9 @@ function OrderPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Nomor HP (WhatsApp) *</label>
+                    <label>
+                      Nomor HP {selectedPaymentMethod === 'OV' ? '(OVO) *' : '(WhatsApp) *'}
+                    </label>
                     <input
                       type="tel"
                       name="customerPhone"
@@ -1151,6 +1157,11 @@ function OrderPage() {
                       className={errors.customerPhone ? 'error' : ''}
                     />
                     {errors.customerPhone && <div className="error">{errors.customerPhone}</div>}
+                    {selectedPaymentMethod === 'OV' && (
+                      <div className="info-box-ovo">
+                        ⚠️ <strong>Penting:</strong> Gunakan nomor HP yang terdaftar di akun OVO kamu. Notifikasi pembayaran akan dikirim ke nomor ini.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

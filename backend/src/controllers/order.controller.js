@@ -421,6 +421,7 @@ exports.createOrder = async (req, res) => {
     // BR=BRI | M2=Mandiri | NC=BNC | I1=BNI | BV=BSI | B1=CIMB | DM=Danamon | BT=Permata
     const duitkuVaMandiri  = ['M2'];
     const duitkuVaLainnya  = ['BR', 'I1', 'BT', 'B1', 'DM', 'BV', 'NC'];
+    const duitkuEwallet    = ['OV', 'SA'];
 
     if (duitkuVaMandiri.includes(paymentMethod)) {
       // Mandiri VA - Rp 4.000
@@ -430,9 +431,11 @@ exports.createOrder = async (req, res) => {
       paymentFee = 3000;
     } else if (paymentMethod === 'SA') {
       // ShopeePay — 2% dari harga setelah diskon
-      // paymentFee = Math.ceil(priceAfterDiscount * 0.02);
       const totalharga = Math.round(priceAfterDiscount / 0.98)
       paymentFee = totalharga - priceAfterDiscount
+    } else if (paymentMethod === 'OV') {
+      // OVO — 3.03% dari harga setelah diskon
+      paymentFee = Math.round(priceAfterDiscount / 0.9697) - priceAfterDiscount;
     } else {
       // Default fallback
       paymentFee = 3000;
