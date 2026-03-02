@@ -7,7 +7,7 @@
  * Atau dengan nomor pelanggan custom:
  *   CUSTOMER_NO=1234567890 node test_cek_tagihan_internet.js
  */
-
+require('dotenv').config({ path: '../.env' });
 const crypto = require('crypto');
 const https = require('https');
 
@@ -16,7 +16,7 @@ const https = require('https');
 const USERNAME    = process.env.DIGIFLAZZ_USERNAME;
 const API_KEY     = process.env.DIGIFLAZZ_PRODUCTION_KEY || process.env.DIGIFLAZZ_DEVELOPMENT_KEY;
 const IS_TESTING  = process.env.DIGIFLAZZ_MODE === 'development';
-const CUSTOMER_NO = process.env.CUSTOMER_NO || '6391601001'; // nomor pelanggan internet test
+const CUSTOMER_NO = process.env.CUSTOMER_NO || '2190852'; // nomor pelanggan internet test
 
 const SKU         = 'MYRPB';
 const REF_ID      = 'test-internet-' + Date.now();
