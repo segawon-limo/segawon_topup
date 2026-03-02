@@ -228,21 +228,22 @@ function PaymentPage() {
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
   const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
 
-  // Untuk OVO: transform paymentUrl dari halaman konfirmasi Duitku ke URL OVO langsung
-  // topupdirectv2.aspx?ref=OV26XXX → TopUpOVOPaymentDirect.aspx?reference=OV26XXX
-  const getOVODirectUrl = (url) => {
+  // Untuk OVO: arahkan ke TopUpOVOPayment.aspx (halaman konfirmasi Duitku)
+  // User klik PAY NOW di sana → trigger push notification OVO di HP
+  // topupdirectv2.aspx?ref=OV26XXX → TopUpOVOPayment.aspx?reference=OV26XXX&amount=XXX
+  const getOVOConfirmUrl = (url) => {
     if (!url) return url;
     try {
       const refMatch = url.match(/[?&]ref=([^&]+)/);
       if (refMatch) {
-        return `https://passport.duitku.com/topup/v2/TopUpOVOPaymentDirect.aspx?reference=${refMatch[1]}`;
+        return `https://passport.duitku.com/topup/v2/TopUpOVOPayment.aspx?reference=${refMatch[1]}`;
       }
     } catch (e) {}
     return url; // fallback ke url asli
   };
 
   const ewalletPaymentUrl = paymentData?.payment?.method === 'OV'
-    ? getOVODirectUrl(paymentData?.payment?.url)
+    ? getOVOConfirmUrl(paymentData?.payment?.url)
     : paymentData?.payment?.url;
 
   return (
@@ -491,7 +492,8 @@ function PaymentPage() {
                   {paymentData.payment.method === 'OV' ? (
                     <ol>
                       <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
-                      <li>Aplikasi OVO akan terbuka dengan notifikasi pembayaran</li>
+                      <li>Masukkan nomor HP OVO kamu, lalu klik <strong>"PAY NOW"</strong></li>
+                      <li>Notifikasi pembayaran akan muncul di aplikasi OVO kamu</li>
                       <li>Pilih metode: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
                       <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
                       <li>Klik <strong>"Bayar"</strong> dan konfirmasi dengan PIN OVO</li>
