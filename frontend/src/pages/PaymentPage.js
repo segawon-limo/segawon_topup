@@ -227,6 +227,17 @@ function PaymentPage() {
   const isQRIS = false; // QRIS belum aktif
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
   const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
+  const [ovoPopupOpen, setOvoPopupOpen] = React.useState(false);
+
+  // Buka popup OVO
+  const openOvoPopup = (e) => {
+    e.preventDefault();
+    setOvoPopupOpen(true);
+  };
+
+  const closeOvoPopup = () => {
+    setOvoPopupOpen(false);
+  };
 
   // Untuk OVO: arahkan ke TopUpOVOPayment.aspx (halaman konfirmasi Duitku)
   // User klik PAY NOW di sana → trigger push notification OVO di HP
@@ -247,6 +258,7 @@ function PaymentPage() {
     : paymentData?.payment?.url;
 
   return (
+    <>
     <div className="payment-page">
       <div className="container">
         <div className="payment-container">
@@ -478,21 +490,30 @@ function PaymentPage() {
                     ? 'Klik tombol di bawah untuk langsung membuka aplikasi OVO dan menyelesaikan pembayaran'
                     : 'Klik tombol di bawah untuk melanjutkan pembayaran'}
                 </p>
-                <a 
-                  href={ewalletPaymentUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="btn-open-payment"
-                >
-                  {paymentData.payment.method === 'OV' ? '💜 Bayar dengan OVO' : '🧡 Bayar dengan ShopeePay'}
-                </a>
+                {paymentData.payment.method === 'OV' ? (
+                  <button
+                    className="btn-open-payment btn-ovo"
+                    onClick={openOvoPopup}
+                  >
+                    💜 Bayar dengan OVO
+                  </button>
+                ) : (
+                  <a 
+                    href={ewalletPaymentUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="btn-open-payment"
+                  >
+                    🧡 Bayar dengan ShopeePay
+                  </a>
+                )}
                 
                 <div className="payment-instructions">
                   <h3>📱 Cara Pembayaran {getPaymentMethodName(paymentData.payment.method)}:</h3>
                   {paymentData.payment.method === 'OV' ? (
                     <ol>
                       <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
-                      <li>Masukkan nomor HP OVO kamu, lalu klik <strong>"PAY NOW"</strong></li>
+                      <li>Popup konfirmasi akan muncul — klik <strong>"PAY NOW"</strong></li>
                       <li>Notifikasi pembayaran akan muncul di aplikasi OVO kamu</li>
                       <li>Pilih metode: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
                       <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
@@ -551,6 +572,43 @@ function PaymentPage() {
         </div>
       </div>
     </div>
+
+      {/* OVO Payment Popup */}
+      {ovoPopupOpen && (
+      <div className="ovo-popup-overlay" onClick={closeOvoPopup}>
+        <div className="ovo-popup-container" onClick={e => e.stopPropagation()}>
+          <div className="ovo-popup-header">
+            <div className="ovo-popup-title">
+              <span className="ovo-popup-logo">💜</span>
+              <span>Pembayaran OVO</span>
+            </div>
+            <button className="ovo-popup-close" onClick={closeOvoPopup}>✕</button>
+          </div>
+          <div className="ovo-popup-body">
+            <iframe
+              src={ewalletPaymentUrl}
+              title="OVO Payment"
+              className="ovo-popup-iframe"
+              onError={() => {
+                // Fallback: buka di tab baru jika iframe diblokir
+                window.open(ewalletPaymentUrl, '_blank');
+                closeOvoPopup();
+              }}
+            />
+          </div>
+          <div className="ovo-popup-footer">
+            <p>Setelah pembayaran selesai, klik <strong>"Cek Status Pembayaran"</strong> di bawah.</p>
+            <button className="ovo-popup-fallback" onClick={() => {
+              window.open(ewalletPaymentUrl, '_blank');
+              closeOvoPopup();
+            }}>
+              🔗 Buka di Tab Baru
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

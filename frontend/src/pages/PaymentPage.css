@@ -888,31 +888,136 @@
     text-align: left;
   }
 }
-/* ── ShopeePay / E-Wallet button ─────────────────────── */
-.btn-open-payment {
-  display: block;
+/* ── OVO Payment Popup ───────────────────────────────────── */
+.ovo-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ovo-popup-container {
+  background: #fff;
+  border-radius: 16px;
   width: 100%;
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #ee4d2d, #d73211);
+  max-width: 420px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.25s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.ovo-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #4c3494, #6d4fc7);
   color: #fff;
+}
+
+.ovo-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 16px;
   font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(238, 77, 45, 0.4);
-  transition: all 0.2s ease;
-  margin: 16px 0;
-  letter-spacing: 0.02em;
 }
 
-.btn-open-payment:hover {
-  background: linear-gradient(135deg, #d73211, #b82a0e);
-  box-shadow: 0 6px 20px rgba(238, 77, 45, 0.5);
-  transform: translateY(-1px);
+.ovo-popup-logo {
+  font-size: 20px;
+}
+
+.ovo-popup-close {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.ovo-popup-close:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+.ovo-popup-body {
+  flex: 1;
+  overflow: hidden;
+  min-height: 400px;
+  position: relative;
+  background: #f8f9fa;
+}
+
+.ovo-popup-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  border: none;
+  display: block;
+}
+
+.ovo-popup-footer {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.ovo-popup-footer p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.ovo-popup-fallback {
+  background: none;
+  border: 1px solid #4c3494;
+  color: #4c3494;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ovo-popup-fallback:hover {
+  background: #4c3494;
   color: #fff;
 }
 
-.btn-open-payment:active {
-  transform: translateY(0);
+/* Mobile: fullscreen popup */
+@media (max-width: 480px) {
+  .ovo-popup-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .ovo-popup-container {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
 }
