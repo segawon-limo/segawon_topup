@@ -21,7 +21,7 @@ const BASE_URL      = IS_SANDBOX
 
 const AMOUNT        = parseInt(process.env.AMOUNT || '50000');
 const EMAIL         = process.env.TEST_EMAIL || 'test@segawontopup.net';
-const PHONE         = process.env.TEST_PHONE || '08123456789';
+const PHONE         = process.env.TEST_PHONE || '085791464598';
 const ORDER_ID_BASE = 'TEST-OVO-' + Date.now();
 
 if (!MERCHANT_CODE || !API_KEY) {
