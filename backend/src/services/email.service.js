@@ -138,15 +138,16 @@ const generateInvoiceHTML = async (orderData) => {
           <h3>📱 Cara Pembayaran OVO:</h3>
           <ol>
             <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
-            <li>Aplikasi OVO akan terbuka dengan notifikasi pembayaran</li>
+            <li>Halaman konfirmasi Duitku akan terbuka — nomor HP sudah terisi otomatis</li>
+            <li>Pastikan nomor HP sesuai, lalu langsung klik <strong>PAY NOW</strong></li>
+            <li>Notifikasi pembayaran akan muncul di aplikasi OVO kamu</li>
             <li>Pilih metode: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
-            <li>Periksa detail pembayaran (<strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong>)</li>
-            <li>Klik <strong>"Bayar"</strong> dan konfirmasi dengan PIN OVO</li>
+            <li>Periksa detail (<strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong>) lalu klik <strong>"Bayar"</strong></li>
             <li>Selesaikan dalam <strong>30 detik</strong> setelah notifikasi muncul</li>
           </ol>
           <div style="background: #f3f0ff; border: 1px solid #c4b5fd; border-radius: 8px; padding: 10px 14px; margin-top: 12px;">
             <p style="font-size: 12px; color: #5b21b6; margin: 0;">
-              💡 <strong>Tips:</strong> Pastikan nomor HP yang kamu masukkan terdaftar di OVO dan notifikasi OVO aktif.
+              💡 <strong>Tips:</strong> Pastikan nomor HP yang kamu masukkan adalah nomor yang terdaftar di akun OVO kamu.
             </p>
           </div>
         </div>

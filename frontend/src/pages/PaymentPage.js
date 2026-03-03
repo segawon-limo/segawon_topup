@@ -494,7 +494,7 @@ function PaymentPage() {
                   {paymentData.payment.method === 'OV' ? (
                     <ol>
                       <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
-                      <li>Popup muncul — masukkan nomor HP OVO, lalu klik <strong>"PAY NOW"</strong></li>
+                      <li>Tab baru terbuka — nomor HP sudah terisi otomatis, langsung klik <strong>PAY NOW</strong></li>
                       <li>Notifikasi pembayaran muncul di aplikasi OVO kamu</li>
                       <li>Pilih: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
                       <li>Periksa detail ({formatRupiah(paymentData.total)}) lalu klik <strong>"Bayar"</strong></li>
@@ -564,20 +564,35 @@ function PaymentPage() {
             </div>
             <button className="ovo-popup-close" onClick={closeOvoPopup}>✕</button>
           </div>
-          <div className="ovo-popup-body">
-            <iframe
-              src={ewalletPaymentUrl}
-              title="OVO Payment"
-              className="ovo-popup-iframe"
-            />
+          <div className="ovo-popup-body-info">
+            <div className="ovo-popup-steps">
+              <div className="ovo-step">
+                <span className="ovo-step-num">1</span>
+                <span>Halaman konfirmasi OVO akan terbuka di tab baru</span>
+              </div>
+              <div className="ovo-step">
+                <span className="ovo-step-num">2</span>
+                <span>Nomor HP sudah terisi otomatis — pastikan sesuai, lalu klik <strong>PAY NOW</strong></span>
+              </div>
+              <div className="ovo-step">
+                <span className="ovo-step-num">3</span>
+                <span>Notifikasi muncul di app OVO — selesaikan dalam <strong>30 detik</strong></span>
+              </div>
+              <div className="ovo-step">
+                <span className="ovo-step-num">4</span>
+                <span>Kembali ke halaman ini, klik <strong>Cek Status Pembayaran</strong></span>
+              </div>
+            </div>
           </div>
           <div className="ovo-popup-footer">
-            <p>Setelah bayar di OVO, klik <strong>"Cek Status Pembayaran"</strong>.</p>
-            <button className="ovo-popup-fallback" onClick={() => {
+            <button className="ovo-btn-pay" onClick={() => {
               window.open(ewalletPaymentUrl, '_blank');
               closeOvoPopup();
             }}>
-              🔗 Buka di Tab Baru
+              💜 Buka Halaman Pembayaran OVO
+            </button>
+            <button className="ovo-popup-cancel" onClick={closeOvoPopup}>
+              Batal
             </button>
           </div>
         </div>
