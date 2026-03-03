@@ -61,6 +61,8 @@ app.use('/api', limiter);
 const routes          = require('./routes/index');
 const duitkuRoutes    = require('./routes/duitku.routes');
 const digiflazzRoutes = require('./routes/digiflazz.routes');
+const pascabayarRoutes = require('./routes/pascabayar.routes');
+app.use('/api/pascabayar', pascabayarRoutes);
 
 // Register routes
 app.use('/api', routes);
