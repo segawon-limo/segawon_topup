@@ -75,3 +75,7 @@ module.exports = router;
 // ══════════════════════════════════════════════════════════════
 const adminRoutes = require('./admin');
 router.use('/admin', adminRoutes);
+
+// ══════════════════════════════════════════════════════════════
+const pascabayarRoutes = require('./pascabayar.routes');
+router.use('/api/pascabayar', pascabayarRoutes);
