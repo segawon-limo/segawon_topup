@@ -498,7 +498,7 @@ function PaymentPage() {
                       <li>Notifikasi pembayaran muncul di aplikasi OVO kamu</li>
                       <li>Pilih: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
                       <li>Periksa detail ({formatRupiah(paymentData.total)}) lalu klik <strong>"Bayar"</strong></li>
-                      <li>Selesaikan dalam <strong>30 detik</strong> setelah notifikasi muncul</li>
+                      <li>Selesaikan dalam <strong>60 detik</strong> setelah notifikasi muncul</li>
                     </ol>
                   ) : (
                     <ol>
