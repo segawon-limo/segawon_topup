@@ -17,8 +17,7 @@ function PaymentPage() {
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [showDetails, setShowDetails] = useState(false); // ← STATE BARU UNTUK TOGGLE
-
-  // ... semua useEffect dan function lainnya tetap sama ...
+  const [ovoPopupOpen, setOvoPopupOpen] = useState(false);
 
   // Load payment info
   useEffect(() => {
@@ -77,6 +76,18 @@ function PaymentPage() {
 
     return () => clearInterval(interval);
   }, [paymentData]);
+
+  const openOvoPopup  = (e) => { e.preventDefault(); setOvoPopupOpen(true); };
+  const closeOvoPopup = () => setOvoPopupOpen(false);
+
+  const getOVOConfirmUrl = (url) => {
+    if (!url) return url;
+    try {
+      const m = url.match(/[?&]ref=([^&]+)/);
+      if (m) return `https://passport.duitku.com/topup/v2/TopUpOVOPayment.aspx?reference=${m[1]}`;
+    } catch (e) {}
+    return url;
+  };
 
   const loadPaymentInfo = async () => {
     try {
@@ -147,7 +158,6 @@ function PaymentPage() {
       'B1': 'CIMB Niaga Virtual Account',
       'DM': 'Danamon Virtual Account',
       'BT': 'Permata Bank Virtual Account',
-      // E-Wallet
       'SA': 'ShopeePay',
       'OV': 'OVO',
       // legacy keys
@@ -227,32 +237,6 @@ function PaymentPage() {
   const isQRIS = false; // QRIS belum aktif
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
   const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
-  const [ovoPopupOpen, setOvoPopupOpen] = React.useState(false);
-
-  // Buka popup OVO
-  const openOvoPopup = (e) => {
-    e.preventDefault();
-    setOvoPopupOpen(true);
-  };
-
-  const closeOvoPopup = () => {
-    setOvoPopupOpen(false);
-  };
-
-  // Untuk OVO: arahkan ke TopUpOVOPayment.aspx (halaman konfirmasi Duitku)
-  // User klik PAY NOW di sana → trigger push notification OVO di HP
-  // topupdirectv2.aspx?ref=OV26XXX → TopUpOVOPayment.aspx?reference=OV26XXX&amount=XXX
-  const getOVOConfirmUrl = (url) => {
-    if (!url) return url;
-    try {
-      const refMatch = url.match(/[?&]ref=([^&]+)/);
-      if (refMatch) {
-        return `https://passport.duitku.com/topup/v2/TopUpOVOPayment.aspx?reference=${refMatch[1]}`;
-      }
-    } catch (e) {}
-    return url; // fallback ke url asli
-  };
-
   const ewalletPaymentUrl = paymentData?.payment?.method === 'OV'
     ? getOVOConfirmUrl(paymentData?.payment?.url)
     : paymentData?.payment?.url;
@@ -487,20 +471,17 @@ function PaymentPage() {
                 <h2>Pembayaran {getPaymentMethodName(paymentData.payment.method)}</h2>
                 <p className="ewallet-info">
                   {paymentData.payment.method === 'OV'
-                    ? 'Klik tombol di bawah untuk langsung membuka aplikasi OVO dan menyelesaikan pembayaran'
-                    : 'Klik tombol di bawah untuk melanjutkan pembayaran'}
+                    ? 'Klik tombol di bawah — popup konfirmasi OVO akan muncul.'
+                    : 'Klik tombol di bawah untuk melanjutkan pembayaran.'}
                 </p>
                 {paymentData.payment.method === 'OV' ? (
-                  <button
-                    className="btn-open-payment btn-ovo"
-                    onClick={openOvoPopup}
-                  >
+                  <button className="btn-open-payment btn-ovo" onClick={openOvoPopup}>
                     💜 Bayar dengan OVO
                   </button>
                 ) : (
-                  <a 
-                    href={ewalletPaymentUrl} 
-                    target="_blank" 
+                  <a
+                    href={ewalletPaymentUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="btn-open-payment"
                   >
@@ -513,11 +494,10 @@ function PaymentPage() {
                   {paymentData.payment.method === 'OV' ? (
                     <ol>
                       <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
-                      <li>Popup konfirmasi akan muncul — klik <strong>"PAY NOW"</strong></li>
-                      <li>Notifikasi pembayaran akan muncul di aplikasi OVO kamu</li>
-                      <li>Pilih metode: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
-                      <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
-                      <li>Klik <strong>"Bayar"</strong> dan konfirmasi dengan PIN OVO</li>
+                      <li>Popup muncul — masukkan nomor HP OVO, lalu klik <strong>"PAY NOW"</strong></li>
+                      <li>Notifikasi pembayaran muncul di aplikasi OVO kamu</li>
+                      <li>Pilih: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
+                      <li>Periksa detail ({formatRupiah(paymentData.total)}) lalu klik <strong>"Bayar"</strong></li>
                       <li>Selesaikan dalam <strong>30 detik</strong> setelah notifikasi muncul</li>
                     </ol>
                   ) : (
@@ -573,8 +553,8 @@ function PaymentPage() {
       </div>
     </div>
 
-      {/* OVO Payment Popup */}
-      {ovoPopupOpen && (
+    {/* OVO Payment Popup */}
+    {ovoPopupOpen && (
       <div className="ovo-popup-overlay" onClick={closeOvoPopup}>
         <div className="ovo-popup-container" onClick={e => e.stopPropagation()}>
           <div className="ovo-popup-header">
@@ -589,15 +569,10 @@ function PaymentPage() {
               src={ewalletPaymentUrl}
               title="OVO Payment"
               className="ovo-popup-iframe"
-              onError={() => {
-                // Fallback: buka di tab baru jika iframe diblokir
-                window.open(ewalletPaymentUrl, '_blank');
-                closeOvoPopup();
-              }}
             />
           </div>
           <div className="ovo-popup-footer">
-            <p>Setelah pembayaran selesai, klik <strong>"Cek Status Pembayaran"</strong> di bawah.</p>
+            <p>Setelah bayar di OVO, klik <strong>"Cek Status Pembayaran"</strong>.</p>
             <button className="ovo-popup-fallback" onClick={() => {
               window.open(ewalletPaymentUrl, '_blank');
               closeOvoPopup();
