@@ -19,7 +19,9 @@ const duitkuService  = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
 
 const DIGIFLAZZ_USERNAME = process.env.DIGIFLAZZ_USERNAME;
-const DIGIFLAZZ_API_KEY  = process.env.DIGIFLAZZ_API_KEY;
+const DIGIFLAZZ_API_KEY  = process.env.NODE_ENV === 'production'
+  ? process.env.DIGIFLAZZ_PRODUCTION_KEY
+  : process.env.DIGIFLAZZ_DEVELOPMENT_KEY;
 
 const IS_PRODUCTION      = process.env.NODE_ENV === 'production';
 
