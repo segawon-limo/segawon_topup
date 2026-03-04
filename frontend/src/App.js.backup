@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -23,41 +23,50 @@ import AdminCatalog  from './pages/admin/Catalog';
 import AdminTerminal from './pages/admin/Terminal';
 import CekTransaksiPage from './pages/CekTransaksiPage';
 
+function AppContent() {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {!isAdminPage && <Navbar />}
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/order/:gameSlug" element={<OrderPage />} />
+          <Route path="/status/:orderNumber" element={<StatusPage />} />
+          <Route path="/order/success" element={<SuccessPage />} />
+          // <Route path="/order/payment" element={<PaymentPage />} />
+          <Route path="/payment/:orderNumber" element={<PaymentPage />} />
+          <Route path="/order/qr" element={<QRPaymentPage />} />
+          <Route path="/admin/login"     element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/orders"    element={<AdminOrders />} />
+          <Route path="/admin/terminal"  element={<AdminTerminal />} />
+          <Route path="/admin/catalog"   element={<AdminCatalog />} />
+          <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
+        </Routes>
+      </main>
+      {!isAdminPage && <Footer />}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-gray-50">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/order/:gameSlug" element={<OrderPage />} />
-            <Route path="/status/:orderNumber" element={<StatusPage />} />
-            <Route path="/order/success" element={<SuccessPage />} />
-            // <Route path="/order/payment" element={<PaymentPage />} />
-            <Route path="/payment/:orderNumber" element={<PaymentPage />} />
-            <Route path="/order/qr" element={<QRPaymentPage />} />
-            <Route path="/admin/login"     element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/orders"    element={<AdminOrders />} />
-            <Route path="/admin/terminal"  element={<AdminTerminal />} />
-            <Route path="/admin/catalog"   element={<AdminCatalog />} />
-            <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
-          </Routes>
-        </main>
-        <Footer />
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-      </div>
+      <AppContent />
     </Router>
   );
 }
