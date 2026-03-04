@@ -336,6 +336,14 @@ function PascabayarPage() {
                       <span className="pb-info-val">{formatRupiah(d.nilai_tagihan)}</span>
                     </div>
                   ))}
+                  {inquiryData.admin_fee > 0 && (
+                    <div className="pb-info-row">
+                      <span className="pb-info-key">Biaya Admin</span>
+                      <span className="pb-info-val" style={{ color: '#f59e0b', fontWeight: 600 }}>
+                        {formatRupiah(inquiryData.admin_fee)}
+                      </span>
+                    </div>
+                  )}
                   <div className="pb-info-row pb-info-row-total">
                     <span className="pb-info-key">Total Tagihan</span>
                     <span className="pb-info-val pb-price-red">{formatRupiah(sellingPrice)}</span>
@@ -490,8 +498,8 @@ function PascabayarPage() {
                 </div>
 
                 <div className="summary-item">
-                  <span>Tagihan Internet</span>
-                  <span>{formatRupiah(sellingPrice)}</span>
+                  <span>Total Tagihan</span>
+                  <span style={{ fontWeight: 700 }}>{formatRupiah(sellingPrice)}</span>
                 </div>
 
                 {voucherApplied && voucherDiscount > 0 && (

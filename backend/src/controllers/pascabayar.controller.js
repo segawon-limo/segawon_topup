@@ -124,15 +124,19 @@ exports.inquiry = async (req, res) => {
     }
 
     // Simpan inquiry ke DB
-    const expiresAt = getTodayMidnight();
-    const detail    = data.desc?.detail || null;
+    const expiresAt  = getTodayMidnight();
+    const detail     = data.desc?.detail || null;
+    const adminFee   = data.admin         || 0;
+    const price      = data.price         || 0;
+    const komisi     = (data.selling_price || 0) - price;
 
     const insertResult = await pool.query(`
       INSERT INTO pascabayar_inquiries
         (ref_id, customer_no, buyer_sku_code, customer_name,
-         selling_price, admin_fee, periode, lembar_tagihan,
+         selling_price, admin_fee, price, komisi,
+         periode, lembar_tagihan,
          detail, inquiry_data, status, expires_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending',$13)
       ON CONFLICT (ref_id) DO UPDATE SET
         inquiry_data  = EXCLUDED.inquiry_data,
         updated_at    = NOW()
@@ -141,10 +145,12 @@ exports.inquiry = async (req, res) => {
       refId,
       customer_no,
       buyer_sku_code,
-      data.customer_name      || null,
-      data.selling_price      || null,
-      data.admin              || 0,
-      data.periode            || null,
+      data.customer_name        || null,
+      data.selling_price        || null,
+      adminFee,
+      price,
+      komisi,
+      data.periode              || null,
       data.desc?.lembar_tagihan || 1,
       detail ? JSON.stringify(detail) : null,
       JSON.stringify(data),
@@ -153,6 +159,8 @@ exports.inquiry = async (req, res) => {
 
     const inquiry = insertResult.rows[0];
 
+    // Response ke frontend: hanya selling_price yang tampil ke customer
+    // price & komisi hanya disimpan di DB untuk laporan internal
     return res.json({
       success: true,
       message: 'Tagihan berhasil dicek',
@@ -163,7 +171,7 @@ exports.inquiry = async (req, res) => {
         customer_name:  data.customer_name,
         buyer_sku_code: data.buyer_sku_code,
         selling_price:  data.selling_price,
-        admin_fee:      data.admin,
+        admin_fee:      adminFee,
         periode:        data.periode,
         lembar_tagihan: data.desc?.lembar_tagihan || 1,
         detail:         data.desc?.detail || [],
