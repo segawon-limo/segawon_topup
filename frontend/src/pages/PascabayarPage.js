@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PascabayarPage.css';
 
@@ -41,6 +41,8 @@ function PascabayarPage() {
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [step, setStep]               = useState('inquiry'); // 'inquiry' | 'confirm'
+  const [products, setProducts]       = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [customerNo, setCustomerNo]   = useState('');
   const [inquiryData, setInquiryData] = useState(null);
   const [loadingInquiry, setLoadingInquiry] = useState(false);
@@ -63,7 +65,15 @@ function PascabayarPage() {
   const [loadingPay, setLoadingPay] = useState(false);
   const [payError, setPayError]     = useState('');
 
-  // ── Fee calculation (logika sama dengan OrderPage) ─────────────────────────
+  // Fetch products on mount
+  useEffect(() => {
+    fetch(`${API_URL}/api/pascabayar/products`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setProducts(d.data || []); })
+      .catch(() => {});
+  }, []);
+
+  // Fee calculation
   const sellingPrice       = inquiryData?.selling_price || 0;
   const priceAfterDiscount = sellingPrice - (voucherApplied ? voucherDiscount : 0);
 
@@ -80,14 +90,15 @@ function PascabayarPage() {
 
   // ── Step 1: Cek Tagihan ────────────────────────────────────────────────────
   const handleInquiry = async () => {
-    if (!customerNo.trim()) { setInquiryError('Nomor pelanggan wajib diisi'); return; }
+    if (!selectedProduct)     { setInquiryError('Pilih provider internet terlebih dahulu'); return; }
+    if (!customerNo.trim())   { setInquiryError('Nomor pelanggan wajib diisi'); return; }
     setLoadingInquiry(true);
     setInquiryError('');
     try {
       const res  = await fetch(`${API_URL}/api/pascabayar/inquiry`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ buyer_sku_code: 'MYRPB', customer_no: customerNo.trim() }),
+        body:    JSON.stringify({ buyer_sku_code: selectedProduct.buyer_sku_code, customer_no: customerNo.trim() }),
       });
       const json = await res.json();
       if (!json.success) { setInquiryError(json.message || 'Gagal mengambil data tagihan'); return; }
@@ -142,6 +153,8 @@ function PascabayarPage() {
   const resetToInquiry = () => {
     setStep('inquiry');
     setInquiryData(null);
+    setSelectedProduct(null);
+    setCustomerNo('');
     setSelectedPaymentMethod('');
     handleRemoveVoucher();
     setPayError('');
@@ -193,7 +206,11 @@ function PascabayarPage() {
         <div className="pb-header">
           <div className="pb-header-icon">🌐</div>
           <h1 className="pb-header-title">Tagihan Internet</h1>
-          <p className="pb-header-sub">MyRepublic — Cek dan bayar tagihan internet bulanan</p>
+          <p className="pb-header-sub">
+            {selectedProduct
+              ? `${selectedProduct.name} — ${selectedProduct.description}`
+              : 'Cek dan bayar tagihan internet bulanan'}
+          </p>
         </div>
 
         {/* Stepper */}
@@ -214,27 +231,69 @@ function PascabayarPage() {
         {/* ── STEP 1 ─────────────────────────────────────────────────────── */}
         {step === 'inquiry' && (
           <div className="pb-card pb-card-center">
-            <h2 className="pb-card-title">Masukkan Nomor Pelanggan</h2>
+            <h2 className="pb-card-title">Pilih Provider Internet</h2>
             <p className="pb-card-desc">
-              Masukkan nomor pelanggan MyRepublic kamu untuk mengecek tagihan bulan ini.
+              Pilih provider internet kamu, lalu masukkan nomor pelanggan.
             </p>
 
-            <div className="form-group">
-              <label className="form-label">Nomor Pelanggan MyRepublic</label>
-              <input
-                type="text"
-                className={`form-input ${inquiryError ? 'error' : ''}`}
-                placeholder="Contoh: 2190852"
-                value={customerNo}
-                onChange={e => { setCustomerNo(e.target.value); setInquiryError(''); }}
-                onKeyDown={e => e.key === 'Enter' && handleInquiry()}
-              />
-              <p className="form-hint">Nomor pelanggan tertera di tagihan atau aplikasi MyRepublic</p>
+            {/* Grid provider */}
+            <div className="pb-provider-grid">
+              {products.map(p => (
+                <button
+                  key={p.buyer_sku_code}
+                  className={`pb-provider-card ${selectedProduct?.buyer_sku_code === p.buyer_sku_code ? 'pb-provider-selected' : ''}`}
+                  onClick={() => { setSelectedProduct(p); setInquiryError(''); }}
+                  style={{ '--provider-color': p.color }}
+                >
+                  <div className="pb-provider-logo-wrap">
+                    <img
+                      src={p.logo}
+                      alt={p.name}
+                      className="pb-provider-logo"
+                      onError={e => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div className="pb-provider-logo-fallback" style={{ background: p.color }}>
+                      {p.name.charAt(0)}
+                    </div>
+                  </div>
+                  <span className="pb-provider-name">{p.name}</span>
+                  <span className="pb-provider-desc">{p.description}</span>
+                  {selectedProduct?.buyer_sku_code === p.buyer_sku_code && (
+                    <span className="pb-provider-check">✓</span>
+                  )}
+                </button>
+              ))}
             </div>
 
-            {inquiryError && <div className="pb-error-box">❌ {inquiryError}</div>}
+            {/* Input nomor pelanggan */}
+            {selectedProduct && (
+              <div className="pb-provider-input-wrap">
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">{selectedProduct.customer_no_label}</label>
+                  <input
+                    type="text"
+                    className={`form-input ${inquiryError ? 'error' : ''}`}
+                    placeholder={selectedProduct.customer_no_hint}
+                    value={customerNo}
+                    onChange={e => { setCustomerNo(e.target.value); setInquiryError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleInquiry()}
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
 
-            <button className="pb-btn-primary" onClick={handleInquiry} disabled={loadingInquiry}>
+            {inquiryError && <div className="pb-error-box" style={{ marginTop: '16px' }}>❌ {inquiryError}</div>}
+
+            <button
+              className="pb-btn-primary"
+              onClick={handleInquiry}
+              disabled={loadingInquiry || !selectedProduct}
+              style={{ marginTop: '20px' }}
+            >
               {loadingInquiry ? '⏳ Mengecek tagihan...' : '🔍 Cek Tagihan'}
             </button>
           </div>

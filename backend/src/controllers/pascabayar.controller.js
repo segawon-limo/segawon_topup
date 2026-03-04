@@ -539,17 +539,41 @@ exports.pay = async (req, res) => {
 exports.getProducts = async (req, res) => {
   const products = [
     {
-      buyer_sku_code: 'myrepublic',
-      name:           'MyRepublic Internet',
-      category:       'Internet',
-      icon:           '🌐',
-      description:    'Pembayaran tagihan internet MyRepublic',
+      buyer_sku_code:    'MYRPB',
+      name:              'MyRepublic',
+      logo:              '/images/pascabayar/myrepublic-logo.png',
+      color:             '#e74c3c',
+      description:       'Internet Fiber MyRepublic',
       customer_no_label: 'Nomor Pelanggan MyRepublic',
-      customer_no_hint:  'Contoh: 6391601001'
-    }
-    // Tambah produk lain di sini nanti:
-    // { buyer_sku_code: 'pln', name: 'PLN Pascabayar', ... }
-    // { buyer_sku_code: 'bpjs', name: 'BPJS Kesehatan', ... }
+      customer_no_hint:  'Contoh: 2190852',
+    },
+    {
+      buyer_sku_code:    'SIHPB',
+      name:              'IndiHome',
+      logo:              '/images/pascabayar/indihome-logo.png',
+      color:             '#e67e22',
+      description:       'Speedy & IndiHome Telkom',
+      customer_no_label: 'Nomor Pelanggan IndiHome',
+      customer_no_hint:  'Contoh: 1234567890',
+    },
+    {
+      buyer_sku_code:    'XLHPB',
+      name:              'XL Home',
+      logo:              '/images/pascabayar/xlhome-logo.png',
+      color:             '#2980b9',
+      description:       'Internet Fiber XL Home',
+      customer_no_label: 'Nomor Pelanggan XL Home',
+      customer_no_hint:  'Contoh: 9876543210',
+    },
+    {
+      buyer_sku_code:    'CBNPB',
+      name:              'CBN',
+      logo:              '/images/pascabayar/cbn-logo.png',
+      color:             '#27ae60',
+      description:       'Internet Fiber CBN',
+      customer_no_label: 'Nomor Pelanggan CBN',
+      customer_no_hint:  'Contoh: 1122334455',
+    },
   ];
 
   return res.json({ success: true, data: products });

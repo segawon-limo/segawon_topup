@@ -9,6 +9,101 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
+/* ── Provider Grid ── */
+.pb-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.pb-provider-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+}
+.pb-provider-card:hover {
+  border-color: var(--provider-color, #c0392b);
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+.pb-provider-selected {
+  border-color: var(--provider-color, #c0392b) !important;
+  background: white !important;
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.1), 0 4px 16px rgba(0,0,0,0.08) !important;
+}
+.pb-provider-logo-wrap {
+  width: 72px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.pb-provider-logo {
+  max-width: 72px;
+  max-height: 48px;
+  object-fit: contain;
+}
+.pb-provider-logo-fallback {
+  display: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+  font-family: 'Syne', sans-serif;
+}
+.pb-provider-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a202c;
+  font-family: 'Syne', sans-serif;
+}
+.pb-provider-desc {
+  font-size: 11px;
+  color: #a0aec0;
+  line-height: 1.4;
+}
+.pb-provider-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--provider-color, #c0392b);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pb-provider-input-wrap {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+  animation: pb-slide-down 0.2s ease;
+}
+@keyframes pb-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Page wrapper ── */
 .pb-page {
   min-height: 100vh;
@@ -113,7 +208,7 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   border: 1px solid #f0f0f0;
 }
-.pb-card-center { max-width: 560px; margin: 0 auto; width: 100%; }
+.pb-card-center { max-width: 620px; margin: 0 auto; width: 100%; }
 .pb-card-tagihan { border-left: 4px solid #c0392b; }
 .pb-card-title {
   font-family: 'Syne', sans-serif;
@@ -288,4 +383,7 @@
   .pb-step-label { font-size: 10px; }
   .pb-actions { flex-direction: column; }
   .pb-btn-primary, .pb-btn-secondary { flex: unset; width: 100%; }
+  .pb-provider-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .pb-provider-card { padding: 16px 10px; }
+  .pb-provider-name { font-size: 13px; }
 }
