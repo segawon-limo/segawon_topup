@@ -492,9 +492,9 @@ async function processDigiflazzTopup(order) {
     console.log('Product SKU:', order.sku);
     console.log('Customer:', order.game_user_id + (order.game_user_tag ? '#' + order.game_user_tag : ''));
 
-    // Get product + product_type sekaligus
+    // Get product + product_type + digiflazz_format_key sekaligus
     const productResult = await pool.query(
-      `SELECT p.*, g.product_type, g.category
+      `SELECT p.*, g.product_type, g.category, g.digiflazz_format_key
        FROM products p
        JOIN games g ON g.id = p.game_id
        WHERE p.id = $1`,
@@ -505,10 +505,12 @@ async function processDigiflazzTopup(order) {
       throw new Error('Product not found');
     }
 
-    const product     = productResult.rows[0];
-    const productType = product.product_type || 'topup_game';
+    const product          = productResult.rows[0];
+    const productType      = product.product_type || 'topup_game';
+    const digiflazzFormat  = product.digiflazz_format_key || 'userId_only';
 
     console.log('Product type:', productType);
+    console.log('Digiflazz format key:', digiflazzFormat);
 
     // Update status ke processing
     await pool.query(
@@ -520,17 +522,17 @@ async function processDigiflazzTopup(order) {
 
     console.log('📞 Calling Digiflazz API...');
 
-    // Format customer_no berdasarkan product_type
+    // ── Format customer_no berdasarkan product_type + digiflazz_format_key ──
+    // Referensi format: lihat migration_digiflazz_format.sql
     let customerNo;
 
     if (productType === 'voucher_code') {
       // Steam Wallet & voucher lain: customer_no = nomor HP customer
-      // Digiflazz butuh nomor tujuan untuk kirim konfirmasi via WhatsApp seller
       customerNo = order.customer_phone;
       console.log('Voucher product — customer_no pakai nomor HP:', customerNo);
 
     } else if (productType === 'token_pln') {
-      // PLN: customer_no = nomor meter
+      // PLN: customer_no = nomor meter (game_user_id)
       customerNo = order.game_user_id;
 
     } else if (productType === 'pulsa' || productType === 'data_package') {
@@ -538,23 +540,54 @@ async function processDigiflazzTopup(order) {
       customerNo = order.game_user_id;
 
     } else {
-      // topup_game (default): game_user_id + format sesuai game
-      customerNo = order.game_user_id;
+      // topup_game — format ditentukan oleh digiflazz_format_key dari tabel games
+      const userId = order.game_user_id;
+      const zoneId = order.game_zone_id || order.game_user_tag || null;
 
-      // Game yang butuh tag (Valorant, dll)
-      if (order.game_user_tag) {
-        customerNo = `${order.game_user_id}#${order.game_user_tag}`;
-      }
+      switch (digiflazzFormat) {
 
-      // Game yang butuh zone_id (Mobile Legends, Free Fire, dll)
-      if (order.game_zone_id) {
-        customerNo = `${order.game_user_id}|${order.game_zone_id}`;
+        case 'riotId_hash_tag':
+          // Valorant (VAL), LoL Wild Rift (LOL)
+          // customer_no = riotId#tag → contoh: segawon#limo
+          customerNo = zoneId ? `${userId}#${zoneId}` : userId;
+          break;
+
+        case 'userId_concat_zoneId':
+          // Mobile Legends (MLB)
+          // customer_no = userId + zoneId tanpa separator
+          // contoh: userId=123456789, zoneId=1234 → 1234567891234
+          if (!zoneId) throw new Error('Zone ID wajib untuk Mobile Legends');
+          customerNo = `${userId}${zoneId}`;
+          break;
+
+        case 'userId_pipe_server':
+          // Genshin Impact (GIP), Honkai Star Rail (HSR), Zenless Zone Zero (ZZZ)
+          // customer_no = userId|server → contoh: 123456789|os_asia
+          // server (zoneId) sudah dalam format kode Digiflazz (os_asia, prod_official_asia, dll)
+          // karena frontend menyimpan value dari dropdown options
+          customerNo = zoneId ? `${userId}|${zoneId}` : userId;
+          break;
+
+        case 'roleId_pipe_server':
+          // Punishing Gray Raven (PGR)
+          // customer_no = roleId|server → contoh: 12345678|Asia-Pacific
+          // server pakai label region lengkap, BUKAN kode os_asia
+          customerNo = zoneId ? `${userId}|${zoneId}` : userId;
+          break;
+
+        case 'userId_only':
+        default:
+          // AOV, FF, HFH, HOK, MRV, PGM — hanya userId
+          customerNo = userId;
+          break;
       }
     }
 
     if (!customerNo) {
-      throw new Error(`customer_no kosong untuk product_type: ${productType}`);
+      throw new Error(`customer_no kosong untuk product_type: ${productType}, format: ${digiflazzFormat}`);
     }
+
+    console.log(`✅ customer_no built [${digiflazzFormat}]:`, customerNo);
 
     // Call Digiflazz API
     const digiflazzResult = await digiflazzService.createTransaction({

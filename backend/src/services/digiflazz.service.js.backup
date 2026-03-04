@@ -4,6 +4,42 @@
 const axios = require('axios');
 const crypto = require('crypto');
 
+// Helper: parse SN dari PLNCEK
+// Format 1: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"  (spasi sebelum tarif)
+// Format 2: "IDPEL:12345678@NAMA :BUDI SANTOSO/R1/900"                  (slash sebelum tarif)
+function parsePlnCekSn(sn) {
+  if (!sn) return {};
+
+  // IDPEL: hanya angka
+  const idpelMatch = sn.match(/IDPEL[:\s]*(\d+)/i);
+  const idpel = idpelMatch ? idpelMatch[1] : null;
+
+  let nama = null, tarif = null, daya = null;
+  const namaTarifMatch = sn.match(/NAMA\s*:\s*(.+)/i);
+  if (namaTarifMatch) {
+    const rest = namaTarifMatch[1].trim();
+    // Format slash: NAMA/TARIF/DAYA
+    const slashM = rest.match(/^(.+?)\/([A-Z]\d+)\/(\d+)\s*$/);
+    if (slashM) {
+      nama  = slashM[1].trim();
+      tarif = slashM[2];
+      daya  = slashM[3] + ' VA';
+    } else {
+      // Format spasi: NAMA TARIF/DAYA
+      const spaceM = rest.match(/^(.+?)\s+([A-Z]\d+)\/(\d+)\s*$/);
+      if (spaceM) {
+        nama  = spaceM[1].trim();
+        tarif = spaceM[2];
+        daya  = spaceM[3] + ' VA';
+      } else {
+        nama = rest;
+      }
+    }
+  }
+
+  return { idpel, nama, tarif, daya };
+}
+
 class DigiflazzService {
   constructor() {
     this.username = process.env.DIGIFLAZZ_USERNAME;
@@ -213,8 +249,14 @@ class DigiflazzService {
         orderStatus = 'processing';
       }
 
+      // rc:00 = Sukses, rc:03 = Pending (normal, tunggu webhook), selain itu = Gagal
+      const rc = response.data.data.rc;
+      const isSuccess = rc === '00' || rc === '03'; // Pending juga dianggap sukses (webhook menyusul)
+      const isFailed  = !isSuccess;
+
       return {
-        success: response.data.data.rc === '00',
+        success: isSuccess,
+        isPending: rc === '03',
         data: {
           ref_id: response.data.data.ref_id,
           customer_no: response.data.data.customer_no,
@@ -222,7 +264,7 @@ class DigiflazzService {
           message: response.data.data.message,
           status: response.data.data.status,
           order_status: orderStatus,
-          rc: response.data.data.rc,
+          rc: rc,
           sn: response.data.data.sn,
           balance: response.data.data.buyer_last_saldo,
           price: response.data.data.price,
@@ -236,6 +278,78 @@ class DigiflazzService {
         success: false,
         message: error.response?.data?.data?.message || 'Failed to create transaction',
         error: error.response?.data,
+      };
+    }
+  }
+
+  /**
+   * Cek Nomor Meter / ID Pelanggan PLN
+   * Flow:
+   *   1. Insert ke pln_meter_checks (status: pending)
+   *   2. Panggil createTransaction({ sku: 'PLNCEK', customerNo, orderNumber: refId })
+   *   3. Digiflazz proses async → kirim webhook ke /api/digiflazz/webhook
+   *   4. Webhook handler parse SN → UPDATE pln_meter_checks status='success'
+   *   5. Frontend polling GET /api/check-pln-meter/:refId sampai success
+   */
+  async checkPlnMeter(nomorMeter) {
+    const refId = `CEK-${Date.now()}`;
+    const { pool } = require('../config/database');
+
+    try {
+      console.log(`🔍 PLN Cek Meter: ${nomorMeter} (ref: ${refId})`);
+
+      // Step 1: Insert ke DB dengan status pending
+      await pool.query(
+        `INSERT INTO pln_meter_checks (ref_id, nomor_meter, status)
+         VALUES ($1, $2, 'pending')`,
+        [refId, nomorMeter]
+      );
+
+      // Step 2: Buat transaksi via createTransaction() yang sudah teruji
+      const result = await this.createTransaction({
+        sku:         'PLNCEK',
+        customerNo:  nomorMeter,
+        orderNumber: refId,
+      });
+
+      console.log(`📦 PLNCEK createTransaction result: success=${result.success} rc=${result.data?.rc} status=${result.data?.status}`);
+
+      // Jika langsung gagal (rc bukan 00/03)
+      if (!result.success && result.data?.order_status === 'failed') {
+        await pool.query(
+          `UPDATE pln_meter_checks SET status='failed', message=$1 WHERE ref_id=$2`,
+          [result.data?.message || 'Transaksi gagal', refId]
+        );
+        return {
+          success: false,
+          message: result.data?.message || 'Nomor meter tidak ditemukan',
+        };
+      }
+
+      // Jika langsung ada SN di response (sync — jarang terjadi di PLNCEK)
+      if (result.success && result.data?.sn) {
+        const parsed = parsePlnCekSn(result.data.sn);
+        await pool.query(
+          `UPDATE pln_meter_checks
+           SET status='success', idpel=$1, nama=$2, tarif=$3, daya=$4, raw_sn=$5
+           WHERE ref_id=$6`,
+          [parsed.idpel || nomorMeter, parsed.nama, parsed.tarif, parsed.daya, result.data.sn, refId]
+        );
+      }
+
+      // Return refId — frontend polling akan menggunakannya
+      return { success: true, refId };
+
+    } catch (error) {
+      console.error('❌ PLN cek meter error:', error.message);
+      // Tandai failed di DB
+      await pool.query(
+        `UPDATE pln_meter_checks SET status='failed', message=$1 WHERE ref_id=$2`,
+        [error.message, refId]
+      ).catch(() => {});
+      return {
+        success: false,
+        message: 'Gagal mengecek nomor meter',
       };
     }
   }
@@ -416,4 +530,6 @@ class DigiflazzService {
   }
 }
 
-module.exports = new DigiflazzService();
+const digiflazzServiceInstance = new DigiflazzService();
+module.exports = digiflazzServiceInstance;
+module.exports.parsePlnCekSn = parsePlnCekSn;

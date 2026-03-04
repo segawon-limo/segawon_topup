@@ -355,6 +355,57 @@ class DigiflazzService {
   }
 
   /**
+   * Pay pascabayar (postpaid) transaction — command: pay-pasca
+   * ref_id HARUS sama dengan yang dipakai saat inq-pasca
+   * Dipanggil setelah customer berhasil bayar via Duitku
+   */
+  async payPasca({ buyer_sku_code, customer_no, ref_id, orderNumber }) {
+    try {
+      const signatureData = this.username + this.apiKey + ref_id;
+      const signature     = this.generateSignature(signatureData);
+
+      console.log('🌐 Digiflazz pay-pasca:', { buyer_sku_code, customer_no, ref_id });
+
+      const requestBody = {
+        commands:       'pay-pasca',
+        username:       this.username,
+        buyer_sku_code,
+        customer_no,
+        ref_id,
+        sign:           signature,
+      };
+
+      if (process.env.DIGIFLAZZ_TESTING === 'true') {
+        requestBody.testing = true;
+        console.log('⚠️  Testing mode — pay-pasca tidak akan diproses sungguhan');
+      }
+
+      const response = await axios.post(
+        `${this.apiUrl}/transaction`,
+        requestBody,
+        { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
+      );
+
+      const data = response.data?.data;
+      const rc   = data?.rc;
+
+      return {
+        success:   rc === '00' || rc === '03' || data?.status === 'Sukses' || data?.status === 'Pending',
+        isPending: rc === '03' || data?.status === 'Pending',
+        data,
+      };
+
+    } catch (error) {
+      console.error('❌ Error Digiflazz pay-pasca:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.data?.message || 'Failed to process pay-pasca',
+        data:    error.response?.data?.data || null,
+      };
+    }
+  }
+
+  /**
    * Check transaction status
    * Signature: md5(username + apiKey + refId)
    */
