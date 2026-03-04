@@ -159,8 +159,8 @@ exports.inquiry = async (req, res) => {
 
     const inquiry = insertResult.rows[0];
 
-    // Response ke frontend: hanya selling_price yang tampil ke customer
-    // price & komisi hanya disimpan di DB untuk laporan internal
+    // Response ke frontend: selling_price yang tampil ke customer
+    // komisi disertakan hanya untuk keperluan validasi voucher admin
     return res.json({
       success: true,
       message: 'Tagihan berhasil dicek',
@@ -172,6 +172,7 @@ exports.inquiry = async (req, res) => {
         buyer_sku_code: data.buyer_sku_code,
         selling_price:  data.selling_price,
         admin_fee:      adminFee,
+        komisi:         komisi,   // untuk validasi voucher admin (base_price type)
         periode:        data.periode,
         lembar_tagihan: data.desc?.lembar_tagihan || 1,
         detail:         data.desc?.detail || [],

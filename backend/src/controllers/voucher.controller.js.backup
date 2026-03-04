@@ -16,7 +16,7 @@ const { pool } = require('../config/database');
  */
 exports.validateVoucher = async (req, res) => {
   try {
-    const { code, orderAmount, productId, profitPrice: profitPriceDirect } = req.body;
+    const { code, orderAmount, productId } = req.body;
 
     if (!code || !orderAmount) {
       return res.status(400).json({
@@ -25,17 +25,14 @@ exports.validateVoucher = async (req, res) => {
       });
     }
 
-    // Prioritas: profitPrice langsung (untuk pascabayar) > ambil dari productId (untuk topup biasa)
+    // UPDATED: Fetch profit_price instead of base_price
     let profitPrice = null;
-    if (profitPriceDirect !== undefined && profitPriceDirect !== null) {
-      // Pascabayar: komisi dikirim langsung dari frontend
-      profitPrice = parseFloat(profitPriceDirect);
-    } else if (productId) {
-      // Topup biasa: ambil dari tabel products
+    if (productId) {
       const productResult = await pool.query(
         'SELECT profit_price FROM products WHERE id = $1',
         [productId]
       );
+      
       if (productResult.rows.length > 0) {
         profitPrice = parseFloat(productResult.rows[0].profit_price);
       }

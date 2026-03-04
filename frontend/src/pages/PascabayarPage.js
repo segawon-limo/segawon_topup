@@ -113,7 +113,11 @@ function PascabayarPage() {
       setVoucherValidating(true); setVoucherError('');
       const res  = await fetch(`${API_URL}/api/vouchers/validate`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: voucherCode.trim(), orderAmount: sellingPrice }),
+        body: JSON.stringify({
+          code:        voucherCode.trim(),
+          orderAmount: sellingPrice,
+          profitPrice: inquiryData?.komisi ?? null,  // komisi = profit untuk voucher admin
+        }),
       });
       const data = await res.json();
       if (data.success) { setVoucherApplied(true); setVoucherDiscount(data.discount); }
