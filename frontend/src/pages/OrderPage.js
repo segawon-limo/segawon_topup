@@ -20,6 +20,7 @@ const paymentLogos = {
   'OV': '/images/ovo-logo.png',
   // Coming soon
   'qris':    '/images/qris-logo.png',
+  'SQ':      '/images/qris-logo.png',
   'ewallet': '/images/dana-logo.png',
 };
 
@@ -39,6 +40,11 @@ const VA_BANKS = [
 const EWALLET_METHODS = [
   { code: 'OV', name: 'OVO',       logo: 'OV', feeType: 'percent', feeValue: 3.03 },
   { code: 'SA', name: 'ShopeePay', logo: 'SA', feeType: 'percent', feeValue: 2 },
+];
+
+// QRIS aktif
+const QRIS_METHODS = [
+  { code: 'SQ', name: 'QRIS (Semua E-Wallet)', logo: 'SQ', feeType: 'percent', feeValue: 0.7 },
 ];
 
 // ── buildDisplayFormat ────────────────────────────────────────
@@ -365,6 +371,8 @@ function OrderPage() {
     // Kode Duitku: M2=Mandiri, BR=BRI, NC=BNC, I1=BNI, BV=BSI, B1=CIMB, DM=Danamon, BT=Permata
     if (method === 'M2') return 4000;
     if (['BR','NC','I1','BV','B1','DM','BT'].includes(method)) return 3000;
+    // QRIS Nusapay (SQ) — 0.7% dari harga setelah diskon
+    if (method === 'SQ') return Math.round(priceAfterDiscount / 0.993) - priceAfterDiscount;
     // E-Wallet SA (ShopeePay) — 2% dari harga setelah diskon
     if (method === 'SA') return Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
     // E-Wallet OVO — 3.03% dari harga setelah diskon
@@ -1200,19 +1208,33 @@ function OrderPage() {
                       ))}
                     </div>
 
-                    {/* QRIS & E-Wallet — Coming Soon */}
-                    {['QRIS'].map(cat => (
-                      <div key={cat} className="payment-category payment-category-disabled">
-                        <h3>{cat} <span className="badge-coming-soon-inline">Coming Soon</span></h3>
-                        <div className="payment-option payment-option-disabled">
+                    {/* QRIS aktif — Nusapay (SQ) */}
+                    <div className="payment-category">
+                      <h3>QRIS</h3>
+                      {QRIS_METHODS.map(qr => (
+                        <label
+                          key={qr.code}
+                          className={`payment-option ${selectedPaymentMethod === qr.code ? 'selected' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value={qr.code}
+                            checked={selectedPaymentMethod === qr.code}
+                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                          />
                           <div className="payment-info">
-                            <span className="payment-name coming-soon-text">
-                              🔒 QRIS (Semua E-Wallet) — Segera Hadir
-                            </span>
+                            <img
+                              src={`${process.env.PUBLIC_URL}${paymentLogos[qr.logo]}`}
+                              alt={qr.name}
+                              className="payment-logo"
+                              onError={e => { e.target.style.display='none'; }}
+                            />
+                            <span className="payment-name">{qr.name}</span>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        </label>
+                      ))}
+                    </div>
 
                     {/* E-Wallet aktif */}
                     <div className="payment-category">

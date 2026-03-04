@@ -20,6 +20,10 @@ const EWALLET_METHODS = [
   { code: 'SA', name: 'ShopeePay', logo: '/images/shopeepay-logo.png', feeValue: 2 },
 ];
 
+const QRIS_METHODS = [
+  { code: 'SQ', name: 'QRIS (Semua E-Wallet)', logo: '/images/qris-logo.png', feeValue: 0.7 },
+];
+
 const formatRupiah = (amount) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
 
@@ -74,6 +78,7 @@ function PascabayarPage() {
   const calculatePaymentFee = (method) => {
     if (method === 'M2') return 4000;
     if (['BR','NC','I1','BV','B1','DM','BT'].includes(method)) return 3000;
+    if (method === 'SQ') return Math.round(priceAfterDiscount * 0.007);
     if (method === 'SA') return Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
     if (method === 'OV') return Math.round(priceAfterDiscount / 0.9697) - priceAfterDiscount;
     return 3000;
@@ -353,6 +358,22 @@ function PascabayarPage() {
                     ))}
                   </div>
                   <div className="payment-category">
+                    <h3>QRIS</h3>
+                    {QRIS_METHODS.map(m => (
+                      <label key={m.code}
+                        className={`payment-option ${selectedPaymentMethod === m.code ? 'selected' : ''}`}>
+                        <input type="radio" name="payment" value={m.code}
+                          checked={selectedPaymentMethod === m.code}
+                          onChange={() => { setSelectedPaymentMethod(m.code); setPayError(''); }} />
+                        <div className="payment-info">
+                          <img src={m.logo} alt={m.name} className="payment-logo"
+                            onError={e => { e.target.style.display='none'; }} />
+                          <span className="payment-name">{m.name}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="payment-category">
                     <h3>E-Wallet</h3>
                     {EWALLET_METHODS.map(m => (
                       <label key={m.code}
@@ -451,7 +472,8 @@ function PascabayarPage() {
                     <span>Metode Pembayaran</span>
                     <span>
                       {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name ||
-                       EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name}
+                       EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name ||
+                       QRIS_METHODS.find(q => q.code === selectedPaymentMethod)?.name}
                     </span>
                   </div>
                   <div className="summary-item">

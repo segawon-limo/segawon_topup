@@ -558,7 +558,7 @@ exports.createOrder = async (req, res) => {
         orderNumber: orderNumber,
         customerName: customerName,
         customerEmail: customerEmail,
-        productName: product.description,
+        productName: product.description || product.name,
         userId: userId,
         zoneId: zoneId || null,
         amount: productPrice,

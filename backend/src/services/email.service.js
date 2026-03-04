@@ -49,6 +49,7 @@ const generateInvoiceHTML = async (orderData) => {
     'BT': 'Permata Bank Virtual Account',
     'SA': 'ShopeePay',
     'OV': 'OVO',
+    'SQ': 'QRIS',
   };
 
   const VA_BANK_NAMES = {
@@ -68,8 +69,8 @@ const generateInvoiceHTML = async (orderData) => {
   const getPaymentInstructions = (method) => {
     const methodUpper = method.toUpperCase();
     
-    // QRIS
-    if (methodUpper === 'QRIS') {
+    // QRIS (SQ = Nusapay, atau method lain yang QR-based)
+    if (methodUpper === 'QRIS' || methodUpper === 'SQ') {
       return `
         <div class="instructions">
           <h3>📱 Cara Pembayaran QRIS:</h3>
@@ -575,6 +576,18 @@ const generateInvoiceHTML = async (orderData) => {
         <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
           Klik tombol di atas atau buka link berikut:<br>
           <a href="${paymentUrl}" style="color: #4c3494; word-break: break-all;">${paymentUrl}</a>
+        </p>
+      </div>
+      ` : ''}
+
+      ${paymentMethod === 'SQ' && paymentUrl ? `
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${paymentUrl}"
+           style="display: inline-block; background: #e4003a; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(228,0,58,0.35);">
+          📷 Lihat QR Code QRIS
+        </a>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 10px;">
+          Atau scan QR Code di atas menggunakan aplikasi e-wallet Anda
         </p>
       </div>
       ` : ''}

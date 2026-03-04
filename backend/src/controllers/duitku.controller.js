@@ -38,7 +38,7 @@ exports.getPaymentMethods = async (req, res) => {
         grouped.va.push(method);
       } 
       // QRIS
-      else if (code === 'BT') {
+      else if (['BT', 'SQ', 'GQ', 'NQ'].includes(code)) {
         grouped.qris.push(method);
       } 
       // E-Wallet

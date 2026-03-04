@@ -17,8 +17,7 @@ function PaymentPage() {
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [showDetails, setShowDetails] = useState(false); // ← STATE BARU UNTUK TOGGLE
-
-  // ... semua useEffect dan function lainnya tetap sama ...
+  const [ovoPopupOpen, setOvoPopupOpen] = useState(false);
 
   // Load payment info
   useEffect(() => {
@@ -77,6 +76,18 @@ function PaymentPage() {
 
     return () => clearInterval(interval);
   }, [paymentData]);
+
+  const openOvoPopup  = (e) => { e.preventDefault(); setOvoPopupOpen(true); };
+  const closeOvoPopup = () => setOvoPopupOpen(false);
+
+  const getOVOConfirmUrl = (url) => {
+    if (!url) return url;
+    try {
+      const m = url.match(/[?&]ref=([^&]+)/);
+      if (m) return `https://passport.duitku.com/topup/v2/TopUpOVOPayment.aspx?reference=${m[1]}`;
+    } catch (e) {}
+    return url;
+  };
 
   const loadPaymentInfo = async () => {
     try {
@@ -147,6 +158,8 @@ function PaymentPage() {
       'B1': 'CIMB Niaga Virtual Account',
       'DM': 'Danamon Virtual Account',
       'BT': 'Permata Bank Virtual Account',
+      'SA': 'ShopeePay',
+      'OV': 'OVO',
       // legacy keys
       'va_bri':     'BRI Virtual Account',
       'va_mandiri': 'Mandiri Virtual Account',
@@ -223,9 +236,13 @@ function PaymentPage() {
   // Determine payment type
   const isQRIS = false; // QRIS belum aktif
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
-  const isEwallet = ['SA'].includes(paymentData?.payment?.method);
+  const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
+  const ewalletPaymentUrl = paymentData?.payment?.method === 'OV'
+    ? getOVOConfirmUrl(paymentData?.payment?.url)
+    : paymentData?.payment?.url;
 
   return (
+    <>
     <div className="payment-page">
       <div className="container">
         <div className="payment-container">
@@ -449,34 +466,50 @@ function PaymentPage() {
             )}
 
             {/* E-Wallet */}
-            {isEwallet && paymentData.payment.url && (
+            {isEwallet && ewalletPaymentUrl && (
               <div className="payment-section ewallet-section">
                 <h2>Pembayaran {getPaymentMethodName(paymentData.payment.method)}</h2>
                 <p className="ewallet-info">
-                  Klik tombol di bawah untuk melanjutkan pembayaran.<br/>
-                  <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                    📱 Di smartphone akan langsung membuka aplikasi ShopeePay.
-                  </span>
+                  {paymentData.payment.method === 'OV'
+                    ? 'Klik tombol di bawah — popup konfirmasi OVO akan muncul.'
+                    : 'Klik tombol di bawah untuk melanjutkan pembayaran.'}
                 </p>
-                <a 
-                  href={paymentData.payment.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="btn-open-payment"
-                >
-                  💳 Bayar Sekarang dengan ShopeePay
-                </a>
+                {paymentData.payment.method === 'OV' ? (
+                  <button className="btn-open-payment btn-ovo" onClick={openOvoPopup}>
+                    💜 Bayar dengan OVO
+                  </button>
+                ) : (
+                  <a
+                    href={ewalletPaymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-open-payment"
+                  >
+                    🧡 Bayar dengan ShopeePay
+                  </a>
+                )}
                 
                 <div className="payment-instructions">
-                  <h3>📱 Cara Pembayaran ShopeePay:</h3>
-                  <ol>
-                    <li>Klik tombol <strong>"Bayar Sekarang dengan ShopeePay"</strong> di atas</li>
-                    <li>Anda akan diarahkan ke aplikasi {getPaymentMethodName(paymentData.payment.method)}</li>
-                    <li>Login ke akun Anda</li>
-                    <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
-                    <li>Konfirmasi pembayaran dengan PIN</li>
-                    <li>Tunggu notifikasi pembayaran berhasil</li>
-                  </ol>
+                  <h3>📱 Cara Pembayaran {getPaymentMethodName(paymentData.payment.method)}:</h3>
+                  {paymentData.payment.method === 'OV' ? (
+                    <ol>
+                      <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
+                      <li>Tab baru terbuka — nomor HP sudah terisi otomatis, langsung klik <strong>PAY NOW</strong></li>
+                      <li>Notifikasi pembayaran muncul di aplikasi OVO kamu</li>
+                      <li>Pilih: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
+                      <li>Periksa detail ({formatRupiah(paymentData.total)}) lalu klik <strong>"Bayar"</strong></li>
+                      <li>Selesaikan dalam <strong>60 detik</strong> setelah notifikasi muncul</li>
+                    </ol>
+                  ) : (
+                    <ol>
+                      <li>Klik tombol <strong>"Bayar dengan ShopeePay"</strong> di atas</li>
+                      <li>Anda akan diarahkan ke aplikasi ShopeePay</li>
+                      <li>Login ke akun Anda</li>
+                      <li>Periksa detail pembayaran ({formatRupiah(paymentData.total)})</li>
+                      <li>Konfirmasi pembayaran dengan PIN</li>
+                      <li>Tunggu notifikasi pembayaran berhasil</li>
+                    </ol>
+                  )}
                   <div className="note-box">
                     <strong>💡 Tips:</strong> Jangan tutup halaman ini. Kembali ke sini setelah pembayaran selesai.
                   </div>
@@ -519,6 +552,53 @@ function PaymentPage() {
         </div>
       </div>
     </div>
+
+    {/* OVO Payment Popup */}
+    {ovoPopupOpen && (
+      <div className="ovo-popup-overlay" onClick={closeOvoPopup}>
+        <div className="ovo-popup-container" onClick={e => e.stopPropagation()}>
+          <div className="ovo-popup-header">
+            <div className="ovo-popup-title">
+              <span className="ovo-popup-logo">💜</span>
+              <span>Pembayaran OVO</span>
+            </div>
+            <button className="ovo-popup-close" onClick={closeOvoPopup}>✕</button>
+          </div>
+          <div className="ovo-popup-body-info">
+            <div className="ovo-popup-steps">
+              <div className="ovo-step">
+                <span className="ovo-step-num">1</span>
+                <span>Halaman konfirmasi OVO akan terbuka di tab baru</span>
+              </div>
+              <div className="ovo-step">
+                <span className="ovo-step-num">2</span>
+                <span>Nomor HP sudah terisi otomatis — pastikan sesuai, lalu klik <strong>PAY NOW</strong></span>
+              </div>
+              <div className="ovo-step">
+                <span className="ovo-step-num">3</span>
+                <span>Notifikasi muncul di app OVO — selesaikan dalam <strong>30 detik</strong></span>
+              </div>
+              <div className="ovo-step">
+                <span className="ovo-step-num">4</span>
+                <span>Kembali ke halaman ini, klik <strong>Cek Status Pembayaran</strong></span>
+              </div>
+            </div>
+          </div>
+          <div className="ovo-popup-footer">
+            <button className="ovo-btn-pay" onClick={() => {
+              window.open(ewalletPaymentUrl, '_blank');
+              closeOvoPopup();
+            }}>
+              💜 Buka Halaman Pembayaran OVO
+            </button>
+            <button className="ovo-popup-cancel" onClick={closeOvoPopup}>
+              Batal
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

@@ -429,6 +429,10 @@ exports.createOrder = async (req, res) => {
     } else if (duitkuVaLainnya.includes(paymentMethod)) {
       // VA lainnya (BRI, BNC, BNI, BSI, CIMB, Danamon, Permata) - Rp 3.000
       paymentFee = 3000;
+    } else if (paymentMethod === 'SQ') {
+      // QRIS Nusapay — 0.7% dari harga setelah diskon
+      // paymentFee = Math.round(priceAfterDiscount * 0.007);
+      paymentFee = Math.round(priceAfterDiscount * 0.993) - priceAfterDiscount; // Alternatif: hitung mundur dari total
     } else if (paymentMethod === 'SA') {
       // ShopeePay — 2% dari harga setelah diskon
       const totalharga = Math.round(priceAfterDiscount / 0.98)

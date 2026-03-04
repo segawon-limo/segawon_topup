@@ -160,6 +160,7 @@ function PaymentPage() {
       'BT': 'Permata Bank Virtual Account',
       'SA': 'ShopeePay',
       'OV': 'OVO',
+      'SQ': 'QRIS (Nusapay)',
       // legacy keys
       'va_bri':     'BRI Virtual Account',
       'va_mandiri': 'Mandiri Virtual Account',
@@ -234,7 +235,7 @@ function PaymentPage() {
   }
 
   // Determine payment type
-  const isQRIS = false; // QRIS belum aktif
+  const isQRIS = paymentData?.payment?.method === 'SQ' || (paymentData?.payment?.qrString && !paymentData?.payment?.vaNumber);
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
   const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
   const ewalletPaymentUrl = paymentData?.payment?.method === 'OV'

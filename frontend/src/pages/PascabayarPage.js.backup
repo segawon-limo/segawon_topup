@@ -4,28 +4,24 @@ import './PascabayarPage.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
-// ── Konstanta metode pembayaran (sama persis dengan OrderPage) ─────────────────
 const VA_BANKS = [
-  { code: 'BR', name: 'BRI Virtual Account',           logo: '/images/bri-logo.png' },
-  { code: 'M2', name: 'Mandiri Virtual Account',        logo: '/images/mandiri-logo.png' },
-  { code: 'NC', name: 'Bank Neo Commerce (BNC)',        logo: '/images/bnc-logo.png' },
-  { code: 'I1', name: 'BNI Virtual Account',            logo: '/images/bni-logo.png' },
-  { code: 'BV', name: 'BSI Virtual Account',            logo: '/images/bsi-logo.png' },
-  { code: 'B1', name: 'CIMB Niaga Virtual Account',     logo: '/images/cimb-logo.png' },
-  { code: 'DM', name: 'Danamon Virtual Account',        logo: '/images/danamon-logo.png' },
-  { code: 'BT', name: 'Permata Bank Virtual Account',   logo: '/images/permata-logo.png' },
+  { code: 'BR', name: 'BRI Virtual Account',          logo: '/images/bri-logo.png' },
+  { code: 'M2', name: 'Mandiri Virtual Account',       logo: '/images/mandiri-logo.png' },
+  { code: 'NC', name: 'Bank Neo Commerce (BNC)',       logo: '/images/bnc-logo.png' },
+  { code: 'I1', name: 'BNI Virtual Account',           logo: '/images/bni-logo.png' },
+  { code: 'BV', name: 'BSI Virtual Account',           logo: '/images/bsi-logo.png' },
+  { code: 'B1', name: 'CIMB Niaga Virtual Account',    logo: '/images/cimb-logo.png' },
+  { code: 'DM', name: 'Danamon Virtual Account',       logo: '/images/danamon-logo.png' },
+  { code: 'BT', name: 'Permata Bank Virtual Account',  logo: '/images/permata-logo.png' },
 ];
 
 const EWALLET_METHODS = [
-  { code: 'OV', name: 'OVO',       logo: '/images/ovo-logo.png',       feeType: 'percent', feeValue: 3.03 },
-  { code: 'SA', name: 'ShopeePay', logo: '/images/shopeepay-logo.png', feeType: 'percent', feeValue: 2 },
+  { code: 'OV', name: 'OVO',       logo: '/images/ovo-logo.png',       feeValue: 3.03 },
+  { code: 'SA', name: 'ShopeePay', logo: '/images/shopeepay-logo.png', feeValue: 2 },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
 const formatRupiah = (amount) =>
-  new Intl.NumberFormat('id-ID', {
-    style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
-  }).format(amount);
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
 
 const getMandiriBankFee = (price) => {
   const amount = parseFloat(price || 0);
@@ -34,27 +30,25 @@ const getMandiriBankFee = (price) => {
   return 'Rp 2.500';
 };
 
-const STEPS = ['Cek Tagihan', 'Detail & Bayar'];
-
 function PascabayarPage() {
   const navigate = useNavigate();
 
   // ── State ──────────────────────────────────────────────────────────────────
-  const [step, setStep]               = useState('inquiry'); // 'inquiry' | 'confirm'
-  const [products, setProducts]       = useState([]);
+  const [step, setStep]                 = useState('inquiry'); // 'inquiry' | 'confirm'
+  const [products, setProducts]         = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [customerNo, setCustomerNo]   = useState('');
-  const [inquiryData, setInquiryData] = useState(null);
+  const [customerNo, setCustomerNo]     = useState('');
+  const [inquiryData, setInquiryData]   = useState(null);
   const [loadingInquiry, setLoadingInquiry] = useState(false);
-  const [inquiryError, setInquiryError]     = useState('');
+  const [inquiryError, setInquiryError] = useState('');
 
-  // Form
+  // Form data
   const [email, setEmail]       = useState('');
   const [phone, setPhone]       = useState('');
   const [custName, setCustName] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
-  // Voucher (pola sama dengan OrderPage)
+  // Voucher
   const [voucherCode, setVoucherCode]         = useState('');
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [voucherApplied, setVoucherApplied]   = useState(false);
@@ -65,7 +59,7 @@ function PascabayarPage() {
   const [loadingPay, setLoadingPay] = useState(false);
   const [payError, setPayError]     = useState('');
 
-  // Fetch products on mount
+  // ── Fetch products ─────────────────────────────────────────────────────────
   useEffect(() => {
     fetch(`${API_URL}/api/pascabayar/products`)
       .then(r => r.json())
@@ -73,7 +67,7 @@ function PascabayarPage() {
       .catch(() => {});
   }, []);
 
-  // Fee calculation
+  // ── Fee calculation (identik dengan OrderPage) ─────────────────────────────
   const sellingPrice       = inquiryData?.selling_price || 0;
   const priceAfterDiscount = sellingPrice - (voucherApplied ? voucherDiscount : 0);
 
@@ -88,30 +82,26 @@ function PascabayarPage() {
   const paymentFee  = selectedPaymentMethod ? calculatePaymentFee(selectedPaymentMethod) : 0;
   const totalAmount = priceAfterDiscount + paymentFee;
 
-  // ── Step 1: Cek Tagihan ────────────────────────────────────────────────────
+  // ── Inquiry ────────────────────────────────────────────────────────────────
   const handleInquiry = async () => {
-    if (!selectedProduct)     { setInquiryError('Pilih provider internet terlebih dahulu'); return; }
-    if (!customerNo.trim())   { setInquiryError('Nomor pelanggan wajib diisi'); return; }
+    if (!selectedProduct)   { setInquiryError('Pilih provider internet terlebih dahulu'); return; }
+    if (!customerNo.trim()) { setInquiryError('Nomor pelanggan wajib diisi'); return; }
     setLoadingInquiry(true);
     setInquiryError('');
     try {
       const res  = await fetch(`${API_URL}/api/pascabayar/inquiry`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ buyer_sku_code: selectedProduct.buyer_sku_code, customer_no: customerNo.trim() }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ buyer_sku_code: selectedProduct.buyer_sku_code, customer_no: customerNo.trim() }),
       });
       const json = await res.json();
       if (!json.success) { setInquiryError(json.message || 'Gagal mengambil data tagihan'); return; }
       setInquiryData(json.data);
       setStep('confirm');
-    } catch {
-      setInquiryError('Koneksi gagal. Coba lagi.');
-    } finally {
-      setLoadingInquiry(false);
-    }
+    } catch { setInquiryError('Koneksi gagal. Coba lagi.'); }
+    finally  { setLoadingInquiry(false); }
   };
 
-  // ── Voucher handlers (sama dengan OrderPage) ───────────────────────────────
+  // ── Voucher ────────────────────────────────────────────────────────────────
   const handleVoucherChange = (e) => {
     setVoucherCode(e.target.value.toUpperCase());
     if (voucherApplied) { setVoucherApplied(false); setVoucherDiscount(0); setVoucherError(''); }
@@ -120,57 +110,36 @@ function PascabayarPage() {
   const handleApplyVoucher = async () => {
     if (!voucherCode.trim()) { setVoucherError('Masukkan kode voucher'); return; }
     try {
-      setVoucherValidating(true);
-      setVoucherError('');
+      setVoucherValidating(true); setVoucherError('');
       const res  = await fetch(`${API_URL}/api/vouchers/validate`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ code: voucherCode.trim(), orderAmount: sellingPrice }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code:        voucherCode.trim(),
+          orderAmount: sellingPrice,
+          profitPrice: inquiryData?.komisi ?? null,  // komisi = profit untuk voucher admin
+        }),
       });
       const data = await res.json();
-      if (data.success) {
-        setVoucherApplied(true);
-        setVoucherDiscount(data.discount);
-        setVoucherError('');
-      } else {
-        setVoucherApplied(false);
-        setVoucherDiscount(0);
-        setVoucherError(data.message || 'Kode voucher tidak valid');
-      }
-    } catch {
-      setVoucherError('Gagal memvalidasi voucher');
-      setVoucherApplied(false);
-      setVoucherDiscount(0);
-    } finally {
-      setVoucherValidating(false);
-    }
+      if (data.success) { setVoucherApplied(true); setVoucherDiscount(data.discount); }
+      else { setVoucherApplied(false); setVoucherDiscount(0); setVoucherError(data.message || 'Kode voucher tidak valid'); }
+    } catch { setVoucherError('Gagal memvalidasi voucher'); }
+    finally  { setVoucherValidating(false); }
   };
 
   const handleRemoveVoucher = () => {
     setVoucherCode(''); setVoucherDiscount(0); setVoucherApplied(false); setVoucherError('');
   };
 
-  const resetToInquiry = () => {
-    setStep('inquiry');
-    setInquiryData(null);
-    setSelectedProduct(null);
-    setCustomerNo('');
-    setSelectedPaymentMethod('');
-    handleRemoveVoucher();
-    setPayError('');
-  };
-
-  // ── Step 2: Bayar ──────────────────────────────────────────────────────────
+  // ── Pay ────────────────────────────────────────────────────────────────────
   const handlePay = async () => {
     if (!email.trim())          { setPayError('Email wajib diisi'); return; }
+    if (!phone.trim())          { setPayError('Nomor HP wajib diisi'); return; }
     if (!selectedPaymentMethod) { setPayError('Pilih metode pembayaran'); return; }
-    setLoadingPay(true);
-    setPayError('');
+    setLoadingPay(true); setPayError('');
     try {
       const res  = await fetch(`${API_URL}/api/pascabayar/pay`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           ref_id:         inquiryData.ref_id,
           customer_email: email.trim(),
           customer_name:  custName.trim() || inquiryData.customer_name,
@@ -182,383 +151,353 @@ function PascabayarPage() {
       const json = await res.json();
       if (!json.success) { setPayError(json.message || 'Gagal memproses pembayaran'); return; }
       navigate(`/payment/${json.orderNumber}`);
-    } catch {
-      setPayError('Koneksi gagal. Coba lagi.');
-    } finally {
-      setLoadingPay(false);
-    }
+    } catch { setPayError('Koneksi gagal. Coba lagi.'); }
+    finally  { setLoadingPay(false); }
   };
 
-  const stepIdx = step === 'inquiry' ? 0 : 1;
+  const resetToInquiry = () => {
+    setStep('inquiry'); setInquiryData(null); setSelectedProduct(null);
+    setCustomerNo(''); setSelectedPaymentMethod('');
+    handleRemoveVoucher(); setPayError('');
+    setEmail(''); setPhone(''); setCustName('');
+  };
+
+  const isFormValid = () => email.trim() && phone.trim() && selectedPaymentMethod;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="pb-page">
-      <div className="pb-blob pb-blob-1" />
-      <div className="pb-blob pb-blob-2" />
 
-      <div className="pb-outer">
-
-        {/* Back */}
-        <button className="pb-back" onClick={() => navigate(-1)}>← Kembali</button>
-
-        {/* Header */}
-        <div className="pb-header">
-          <div className="pb-header-icon">🌐</div>
-          <h1 className="pb-header-title">Tagihan Internet</h1>
-          <p className="pb-header-sub">
-            {selectedProduct
-              ? `${selectedProduct.name} — ${selectedProduct.description}`
-              : 'Cek dan bayar tagihan internet bulanan'}
-          </p>
-        </div>
-
-        {/* Stepper */}
-        <div className="pb-stepper">
-          {STEPS.map((s, i) => (
-            <React.Fragment key={s}>
-              <div className={`pb-step ${i <= stepIdx ? 'pb-step-active' : ''} ${i < stepIdx ? 'pb-step-done' : ''}`}>
-                <div className="pb-step-circle">{i < stepIdx ? '✓' : i + 1}</div>
-                <span className="pb-step-label">{s}</span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className={`pb-step-line ${i < stepIdx ? 'pb-step-line-done' : ''}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* ── STEP 1 ─────────────────────────────────────────────────────── */}
-        {step === 'inquiry' && (
-          <div className="pb-card pb-card-center">
-            <h2 className="pb-card-title">Pilih Provider Internet</h2>
-            <p className="pb-card-desc">
-              Pilih provider internet kamu, lalu masukkan nomor pelanggan.
+      {/* ── Header Banner ──────────────────────────────────────────────────── */}
+      <div className="pb-banner">
+        <div className="pb-banner-inner">
+          <button className="pb-back" onClick={() => navigate(-1)}>← Kembali</button>
+          <div className="pb-banner-content">
+            <span className="pb-banner-icon">🌐</span>
+            <h1 className="pb-banner-title">Tagihan Internet</h1>
+            <p className="pb-banner-sub">
+              {selectedProduct
+                ? `${selectedProduct.name} — ${selectedProduct.description}`
+                : 'Pilih provider dan bayar tagihan internet bulanan'}
             </p>
+          </div>
+        </div>
+      </div>
 
-            {/* Grid provider */}
-            <div className="pb-provider-grid">
-              {products.map(p => (
-                <button
-                  key={p.buyer_sku_code}
-                  className={`pb-provider-card ${selectedProduct?.buyer_sku_code === p.buyer_sku_code ? 'pb-provider-selected' : ''}`}
-                  onClick={() => { setSelectedProduct(p); setInquiryError(''); }}
-                  style={{ '--provider-color': p.color }}
-                >
-                  <div className="pb-provider-logo-wrap">
-                    <img
-                      src={p.logo}
-                      alt={p.name}
-                      className="pb-provider-logo"
-                      onError={e => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                    <div className="pb-provider-logo-fallback" style={{ background: p.color }}>
-                      {p.name.charAt(0)}
-                    </div>
-                  </div>
-                  <span className="pb-provider-name">{p.name}</span>
-                  <span className="pb-provider-desc">{p.description}</span>
-                  {selectedProduct?.buyer_sku_code === p.buyer_sku_code && (
-                    <span className="pb-provider-check">✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
+      <div className="pb-container">
 
-            {/* Input nomor pelanggan */}
-            {selectedProduct && (
-              <div className="pb-provider-input-wrap">
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">{selectedProduct.customer_no_label}</label>
-                  <input
-                    type="text"
-                    className={`form-input ${inquiryError ? 'error' : ''}`}
-                    placeholder={selectedProduct.customer_no_hint}
-                    value={customerNo}
-                    onChange={e => { setCustomerNo(e.target.value); setInquiryError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && handleInquiry()}
-                    autoFocus
-                  />
+        {/* ── STEP 1: Pilih Provider ─────────────────────────────────────── */}
+        {step === 'inquiry' && (
+          <div className="pb-inquiry-wrap">
+            <div className="order-form">
+
+              {/* Stepper kecil di dalam form */}
+              <div className="pb-stepper-inline">
+                <div className="pb-stepper-dot pb-stepper-dot-active">1</div>
+                <div className="pb-stepper-line" />
+                <div className="pb-stepper-dot">2</div>
+                <span className="pb-stepper-label">Cek Tagihan</span>
+              </div>
+
+              <div className="form-section">
+                <h2>1. Pilih Provider Internet</h2>
+                <div className="pb-provider-grid">
+                  {products.map(p => (
+                    <button
+                      key={p.buyer_sku_code}
+                      className={`pb-provider-card ${selectedProduct?.buyer_sku_code === p.buyer_sku_code ? 'pb-provider-selected' : ''}`}
+                      onClick={() => { setSelectedProduct(p); setInquiryError(''); setCustomerNo(''); }}
+                      style={{ '--provider-color': p.color }}
+                    >
+                      <div className="pb-provider-logo-wrap">
+                        <img src={p.logo} alt={p.name} className="pb-provider-logo"
+                          onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+                        <div className="pb-provider-logo-fallback" style={{ background: p.color }}>
+                          {p.name.charAt(0)}
+                        </div>
+                      </div>
+                      <span className="pb-provider-name">{p.name}</span>
+                      <span className="pb-provider-desc">{p.description}</span>
+                      {selectedProduct?.buyer_sku_code === p.buyer_sku_code && (
+                        <span className="pb-provider-check">✓</span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
 
-            {inquiryError && <div className="pb-error-box" style={{ marginTop: '16px' }}>❌ {inquiryError}</div>}
+              {selectedProduct && (
+                <div className="form-section">
+                  <h2>2. Nomor Pelanggan</h2>
+                  <div className="form-group">
+                    <label>{selectedProduct.customer_no_label}</label>
+                    <input
+                      type="text"
+                      className={`${inquiryError ? 'error' : ''}`}
+                      placeholder={selectedProduct.customer_no_hint}
+                      value={customerNo}
+                      onChange={e => { setCustomerNo(e.target.value); setInquiryError(''); }}
+                      onKeyDown={e => e.key === 'Enter' && handleInquiry()}
+                      autoFocus
+                    />
+                    {inquiryError && <div className="error">{inquiryError}</div>}
+                  </div>
 
-            <button
-              className="pb-btn-primary"
-              onClick={handleInquiry}
-              disabled={loadingInquiry || !selectedProduct}
-              style={{ marginTop: '20px' }}
-            >
-              {loadingInquiry ? '⏳ Mengecek tagihan...' : '🔍 Cek Tagihan'}
-            </button>
+                  <button
+                    className="btn-submit"
+                    onClick={handleInquiry}
+                    disabled={loadingInquiry || !customerNo.trim()}
+                  >
+                    {loadingInquiry ? 'Mengecek tagihan...' : '🔍 Cek Tagihan'}
+                  </button>
+                </div>
+              )}
+
+              {inquiryError && !selectedProduct && (
+                <div className="error" style={{ marginTop: 12 }}>{inquiryError}</div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* ── STEP 2 ─────────────────────────────────────────────────────── */}
+        {/* ── STEP 2: Detail & Bayar ─────────────────────────────────────── */}
         {step === 'confirm' && inquiryData && (
-          <div className="pb-layout">
+          <div className="order-layout">
 
-            {/* LEFT COLUMN */}
-            <div className="pb-left">
+            {/* LEFT: Form */}
+            <div className="order-form">
 
-              {/* Info Tagihan */}
-              <div className="pb-card pb-card-tagihan">
-                <h2 className="pb-card-title">✅ Detail Tagihan Ditemukan</h2>
-                <div className="pb-info-rows">
+              {/* Detail Tagihan */}
+              <div className="form-section">
+                <h2>✅ Detail Tagihan Ditemukan</h2>
+                <div className="pb-info-table">
                   <div className="pb-info-row">
-                    <span className="pb-info-key">Nama Pelanggan</span>
-                    <span className="pb-info-val">{inquiryData.customer_name || '-'}</span>
+                    <span>Nama Pelanggan</span>
+                    <span>{inquiryData.customer_name || '-'}</span>
                   </div>
                   <div className="pb-info-row">
-                    <span className="pb-info-key">Nomor Pelanggan</span>
-                    <span className="pb-info-val">{inquiryData.customer_no}</span>
+                    <span>Nomor Pelanggan</span>
+                    <span>{inquiryData.customer_no}</span>
                   </div>
                   {inquiryData.periode && (
                     <div className="pb-info-row">
-                      <span className="pb-info-key">Periode</span>
-                      <span className="pb-info-val">{inquiryData.periode}</span>
+                      <span>Periode</span>
+                      <span>{inquiryData.periode}</span>
                     </div>
                   )}
                   {inquiryData.lembar_tagihan > 0 && (
                     <div className="pb-info-row">
-                      <span className="pb-info-key">Lembar Tagihan</span>
-                      <span className="pb-info-val">{inquiryData.lembar_tagihan} lembar</span>
+                      <span>Lembar Tagihan</span>
+                      <span>{inquiryData.lembar_tagihan} lembar</span>
                     </div>
                   )}
-                  {inquiryData.detail && inquiryData.detail.length > 0 && inquiryData.detail.map((d, i) => (
-                    <div key={i} className="pb-info-row pb-detail-row">
-                      <span className="pb-info-key">↳ {d.periode}</span>
-                      <span className="pb-info-val">{formatRupiah(d.nilai_tagihan)}</span>
+                  {inquiryData.detail?.map((d, i) => (
+                    <div key={i} className="pb-info-row pb-info-detail">
+                      <span>↳ {d.periode}</span>
+                      <span>{formatRupiah(d.nilai_tagihan)}</span>
                     </div>
                   ))}
                   {inquiryData.admin_fee > 0 && (
                     <div className="pb-info-row">
-                      <span className="pb-info-key">Biaya Admin</span>
-                      <span className="pb-info-val" style={{ color: '#f59e0b', fontWeight: 600 }}>
-                        {formatRupiah(inquiryData.admin_fee)}
-                      </span>
+                      <span>Biaya Admin</span>
+                      <span className="pb-fee-amount">{formatRupiah(inquiryData.admin_fee)}</span>
                     </div>
                   )}
-                  <div className="pb-info-row pb-info-row-total">
-                    <span className="pb-info-key">Total Tagihan</span>
-                    <span className="pb-info-val pb-price-red">{formatRupiah(sellingPrice)}</span>
+                  <div className="pb-info-row pb-info-total">
+                    <span>Total Tagihan</span>
+                    <span className="pb-price-red">{formatRupiah(sellingPrice)}</span>
                   </div>
                 </div>
+                <button className="pb-btn-ganti" onClick={resetToInquiry}>← Ganti Provider / Nomor</button>
               </div>
 
-              {/* Data Customer */}
-              <div className="pb-card">
-                <h2 className="pb-card-title">Data Pembayaran</h2>
-
+              {/* Data Kontak */}
+              <div className="form-section">
+                <h2>1. Data Kontak</h2>
                 <div className="form-group">
-                  <label className="form-label">Email <span className="required-star">*</span></label>
-                  <input
-                    type="email"
-                    className="form-input"
-                    placeholder="email@contoh.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
-                  <p className="form-hint">Invoice akan dikirim ke email ini</p>
+                  <label>Email <span className="pb-required">*</span></label>
+                  <input type="email" placeholder="email@contoh.com"
+                    value={email} onChange={e => setEmail(e.target.value)} />
+                  <small>Invoice akan dikirim ke email ini</small>
                 </div>
-
                 <div className="form-group">
-                  <label className="form-label">Nama Lengkap</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Nama kamu (opsional)"
-                    value={custName}
-                    onChange={e => setCustName(e.target.value)}
-                  />
+                  <label>Nama Lengkap</label>
+                  <input type="text" placeholder="Nama kamu (opsional)"
+                    value={custName} onChange={e => setCustName(e.target.value)} />
                 </div>
-
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Nomor HP</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="08xxxxxxxxxx (opsional)"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                  />
+                <div className="form-group">
+                  <label>Nomor HP <span className="pb-required">*</span></label>
+                  <input type="tel" placeholder="081234567890"
+                    value={phone} onChange={e => setPhone(e.target.value)} />
                 </div>
-              </div>
-
-              {/* Voucher (UI sama dengan OrderPage) */}
-              <div className="pb-card">
-                <h2 className="pb-card-title">
-                  Kode Voucher <span className="pb-optional">(Opsional)</span>
-                </h2>
-                <div className="voucher-input-group">
-                  <input
-                    type="text"
-                    value={voucherCode}
-                    onChange={handleVoucherChange}
-                    placeholder="Masukkan kode voucher"
-                    className={`form-input ${voucherError ? 'error' : voucherApplied ? 'success' : ''}`}
-                    disabled={voucherApplied}
-                    maxLength={50}
-                  />
-                  {!voucherApplied ? (
-                    <button
-                      type="button"
-                      onClick={handleApplyVoucher}
-                      disabled={voucherValidating || !voucherCode.trim()}
-                      className="btn-apply-voucher"
-                    >
-                      {voucherValidating ? 'Memvalidasi...' : 'Pakai'}
-                    </button>
-                  ) : (
-                    <button type="button" onClick={handleRemoveVoucher} className="btn-remove-voucher">
-                      Hapus
-                    </button>
-                  )}
-                </div>
-                {voucherError   && <div className="voucher-error">❌ {voucherError}</div>}
-                {voucherApplied && <div className="voucher-success">✓ Voucher berhasil diterapkan! Hemat {formatRupiah(voucherDiscount)}</div>}
               </div>
 
               {/* Metode Pembayaran */}
-              <div className="pb-card">
-                <h2 className="pb-card-title">Metode Pembayaran</h2>
-
-                <p className="pb-payment-group-label">Virtual Account</p>
-                <div className="pb-payment-list">
-                  {VA_BANKS.map(m => (
-                    <label
-                      key={m.code}
-                      className={`pb-payment-option ${selectedPaymentMethod === m.code ? 'selected' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value={m.code}
-                        checked={selectedPaymentMethod === m.code}
-                        onChange={() => { setSelectedPaymentMethod(m.code); setPayError(''); }}
-                      />
-                      <img src={m.logo} alt={m.name} className="payment-logo"
-                        onError={e => { e.target.style.display = 'none'; }} />
-                      <span className="pb-payment-name">{m.name}</span>
-                      <span className="pb-payment-fee">
-                        +{m.code === 'M2' ? 'Rp 4.000' : 'Rp 3.000'}
-                      </span>
-                    </label>
-                  ))}
+              <div className="form-section">
+                <h2>2. Pilih Metode Pembayaran</h2>
+                <div className="payment-methods">
+                  <div className="payment-category">
+                    <h3>Virtual Account</h3>
+                    {VA_BANKS.map(b => (
+                      <label key={b.code}
+                        className={`payment-option ${selectedPaymentMethod === b.code ? 'selected' : ''}`}>
+                        <input type="radio" name="payment" value={b.code}
+                          checked={selectedPaymentMethod === b.code}
+                          onChange={() => { setSelectedPaymentMethod(b.code); setPayError(''); }} />
+                        <div className="payment-info">
+                          <img src={b.logo} alt={b.name} className="payment-logo"
+                            onError={e => { e.target.style.display='none'; }} />
+                          <span className="payment-name">{b.name}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="payment-category">
+                    <h3>E-Wallet</h3>
+                    {EWALLET_METHODS.map(m => (
+                      <label key={m.code}
+                        className={`payment-option ${selectedPaymentMethod === m.code ? 'selected' : ''}`}>
+                        <input type="radio" name="payment" value={m.code}
+                          checked={selectedPaymentMethod === m.code}
+                          onChange={() => { setSelectedPaymentMethod(m.code); setPayError(''); }} />
+                        <div className="payment-info">
+                          <img src={m.logo} alt={m.name} className="payment-logo"
+                            onError={e => { e.target.style.display='none'; }} />
+                          <span className="payment-name">{m.name}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 </div>
+                {payError && <div className="error" style={{ marginTop: 12 }}>{payError}</div>}
+              </div>
 
-                <p className="pb-payment-group-label" style={{ marginTop: '16px' }}>E-Wallet</p>
-                <div className="pb-payment-list">
-                  {EWALLET_METHODS.map(m => (
-                    <label
-                      key={m.code}
-                      className={`pb-payment-option ${selectedPaymentMethod === m.code ? 'selected' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value={m.code}
-                        checked={selectedPaymentMethod === m.code}
-                        onChange={() => { setSelectedPaymentMethod(m.code); setPayError(''); }}
-                      />
-                      <img src={m.logo} alt={m.name} className="payment-logo"
-                        onError={e => { e.target.style.display = 'none'; }} />
-                      <span className="pb-payment-name">{m.name}</span>
-                      <span className="pb-payment-fee">+{m.feeValue}%</span>
-                    </label>
-                  ))}
+              {/* Voucher — setelah metode pembayaran */}
+              {selectedPaymentMethod && (
+                <div className="form-section voucher-section">
+                  <h2>3. Kode Voucher (Opsional)</h2>
+                  <div className="voucher-input-group">
+                    <input type="text"
+                      value={voucherCode}
+                      onChange={handleVoucherChange}
+                      placeholder="Masukkan kode voucher"
+                      className={voucherError ? 'error' : voucherApplied ? 'success' : ''}
+                      disabled={voucherApplied}
+                      maxLength={50}
+                    />
+                    {!voucherApplied ? (
+                      <button type="button" onClick={handleApplyVoucher}
+                        disabled={voucherValidating || !voucherCode.trim()}
+                        className="btn-apply-voucher">
+                        {voucherValidating ? 'Memvalidasi...' : 'Pakai'}
+                      </button>
+                    ) : (
+                      <button type="button" onClick={handleRemoveVoucher} className="btn-remove-voucher">
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                  {voucherError   && <div className="voucher-error">❌ {voucherError}</div>}
+                  {voucherApplied && <div className="voucher-success">✓ Voucher berhasil diterapkan! Hemat {formatRupiah(voucherDiscount)}</div>}
+                </div>
+              )}
+
+            </div>{/* end order-form */}
+
+            {/* RIGHT: Summary — sticky, stepper di atas, ikut scroll */}
+            <div className="pb-summary-col">
+
+              {/* Stepper — di atas ringkasan, ikut scroll bersama summary */}
+              <div className="pb-stepper-bar">
+                <div className="pb-step-item pb-step-done">
+                  <div className="pb-step-circle pb-step-circle-done">✓</div>
+                  <span>Cek Tagihan</span>
+                </div>
+                <div className="pb-step-connector pb-step-connector-done" />
+                <div className="pb-step-item pb-step-active">
+                  <div className="pb-step-circle pb-step-circle-active">2</div>
+                  <span>Detail & Bayar</span>
                 </div>
               </div>
 
-              {payError && <div className="pb-error-box">❌ {payError}</div>}
-
-              <div className="pb-actions">
-                <button className="pb-btn-secondary" onClick={resetToInquiry}>
-                  ← Ganti Nomor
-                </button>
-                <button className="pb-btn-primary" onClick={handlePay} disabled={loadingPay}>
-                  {loadingPay ? '⏳ Memproses...' : '💳 Bayar Sekarang'}
-                </button>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: Order Summary (sticky, pola sama dengan OrderPage) */}
-            <div className="pb-right">
               <div className="order-summary">
-                <h3>Ringkasan Pesanan</h3>
+              <h3>Ringkasan Pesanan</h3>
 
-                <div className="summary-item">
-                  <span>Pelanggan</span>
-                  <span>{inquiryData.customer_no}</span>
+              <div className="summary-item">
+                <span>Provider</span>
+                <span>{selectedProduct?.name}</span>
+              </div>
+              <div className="summary-item">
+                <span>Pelanggan</span>
+                <span>{inquiryData.customer_no}</span>
+              </div>
+              <div className="summary-item">
+                <span>Total Tagihan</span>
+                <span>{formatRupiah(sellingPrice)}</span>
+              </div>
+
+              {voucherApplied && voucherDiscount > 0 && (
+                <div className="summary-item voucher-discount">
+                  <span>Diskon Voucher ({voucherCode})</span>
+                  <span style={{ color: '#10b981', fontWeight: '700' }}>
+                    - {formatRupiah(voucherDiscount)}
+                  </span>
                 </div>
+              )}
 
-                <div className="summary-item">
-                  <span>Total Tagihan</span>
-                  <span style={{ fontWeight: 700 }}>{formatRupiah(sellingPrice)}</span>
-                </div>
-
-                {voucherApplied && voucherDiscount > 0 && (
-                  <div className="summary-item voucher-discount">
-                    <span>Diskon Voucher ({voucherCode})</span>
-                    <span style={{ color: '#10b981', fontWeight: '700' }}>
-                      - {formatRupiah(voucherDiscount)}
+              {selectedPaymentMethod && (
+                <>
+                  <div className="summary-item">
+                    <span>Metode Pembayaran</span>
+                    <span>
+                      {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name ||
+                       EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name}
                     </span>
                   </div>
-                )}
+                  <div className="summary-item">
+                    <span>Biaya Layanan</span>
+                    <span style={{ color: '#f59e0b', fontWeight: '700' }}>
+                      {formatRupiah(paymentFee)}
+                    </span>
+                  </div>
 
-                {selectedPaymentMethod && (
-                  <>
-                    <div className="summary-item">
-                      <span>Metode Bayar</span>
-                      <span>
-                        {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name ||
-                         EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name ||
-                         selectedPaymentMethod}
-                      </span>
+                  {selectedPaymentMethod === 'M2' && (
+                    <div style={{
+                      background: '#fffbeb', border: '1px solid #fde68a',
+                      borderRadius: '8px', padding: '10px 14px', marginTop: '-4px', marginBottom: '4px',
+                    }}>
+                      <p style={{ fontSize: '12px', color: '#92400e', fontWeight: '600', marginBottom: '4px' }}>
+                        ⚠️ Biaya Bank Mandiri (ditagih langsung oleh bank)
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#78350f', margin: 0, lineHeight: '1.6' }}>
+                        {getMandiriBankFee(priceAfterDiscount)} — tidak termasuk dalam total di atas
+                      </p>
                     </div>
+                  )}
 
-                    <div className="summary-item">
-                      <span>Biaya Layanan</span>
-                      <span style={{ color: '#f59e0b', fontWeight: '700' }}>
-                        {formatRupiah(paymentFee)}
-                      </span>
-                    </div>
+                  <div className="summary-divider" />
+                  <div className="summary-total">
+                    <span>Total Pembayaran</span>
+                    <span className="total-price">{formatRupiah(totalAmount)}</span>
+                  </div>
 
-                    {selectedPaymentMethod === 'M2' && (
-                      <div style={{
-                        background: '#fffbeb', border: '1px solid #fde68a',
-                        borderRadius: '8px', padding: '10px 14px',
-                        marginTop: '-4px', marginBottom: '4px',
-                      }}>
-                        <p style={{ fontSize: '12px', color: '#92400e', fontWeight: '600', marginBottom: '4px' }}>
-                          ⚠️ Biaya Bank Mandiri (ditagih langsung oleh bank)
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#78350f', margin: 0, lineHeight: '1.6' }}>
-                          {getMandiriBankFee(priceAfterDiscount)} — tidak termasuk dalam total di atas
-                        </p>
-                      </div>
-                    )}
+                  <button
+                    className="btn-submit"
+                    onClick={handlePay}
+                    disabled={loadingPay || !isFormValid()}
+                  >
+                    {loadingPay ? 'Memproses...' : '💳 Bayar Sekarang'}
+                  </button>
+                </>
+              )}
 
-                    <div className="summary-divider" />
-                    <div className="summary-total">
-                      <span>Total Pembayaran</span>
-                      <span className="total-price">{formatRupiah(totalAmount)}</span>
-                    </div>
-                  </>
-                )}
-
-                {!selectedPaymentMethod && (
-                  <p style={{ fontSize: '13px', color: '#a0aec0', textAlign: 'center', padding: '12px 0', margin: 0 }}>
-                    Pilih metode pembayaran untuk melihat total
-                  </p>
-                )}
-              </div>
-            </div>
+              {!selectedPaymentMethod && (
+                <div className="summary-placeholder">
+                  <p>Pilih metode pembayaran untuk melihat total</p>
+                </div>
+              )}
+            </div>{/* end order-summary */}
+            </div>{/* end pb-summary-col */}
 
           </div>
         )}

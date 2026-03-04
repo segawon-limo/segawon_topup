@@ -306,41 +306,29 @@ class DuitkuService {
    * Map payment method to Duitku code
    */
   getPaymentMethodCode(method, channel = null) {
+    // Kode Duitku VA yang aktif:
+    // BR=BRI | M2=Mandiri | NC=BNC | I1=BNI | BV=BSI | B1=CIMB | DM=Danamon | BT=Permata
     const methodMap = {
-      // Virtual Account
-      'va_bca': 'BC',
+      'va_bri':     'BR',
       'va_mandiri': 'M2',
-      'va_bni': 'I1',
-      'va_bri': 'BR',
-      'va_permata': 'BT',
-      'va_cimb': 'B1',
+      'va_bnc':     'NC',
+      'va_bni':     'I1',
+      'va_bsi':     'BV',
+      'va_cimb':    'B1',
       'va_danamon': 'DM',
-      'va_bsi': 'BV',
-      
-      // QRIS
-      'qris': 'SP',
-      
-      // E-Wallet
-      'gopay': 'OV',
-      'shopeepay': 'SA',
-      'dana': 'DA',
-      'linkaja': 'LF',
-      'ovo': 'OV',
-      
-      // Retail
-      'alfamart': 'FT',
-      'indomaret': 'IR',
-      
-      // Credit Card
-      'credit_card': 'CC'
+      'va_permata': 'BT',
+      // Pass-through kode Duitku langsung dari frontend
+      'BR': 'BR', 'M2': 'M2', 'NC': 'NC', 'I1': 'I1',
+      'BV': 'BV', 'B1': 'B1', 'DM': 'DM', 'BT': 'BT',
+      'SA': 'SA', // ShopeePay App
+      'OV': 'OV', // OVO
     };
 
-    // If specific channel provided
     if (channel) {
-      return methodMap[`${method}_${channel}`] || methodMap[method] || 'BC';
+      return methodMap[`${method}_${channel}`] || methodMap[method] || 'BR';
     }
 
-    return methodMap[method] || 'BC'; // Default to BCA VA
+    return methodMap[method] || 'BR'; // Default BRI VA
   }
 
   /**
@@ -356,7 +344,7 @@ class DuitkuService {
       'I1': { percentage: 0.7, fixed: 1000 },  // BNI VA
       'BR': { percentage: 0.7, fixed: 1000 },  // BRI VA
       'BT': { percentage: 0.7, fixed: 0 },     // QRIS
-      'OV': { percentage: 2.0, fixed: 0 },     // OVO/GoPay
+      'OV': { percentage: 3.03, fixed: 0 },     // OVO/GoPay
       'SA': { percentage: 2.0, fixed: 0 },     // ShopeePay
       'DA': { percentage: 2.0, fixed: 0 }      // DANA
     };

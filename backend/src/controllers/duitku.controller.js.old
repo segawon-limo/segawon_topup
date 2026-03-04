@@ -273,10 +273,11 @@ exports.duitkuCallback = async (req, res) => {
     console.log('✓ Signature valid');
 
     // 2. Get order from database with product info
+    // LEFT JOIN: pascabayar orders punya product_id = NULL, jangan sampai crash
     const orderResult = await pool.query(
       `SELECT o.*, p.sku, p.name as product_name
        FROM orders o
-       JOIN products p ON o.product_id = p.id
+       LEFT JOIN products p ON o.product_id = p.id
        WHERE o.order_number = $1`,
       [merchantOrderId]
     );
@@ -359,10 +360,17 @@ exports.duitkuCallback = async (req, res) => {
       ]);
 
       // Process Digiflazz topup in background
-      processDigiflazzTopup(order).catch(error => {
-        console.error('❌ Digiflazz processing error:', error);
-        // Jangan throw error, biar callback tetap return success
-      });
+      // Pascabayar (product_id=NULL) punya flow berbeda: pay-pasca ke Digiflazz
+      if (!order.product_id && order.notes && order.notes.includes('PASCABAYAR')) {
+        processPascabayarPayment(order).catch(error => {
+          console.error('❌ Pascabayar Digiflazz processing error:', error);
+        });
+      } else {
+        processDigiflazzTopup(order).catch(error => {
+          console.error('❌ Digiflazz processing error:', error);
+          // Jangan throw error, biar callback tetap return success
+        });
+      }
 
       // TODO: Send notification to customer
       try {
@@ -480,6 +488,92 @@ exports.testDuitku = async (req, res) => {
     });
   }
 };
+
+/**
+ * Process Pascabayar via Digiflazz pay-pasca
+ * Dipanggil SETELAH Duitku webhook konfirmasi pembayaran sukses (resultCode = '00')
+ * Flow: Customer bayar Duitku → webhook → fungsi ini → Digiflazz pay-pasca
+ */
+async function processPascabayarPayment(order) {
+  try {
+    console.log('=== 🌐 Processing Pascabayar Digiflazz ===');
+    console.log('Order Number:', order.order_number);
+
+    // Ambil ref_id, buyer_sku_code, customer_no dari provider_response
+    const providerData = typeof order.provider_response === 'string'
+      ? JSON.parse(order.provider_response)
+      : (order.provider_response || {});
+
+    const ref_id         = providerData?.ref_id;
+    const buyer_sku_code = providerData?.buyer_sku_code;
+    const customer_no    = providerData?.customer_no;
+
+    if (!ref_id || !buyer_sku_code || !customer_no) {
+      throw new Error(`Data pascabayar tidak lengkap: ref_id=${ref_id}, sku=${buyer_sku_code}, cust=${customer_no}`);
+    }
+
+    // Update order status ke processing
+    await pool.query(
+      `UPDATE orders SET order_status = 'processing', updated_at = NOW() WHERE order_number = $1`,
+      [order.order_number]
+    );
+
+    console.log(`📞 Calling Digiflazz pay-pasca: ref=${ref_id} sku=${buyer_sku_code}`);
+
+    // Gunakan digiflazzService.payPasca (pay-pasca)
+    const digiflazzResult = await digiflazzService.payPasca({
+      buyer_sku_code,
+      customer_no,
+      ref_id,
+      orderNumber: order.order_number,
+    });
+
+    console.log('📦 Digiflazz pay-pasca response:', JSON.stringify(digiflazzResult));
+
+    const digiStatus = digiflazzResult?.data?.status || 'Unknown';
+    const rc         = digiflazzResult?.data?.rc;
+    const sn         = digiflazzResult?.data?.sn || null;
+
+    // Tentukan order_status berdasarkan rc/status Digiflazz
+    const orderStatus = (digiStatus === 'Sukses' || rc === '00') ? 'completed'
+                      : (digiStatus === 'Pending' || rc === '03') ? 'processing'
+                      : 'failed';
+
+    // Update order dengan hasil Digiflazz
+    await pool.query(
+      `UPDATE orders SET
+        order_status           = $1,
+        provider_order_id      = $2,
+        provider_serial_number = $3,
+        provider_response      = $4,
+        processed_at           = NOW(),
+        updated_at             = NOW()
+       WHERE order_number = $5`,
+      [
+        orderStatus,
+        ref_id,
+        sn,
+        JSON.stringify({ ...providerData, digiflazz: digiflazzResult?.data }),
+        order.order_number,
+      ]
+    );
+
+    // Update inquiry → status paid
+    await pool.query(
+      `UPDATE pascabayar_inquiries SET status = 'paid', updated_at = NOW() WHERE ref_id = $1`,
+      [ref_id]
+    );
+
+    console.log(`✅ Pascabayar done: ${order.order_number} status=${orderStatus} sn=${sn}`);
+
+  } catch (error) {
+    console.error('❌ Critical Error in processPascabayarPayment:', error);
+    await pool.query(
+      `UPDATE orders SET order_status = 'failed', updated_at = NOW() WHERE order_number = $1`,
+      [order.order_number]
+    ).catch(() => {});
+  }
+}
 
 /**
  * Process Digiflazz topup (async background job)

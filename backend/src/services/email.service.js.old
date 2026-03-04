@@ -48,6 +48,7 @@ const generateInvoiceHTML = async (orderData) => {
     'DM': 'Danamon Virtual Account',
     'BT': 'Permata Bank Virtual Account',
     'SA': 'ShopeePay',
+    'OV': 'OVO',
   };
 
   const VA_BANK_NAMES = {
@@ -86,7 +87,7 @@ const generateInvoiceHTML = async (orderData) => {
     
     // E-Wallet (ShopeePay, OVO, DANA, LinkAja)
     if (['SP', 'OV', 'DA', 'LA'].includes(methodUpper)) {
-      const walletName = paymentMethodNames[method];
+      const walletName = paymentMethodNames[methodUpper] || paymentMethodNames[method] || method;
       return `
         <div class="instructions">
           <h3>📱 Cara Pembayaran ${walletName}:</h3>
@@ -129,6 +130,30 @@ const generateInvoiceHTML = async (orderData) => {
       `;
     }
     
+
+    // OVO
+    if (methodUpper === 'OV') {
+      return `
+        <div class="instructions">
+          <h3>📱 Cara Pembayaran OVO:</h3>
+          <ol>
+            <li>Klik tombol <strong>"Bayar dengan OVO"</strong> di atas</li>
+            <li>Halaman konfirmasi Duitku akan terbuka — nomor HP sudah terisi otomatis</li>
+            <li>Pastikan nomor HP sesuai, lalu langsung klik <strong>PAY NOW</strong></li>
+            <li>Notifikasi pembayaran akan muncul di aplikasi OVO kamu</li>
+            <li>Pilih metode: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
+            <li>Periksa detail (<strong>Rp ${totalAmount.toLocaleString('id-ID')}</strong>) lalu klik <strong>"Bayar"</strong></li>
+            <li>Selesaikan dalam <strong>30 detik</strong> setelah notifikasi muncul</li>
+          </ol>
+          <div style="background: #f3f0ff; border: 1px solid #c4b5fd; border-radius: 8px; padding: 10px 14px; margin-top: 12px;">
+            <p style="font-size: 12px; color: #5b21b6; margin: 0;">
+              💡 <strong>Tips:</strong> Pastikan nomor HP yang kamu masukkan adalah nomor yang terdaftar di akun OVO kamu.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
     // Virtual Account — semua kode aktif
     if (['BR', 'M2', 'NC', 'I1', 'BV', 'B1', 'DM', 'BT'].includes(methodUpper)) {
       const bankName = VA_BANK_NAMES[methodUpper] || methodUpper;
@@ -537,6 +562,19 @@ const generateInvoiceHTML = async (orderData) => {
         <p style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 10px;">
           Klik tombol di atas atau buka link berikut:<br>
           <a href="${paymentUrl}" style="color: rgba(255,255,255,0.9); word-break: break-all;">${paymentUrl}</a>
+        </p>
+      </div>
+      ` : ''}
+
+      ${paymentMethod === 'OV' && paymentUrl ? `
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${paymentUrl}"
+           style="display: inline-block; background: #4c3494; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(76,52,148,0.35);">
+          💜 Bayar dengan OVO
+        </a>
+        <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+          Klik tombol di atas atau buka link berikut:<br>
+          <a href="${paymentUrl}" style="color: #4c3494; word-break: break-all;">${paymentUrl}</a>
         </p>
       </div>
       ` : ''}
