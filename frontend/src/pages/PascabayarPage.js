@@ -259,10 +259,6 @@ function PascabayarPage() {
                     <span className="pb-info-key">Nomor Pelanggan</span>
                     <span className="pb-info-val">{inquiryData.customer_no}</span>
                   </div>
-                  <div className="pb-info-row">
-                    <span className="pb-info-key">Produk</span>
-                    <span className="pb-info-val">{inquiryData.buyer_sku_code}</span>
-                  </div>
                   {inquiryData.periode && (
                     <div className="pb-info-row">
                       <span className="pb-info-key">Periode</span>
