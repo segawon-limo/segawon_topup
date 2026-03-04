@@ -13,15 +13,42 @@
  */
 
 const crypto         = require('crypto');
-const fetch          = require('node-fetch');
+const https          = require('https');
 const { pool }       = require('../config/database');
 const duitkuService  = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
 
 const DIGIFLAZZ_USERNAME = process.env.DIGIFLAZZ_USERNAME;
 const DIGIFLAZZ_API_KEY  = process.env.DIGIFLAZZ_API_KEY;
-const DIGIFLAZZ_URL      = 'https://api.digiflazz.com/v1/transaction';
+
 const IS_PRODUCTION      = process.env.NODE_ENV === 'production';
+
+// ── Helper: HTTP POST ke Digiflazz (native https) ────────────────────────────
+const digiflazzPost = (body) => {
+  return new Promise((resolve, reject) => {
+    const bodyStr = JSON.stringify(body);
+    const options = {
+      hostname: 'api.digiflazz.com',
+      path:     '/v1/transaction',
+      method:   'POST',
+      headers:  {
+        'Content-Type':   'application/json',
+        'Content-Length': Buffer.byteLength(bodyStr)
+      }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(new Error('Invalid JSON from Digiflazz')); }
+      });
+    });
+    req.on('error', reject);
+    req.write(bodyStr);
+    req.end();
+  });
+};
 
 // ── Helper: buat signature Digiflazz ─────────────────────────────────────────
 const makeSign = (refId) => {
@@ -71,22 +98,17 @@ exports.inquiry = async (req, res) => {
     console.log(`[PASCABAYAR] Inquiry: sku=${buyer_sku_code} customer=${customer_no} ref=${refId}`);
 
     // Hit Digiflazz
-    const digiRes = await fetch(DIGIFLAZZ_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        commands:       'inq-pasca',
-        username:       DIGIFLAZZ_USERNAME,
-        buyer_sku_code,
-        customer_no,
-        ref_id:         refId,
-        sign,
-        ...(!IS_PRODUCTION && { testing: true })
-      })
+    const digiJson = await digiflazzPost({
+      commands:       'inq-pasca',
+      username:       DIGIFLAZZ_USERNAME,
+      buyer_sku_code,
+      customer_no,
+      ref_id:         refId,
+      sign,
+      ...(!IS_PRODUCTION && { testing: true })
     });
 
-    const digiJson = await digiRes.json();
-    const data     = digiJson?.data;
+    const data = digiJson?.data;
 
     console.log(`[PASCABAYAR] Inquiry response:`, JSON.stringify(data));
 
@@ -282,22 +304,17 @@ exports.pay = async (req, res) => {
 
     console.log(`[PASCABAYAR] Pay: ref=${ref_id} sku=${inquiry.buyer_sku_code}`);
 
-    const digiRes = await fetch(DIGIFLAZZ_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        commands:       'pay-pasca',
-        username:       DIGIFLAZZ_USERNAME,
-        buyer_sku_code: inquiry.buyer_sku_code,
-        customer_no:    inquiry.customer_no,
-        ref_id,
-        sign,
-        ...(!IS_PRODUCTION && { testing: true })
-      })
+    const digiJson = await digiflazzPost({
+      commands:       'pay-pasca',
+      username:       DIGIFLAZZ_USERNAME,
+      buyer_sku_code: inquiry.buyer_sku_code,
+      customer_no:    inquiry.customer_no,
+      ref_id,
+      sign,
+      ...(!IS_PRODUCTION && { testing: true })
     });
 
-    const digiJson = await digiRes.json();
-    const data     = digiJson?.data;
+    const data = digiJson?.data;
 
     console.log(`[PASCABAYAR] Pay response:`, JSON.stringify(data));
 

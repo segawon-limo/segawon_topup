@@ -6,7 +6,7 @@
  * 
  * Pastikan server sudah running: pm2 start / node index.js
  */
-
+require('dotenv').config({ path: '../.env' });
 const BASE_URL = 'https://segawontopup.net'; // ganti ke http://localhost:PORT saat dev
 
 // ── Warna console ─────────────────────────────────────────────────────────────
