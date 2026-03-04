@@ -100,14 +100,15 @@
   color: #718096;
 }
 
-/* ── Stepper bar (step 2, di atas order-form, ikut scroll) ── */
+/* ── Stepper bar (step 2) — di dalam kolom kanan, di atas ringkasan ── */
 .pb-stepper-bar {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid #e2e8f0;
 }
 .pb-step-item {
   display: flex;
@@ -117,11 +118,12 @@
   font-size: 12px;
   font-weight: 500;
   color: #a0aec0;
+  white-space: nowrap;
 }
-.pb-step-item.pb-step-done  { color: #16a34a; }
+.pb-step-item.pb-step-done   { color: #16a34a; }
 .pb-step-item.pb-step-active { color: #c0392b; font-weight: 700; }
 .pb-step-circle {
-  width: 32px; height: 32px;
+  width: 30px; height: 30px;
   border-radius: 50%;
   background: #e2e8f0;
   color: #a0aec0;
@@ -133,7 +135,7 @@
 .pb-step-connector {
   flex: 1; height: 2px;
   background: #e2e8f0;
-  margin: 0 8px;
+  margin: 0 10px;
   margin-bottom: 16px;
 }
 .pb-step-connector-done { background: #16a34a; }
@@ -249,7 +251,7 @@
 /* ── Required star ── */
 .pb-required { color: #c0392b; }
 
-/* ── order-layout: reuse OrderPage.css class but override for pb-page ── */
+/* ── order-layout ── */
 .pb-page .order-layout {
   display: grid;
   grid-template-columns: 1fr 400px;
@@ -257,13 +259,25 @@
   align-items: start;
 }
 
-/* Sticky summary — identik dengan OrderPage */
-.pb-page .order-layout .order-summary {
-  position: sticky !important;
-  top: 80px !important;
-  align-self: flex-start !important;
-  max-height: calc(100vh - 100px) !important;
-  overflow-y: auto !important;
+/* Kolom kanan: sticky wrapper berisi stepper + summary */
+.pb-summary-col {
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Summary box dengan border */
+.pb-page .order-summary {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid #e2e8f0;
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
@@ -273,12 +287,13 @@
   .pb-page .order-layout {
     grid-template-columns: 1fr;
   }
-  .pb-page .order-layout .order-summary {
-    position: relative !important;
-    top: auto !important;
-    max-height: none !important;
-    order: 2;
-    margin-top: 0;
+  .pb-summary-col {
+    position: relative;
+    top: auto;
+    order: -1; /* stepper + summary muncul di ATAS form di mobile */
+  }
+  .pb-page .order-summary {
+    max-height: none;
   }
 }
 

@@ -263,19 +263,6 @@ function PascabayarPage() {
             {/* LEFT: Form */}
             <div className="order-form">
 
-              {/* Stepper di atas form — ikut scroll */}
-              <div className="pb-stepper-bar">
-                <div className="pb-step-item pb-step-done">
-                  <div className="pb-step-circle pb-step-circle-done">✓</div>
-                  <span>Cek Tagihan</span>
-                </div>
-                <div className="pb-step-connector pb-step-connector-done" />
-                <div className="pb-step-item pb-step-active">
-                  <div className="pb-step-circle pb-step-circle-active">2</div>
-                  <span>Detail & Bayar</span>
-                </div>
-              </div>
-
               {/* Detail Tagihan */}
               <div className="form-section">
                 <h2>✅ Detail Tagihan Ditemukan</h2>
@@ -413,8 +400,23 @@ function PascabayarPage() {
 
             </div>{/* end order-form */}
 
-            {/* RIGHT: Summary — sticky, mengikuti scroll */}
-            <div className="order-summary">
+            {/* RIGHT: Summary — sticky, stepper di atas, ikut scroll */}
+            <div className="pb-summary-col">
+
+              {/* Stepper — di atas ringkasan, ikut scroll bersama summary */}
+              <div className="pb-stepper-bar">
+                <div className="pb-step-item pb-step-done">
+                  <div className="pb-step-circle pb-step-circle-done">✓</div>
+                  <span>Cek Tagihan</span>
+                </div>
+                <div className="pb-step-connector pb-step-connector-done" />
+                <div className="pb-step-item pb-step-active">
+                  <div className="pb-step-circle pb-step-circle-active">2</div>
+                  <span>Detail & Bayar</span>
+                </div>
+              </div>
+
+              <div className="order-summary">
               <h3>Ringkasan Pesanan</h3>
 
               <div className="summary-item">
@@ -490,7 +492,8 @@ function PascabayarPage() {
                   <p>Pilih metode pembayaran untuk melihat total</p>
                 </div>
               )}
-            </div>
+            </div>{/* end order-summary */}
+            </div>{/* end pb-summary-col */}
 
           </div>
         )}
