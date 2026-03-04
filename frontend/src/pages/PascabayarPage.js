@@ -21,7 +21,7 @@ const EWALLET_METHODS = [
 ];
 
 const QRIS_METHODS = [
-  { code: 'SQ', name: 'QRIS (Semua E-Wallet)', logo: '/images/qris-logo.png', feeValue: 0.7 },
+  { code: 'SQ', name: 'QRIS', logo: '/images/qris-logo.png', feeValue: 0.7 },
 ];
 
 const formatRupiah = (amount) =>

@@ -452,7 +452,7 @@ function PaymentPage() {
                 <div className="payment-instructions">
                   <h3>📱 Cara Pembayaran QRIS:</h3>
                   <ol>
-                    <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
+                    <li>Buka aplikasi e-wallet atau mobile banking favorit Anda (GoPay, OVO, Livin', BCA Mobile, dll)</li>
                     <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
                     <li>Scan QR Code yang tertera di atas</li>
                     <li>Periksa detail pembayaran</li>

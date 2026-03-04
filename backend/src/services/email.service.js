@@ -75,7 +75,7 @@ const generateInvoiceHTML = async (orderData) => {
         <div class="instructions">
           <h3>📱 Cara Pembayaran QRIS:</h3>
           <ol>
-            <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
+            <li>Buka aplikasi e-wallet atau mobile banking favorit Anda (GoPay, OVO, Livin', BCA Mobile, dll)</li>
             <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
             <li>Scan QR Code yang tertera di atas</li>
             <li>Periksa detail pembayaran</li>
@@ -579,18 +579,18 @@ const generateInvoiceHTML = async (orderData) => {
         </p>
       </div>
       ` : ''}
-
-      ${paymentMethod === 'SQ' && paymentUrl ? `
-      <div style="text-align: center; margin-top: 20px;">
-        <a href="${paymentUrl}"
-           style="display: inline-block; background: #e4003a; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(228,0,58,0.35);">
-          📷 Lihat QR Code QRIS
-        </a>
-        <p style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 10px;">
-          Atau scan QR Code di atas menggunakan aplikasi e-wallet Anda
-        </p>
-      </div>
-      ` : ''}
+      
+      // ${paymentMethod === 'SQ' && paymentUrl ? `
+      // <div style="text-align: center; margin-top: 20px;">
+      //   <a href="${paymentUrl}"
+      //      style="display: inline-block; background: #e4003a; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(228,0,58,0.35);">
+      //     📷 Lihat QR Code QRIS
+      //   </a>
+      //   <p style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 10px;">
+      //     Atau scan QR Code di atas menggunakan aplikasi e-wallet Anda
+      //   </p>
+      // </div>
+      // ` : ''}
     </div>
     
     <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->

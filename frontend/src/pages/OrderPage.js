@@ -44,7 +44,7 @@ const EWALLET_METHODS = [
 
 // QRIS aktif
 const QRIS_METHODS = [
-  { code: 'SQ', name: 'QRIS (Semua E-Wallet)', logo: 'SQ', feeType: 'percent', feeValue: 0.7 },
+  { code: 'SQ', name: 'QRIS', logo: 'SQ', feeType: 'percent', feeValue: 0.7 },
 ];
 
 // ── buildDisplayFormat ────────────────────────────────────────
