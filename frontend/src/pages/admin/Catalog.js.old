@@ -753,18 +753,29 @@ function AdminCatalog() {
 
     const ws = new WebSocket(WS_URL);
 
+    // Timeout 10 detik — jika tidak ada respons auth, anggap error
+    const authTimeout = setTimeout(() => {
+      if (ws.readyState !== WebSocket.CLOSED) {
+        setBuildState('error');
+        setBuildLog(['❌ Timeout: tidak ada respons dari server terminal']);
+        ws.close();
+      }
+    }, 10000);
+
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: 'auth', token }));
     };
 
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
-      if (msg.type === 'authed') {
+      if (msg.type === 'authed' || (msg.type === 'auth' && msg.success === true)) {
+        clearTimeout(authTimeout);
         setBuildState('building');
         ws.send(JSON.stringify({ type: 'run', key: 'npm_build' }));
         return;
       }
-      if (msg.type === 'auth_error') {
+      if (msg.type === 'auth_error' || (msg.type === 'auth' && msg.success === false)) {
+        clearTimeout(authTimeout);
         setBuildState('error');
         setBuildLog(['❌ Auth gagal']);
         ws.close();

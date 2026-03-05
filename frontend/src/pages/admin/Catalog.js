@@ -771,7 +771,7 @@ function AdminCatalog() {
       if (msg.type === 'authed' || (msg.type === 'auth' && msg.success === true)) {
         clearTimeout(authTimeout);
         setBuildState('building');
-        ws.send(JSON.stringify({ type: 'run', key: 'npm_build' }));
+        ws.send(JSON.stringify({ type: 'run', command: 'npm_build' }));
         return;
       }
       if (msg.type === 'auth_error' || (msg.type === 'auth' && msg.success === false)) {
@@ -787,6 +787,12 @@ function AdminCatalog() {
       }
       if (msg.type === 'done') {
         setBuildState(msg.success ? 'done' : 'error');
+        ws.close();
+        return;
+      }
+      if (msg.type === 'error') {
+        setBuildState('error');
+        setBuildLog(prev => [...prev, `❌ ${msg.message || 'Command error'}`]);
         ws.close();
         return;
       }
