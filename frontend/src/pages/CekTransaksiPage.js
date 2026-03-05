@@ -291,8 +291,8 @@ function CekTransaksiPage() {
                     </span>
                   </div>
                   <div className="ct-info-row">
-                    <span className="ct-info-key">Subtotal</span>
-                    <span className="ct-info-val">{formatRupiah(order.subtotal)}</span>
+                    <span className="ct-info-key">Harga Product</span>
+                    <span className="ct-info-val">{formatRupiah(order.amount)}</span>
                   </div>
                   {/* Diskon Voucher */}
                   {order.voucherDiscount > 0 && (
