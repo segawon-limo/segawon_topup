@@ -431,12 +431,10 @@ exports.createOrder = async (req, res) => {
       paymentFee = 3000;
     } else if (paymentMethod === 'SQ') {
       // QRIS Nusapay — 0.7% dari harga setelah diskon
-      // paymentFee = Math.round(priceAfterDiscount * 0.007);
-      paymentFee = Math.round(priceAfterDiscount * 0.993) - priceAfterDiscount; // Alternatif: hitung mundur dari total
+      paymentFee = Math.round(priceAfterDiscount / 0.993) - priceAfterDiscount;
     } else if (paymentMethod === 'SA') {
       // ShopeePay — 2% dari harga setelah diskon
-      const totalharga = Math.round(priceAfterDiscount / 0.98)
-      paymentFee = totalharga - priceAfterDiscount
+      paymentFee = Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
     } else if (paymentMethod === 'OV') {
       // OVO — 3.03% dari harga setelah diskon
       paymentFee = Math.round(priceAfterDiscount / 0.9697) - priceAfterDiscount;

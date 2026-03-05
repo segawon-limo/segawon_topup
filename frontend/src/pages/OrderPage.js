@@ -1377,6 +1377,7 @@ function OrderPage() {
                       <span>
                         {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name ||
                          EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name ||
+                          QRIS_METHODS.find(q => q.code === selectedPaymentMethod)?.name ||
                          selectedPaymentMethod}
                       </span>
                     </div>
