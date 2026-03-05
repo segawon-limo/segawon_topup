@@ -22,6 +22,7 @@ const generateInvoiceHTML = async (orderData) => {
     userId,
     zoneId,
     amount,
+    voucherCode,
     voucherDiscount,
     paymentFee,
     totalAmount,
@@ -512,12 +513,12 @@ const generateInvoiceHTML = async (orderData) => {
       </div>
       ${voucherDiscount > 0 ? `
       <div class="price-row">
-        <span class="price-label" style="color: #10b981;">Diskon Voucher</span>
+        <span class="price-label" style="color: #10b981;">Diskon Voucher${voucherCode ? ` (${voucherCode})` : ''}</span>
         <span class="price-value" style="color: #10b981;">- Rp ${voucherDiscount.toLocaleString('id-ID')}</span>
       </div>
       ` : ''}
       <div class="price-row">
-        <span class="price-label">Biaya Admin</span>
+        <span class="price-label">Biaya Layanan</span>
         <span class="price-value">Rp ${paymentFee.toLocaleString('id-ID')}</span>
       </div>
       ${paymentMethod === 'M2' ? `
