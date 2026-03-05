@@ -580,17 +580,6 @@ const generateInvoiceHTML = async (orderData) => {
       </div>
       ` : ''}
       
-      // ${paymentMethod === 'SQ' && paymentUrl ? `
-      // <div style="text-align: center; margin-top: 20px;">
-      //   <a href="${paymentUrl}"
-      //      style="display: inline-block; background: #e4003a; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(228,0,58,0.35);">
-      //     📷 Lihat QR Code QRIS
-      //   </a>
-      //   <p style="font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 10px;">
-      //     Atau scan QR Code di atas menggunakan aplikasi e-wallet Anda
-      //   </p>
-      // </div>
-      // ` : ''}
     </div>
     
     <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->

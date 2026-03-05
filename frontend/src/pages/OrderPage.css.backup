@@ -1095,4 +1095,15 @@ input:disabled {
   border-radius: 6px;
   flex-shrink: 0;
 }
+.info-box-ovo {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: #fff8e1;
+  border: 1px solid #f9a825;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #5d4037;
+  line-height: 1.5;
+}
+
 /* ── end ─────────────────────────────────────────────── */
