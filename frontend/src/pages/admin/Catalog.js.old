@@ -718,6 +718,10 @@ function AdminCatalog() {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
+  // Build overlay state
+  const [buildState, setBuildState] = useState(null); // null | 'connecting' | 'building' | 'done' | 'error'
+  const [buildLog,   setBuildLog]   = useState([]);
+
   // Filters
   const [filterGame,    setFilterGame]    = useState('');
   const [filterSearch,  setFilterSearch]  = useState('');
@@ -738,6 +742,50 @@ function AdminCatalog() {
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
   }, []);
+
+  // Auto trigger npm run build via WebSocket terminal
+  const triggerBuild = useCallback(() => {
+    const WS_URL = (process.env.REACT_APP_API_URL || 'https://segawontopup.net')
+      .replace(/^https/, 'wss').replace(/^http/, 'ws') + '/ws/terminal';
+
+    setBuildState('connecting');
+    setBuildLog([]);
+
+    const ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'auth', token }));
+    };
+
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'authed') {
+        setBuildState('building');
+        ws.send(JSON.stringify({ type: 'run', key: 'npm_build' }));
+        return;
+      }
+      if (msg.type === 'auth_error') {
+        setBuildState('error');
+        setBuildLog(['❌ Auth gagal']);
+        ws.close();
+        return;
+      }
+      if (msg.type === 'stdout' || msg.type === 'stderr') {
+        setBuildLog(prev => [...prev.slice(-80), msg.data.trimEnd()]);
+        return;
+      }
+      if (msg.type === 'done') {
+        setBuildState(msg.success ? 'done' : 'error');
+        ws.close();
+        return;
+      }
+    };
+
+    ws.onerror = () => {
+      setBuildState('error');
+      setBuildLog(['❌ Koneksi WebSocket gagal']);
+    };
+  }, [token]); // eslint-disable-line
 
   useEffect(() => {
     if (!token) { navigate('/admin/login'); return; }
@@ -790,9 +838,22 @@ function AdminCatalog() {
 
   // ── Save callbacks ─────────────────────────────────────────
   const handleGameSaved = async (saved, mode) => {
+    const prevGame = gameModal; // simpan referensi game sebelum modal ditutup
     setGameModal(null);
     showToast(mode === 'create' ? `Game "${saved.name}" berhasil dibuat!` : `Game "${saved.name}" diperbarui.`);
     await loadAll();
+    if (mode === 'create') {
+      // Game baru — selalu build
+      triggerBuild();
+    } else if (mode === 'update' && prevGame && typeof prevGame === 'object') {
+      // Edit — build hanya jika ada perubahan gambar
+      const imageChanged =
+        saved.icon_url                     !== (prevGame.icon_url                     || null) ||
+        saved.icon_product_url             !== (prevGame.icon_product_url             || null) ||
+        saved.form_config?.headerImage     !== (prevGame.form_config?.headerImage     || null) ||
+        saved.form_config?.iconFile        !== (prevGame.form_config?.iconFile        || null);
+      if (imageChanged) triggerBuild();
+    }
   };
 
   const handleProductSaved = async (saved, mode) => {
@@ -854,6 +915,78 @@ function AdminCatalog() {
 
   return (
     <div className="admin-dashboard">
+
+      {/* Build Overlay */}
+      {buildState && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#1a1a2e', borderRadius: '16px', padding: '32px 36px',
+            width: '520px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            border: '1px solid #2d2d4e',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              {buildState === 'connecting' && <span style={{ fontSize: '28px', animation: 'spin 1s linear infinite', display: 'inline-block' }}>⚙️</span>}
+              {buildState === 'building'   && <span style={{ fontSize: '28px', animation: 'spin 1s linear infinite', display: 'inline-block' }}>🔨</span>}
+              {buildState === 'done'        && <span style={{ fontSize: '28px' }}>✅</span>}
+              {buildState === 'error'       && <span style={{ fontSize: '28px' }}>❌</span>}
+              <div>
+                <div style={{ color: '#fff', fontWeight: '700', fontSize: '16px' }}>
+                  {buildState === 'connecting' && 'Menghubungkan...'}
+                  {buildState === 'building'   && 'Membangun ulang frontend...'}
+                  {buildState === 'done'        && 'Build selesai!'}
+                  {buildState === 'error'       && 'Build gagal'}
+                </div>
+                <div style={{ color: '#9ca3af', fontSize: '13px', marginTop: '2px' }}>
+                  {buildState === 'building' && 'npm run build — mohon tunggu ±2-3 menit'}
+                  {buildState === 'done'     && 'Halaman sudah diperbarui. Gambar game sekarang tampil.'}
+                  {buildState === 'error'    && 'Cek log di bawah atau jalankan manual di Server → npm run build'}
+                </div>
+              </div>
+            </div>
+
+            {(buildState === 'connecting' || buildState === 'building') && (
+              <div style={{ background: '#2d2d4e', borderRadius: '4px', height: '6px', marginBottom: '16px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: '4px',
+                  background: 'linear-gradient(90deg, #f6ad55, #ed8936)',
+                  animation: 'progress-indeterminate 1.5s ease-in-out infinite',
+                  width: '40%',
+                }} />
+              </div>
+            )}
+
+            {buildLog.length > 0 && (
+              <div style={{
+                background: '#0d0d1a', borderRadius: '8px', padding: '12px',
+                maxHeight: '200px', overflowY: 'auto', fontFamily: 'monospace',
+                fontSize: '11px', color: '#68d391', lineHeight: '1.5',
+              }}>
+                {buildLog.map((line, i) => (
+                  <div key={i} style={{ color: line.startsWith('❌') ? '#fc8181' : '#68d391' }}>{line}</div>
+                ))}
+              </div>
+            )}
+
+            {(buildState === 'done' || buildState === 'error') && (
+              <button
+                onClick={() => { setBuildState(null); setBuildLog([]); }}
+                style={{
+                  marginTop: '16px', width: '100%', padding: '10px',
+                  background: buildState === 'done' ? '#38a169' : '#e53e3e',
+                  color: '#fff', border: 'none', borderRadius: '8px',
+                  fontWeight: '700', fontSize: '14px', cursor: 'pointer',
+                }}
+              >
+                {buildState === 'done' ? '✓ Tutup' : '✕ Tutup'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <AdminPageHeader title="Catalog Manager" subtitle="Kelola Games &amp; Products">
         <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
