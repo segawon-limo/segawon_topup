@@ -341,9 +341,14 @@ exports.createOrder = async (req, res) => {
     const zoneId = gameZoneId || riotTag || null;
 
     // Validate required fields
-    if (!productId || !paymentMethod || !customerEmail || !customerName || !phoneNumber) {
-      throw new Error('Missing required fields: productId, paymentMethod, customerEmail, customerName, phoneNumber');
+    if (!productId || !paymentMethod || !customerEmail || !phoneNumber) {
+      throw new Error('Missing required fields: productId, paymentMethod, customerEmail, phoneNumber');
     }
+
+    // Fallback nama: pakai bagian sebelum @ dari email jika nama kosong
+    const resolvedName = (customerName && customerName.trim())
+      ? customerName.trim()
+      : customerEmail.split('@')[0];
 
     // 1. Get product + product_type dari game — UPDATED: Fetch profit_price & product_type
     const productResult = await client.query(
@@ -431,7 +436,7 @@ exports.createOrder = async (req, res) => {
       paymentFee = 3000;
     } else if (paymentMethod === 'SQ') {
       // QRIS Nusapay — 0.7% dari harga setelah diskon
-      paymentFee = Math.round(priceAfterDiscount / 0.993) - priceAfterDiscount;
+      paymentFee = Math.round(priceAfterDiscount / 0.993) - priceAfterDiscount; // Alternatif: hitung mundur dari total
     } else if (paymentMethod === 'SA') {
       // ShopeePay — 2% dari harga setelah diskon
       paymentFee = Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
@@ -478,7 +483,7 @@ exports.createOrder = async (req, res) => {
       orderNumber,
       productId,
       customerEmail,
-      customerName,
+      resolvedName,
       phoneNumber,
       userId,
       zoneId || null,
@@ -511,7 +516,7 @@ exports.createOrder = async (req, res) => {
         ? `${product.name} - ${userId}${zoneId ? ' (' + zoneId + ')' : ''}`
         : product.name,
       email: customerEmail,
-      customerVaName: customerName.substring(0, 20).replace(/[^a-zA-Z0-9 ]/g, ''),
+      customerVaName: resolvedName.substring(0, 20).replace(/[^a-zA-Z0-9 ]/g, ''),
       phoneNumber: phoneNumber,
       paymentMethod: duitkuMethod,
       callbackUrl: `${process.env.BASE_URL}/api/duitku/callback`,
@@ -558,7 +563,7 @@ exports.createOrder = async (req, res) => {
     try {
       const emailData = {
         orderNumber: orderNumber,
-        customerName: customerName,
+        customerName: resolvedName,
         customerEmail: customerEmail,
         productName: product.description || product.name,
         userId: userId,

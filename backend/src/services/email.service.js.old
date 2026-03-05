@@ -49,6 +49,7 @@ const generateInvoiceHTML = async (orderData) => {
     'BT': 'Permata Bank Virtual Account',
     'SA': 'ShopeePay',
     'OV': 'OVO',
+    'SQ': 'QRIS',
   };
 
   const VA_BANK_NAMES = {
@@ -68,13 +69,13 @@ const generateInvoiceHTML = async (orderData) => {
   const getPaymentInstructions = (method) => {
     const methodUpper = method.toUpperCase();
     
-    // QRIS
-    if (methodUpper === 'QRIS') {
+    // QRIS (SQ = Nusapay, atau method lain yang QR-based)
+    if (methodUpper === 'QRIS' || methodUpper === 'SQ') {
       return `
         <div class="instructions">
           <h3>📱 Cara Pembayaran QRIS:</h3>
           <ol>
-            <li>Buka aplikasi e-wallet favorit Anda (GoPay, OVO, DANA, ShopeePay, dll)</li>
+            <li>Buka aplikasi e-wallet atau mobile banking favorit Anda (GoPay, OVO, Livin', BCA Mobile, dll)</li>
             <li>Pilih menu <strong>"Scan QR"</strong> atau <strong>"Bayar"</strong></li>
             <li>Scan QR Code yang tertera di atas</li>
             <li>Periksa detail pembayaran</li>
@@ -578,6 +579,7 @@ const generateInvoiceHTML = async (orderData) => {
         </p>
       </div>
       ` : ''}
+      
     </div>
     
     <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->

@@ -140,6 +140,9 @@ function OrderPage() {
 
   const [errors, setErrors] = useState({});
 
+  // Accordion state untuk payment methods — default semua tertutup
+  const [openAccordion, setOpenAccordion] = useState(null);
+
   // Inputphone
   const allowPhoneInput = (e) => {
     const { key, target } = e;
@@ -425,6 +428,18 @@ function OrderPage() {
 
   const handlePaymentMethodChange = (method) => {
     setSelectedPaymentMethod(method);
+  };
+
+  const toggleAccordion = (key) => {
+    setOpenAccordion(prev => prev === key ? null : key);
+  };
+
+  // Auto-open accordion sesuai metode yang dipilih (misal dari reset)
+  const getAccordionKey = (method) => {
+    if (VA_BANKS.find(b => b.code === method)) return 'va';
+    if (QRIS_METHODS.find(q => q.code === method)) return 'qris';
+    if (EWALLET_METHODS.find(e => e.code === method)) return 'ewallet';
+    return 'va';
   };
 
   // NEW: Handle voucher code input
@@ -1180,88 +1195,142 @@ function OrderPage() {
                   <h2>4. Pilih Pembayaran</h2>
                   
                   <div className="payment-methods">
-                    {/* Virtual Account — 8 bank aktif */}
-                    <div className="payment-category">
-                      <h3>Virtual Account</h3>
-                      {VA_BANKS.map(bank => (
-                        <label
-                          key={bank.code}
-                          className={`payment-option ${selectedPaymentMethod === bank.code ? 'selected' : ''}`}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value={bank.code}
-                            checked={selectedPaymentMethod === bank.code}
-                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                          />
-                          <div className="payment-info">
-                            <img
-                              src={`${process.env.PUBLIC_URL}${paymentLogos[bank.logo]}`}
-                              alt={bank.name}
-                              className="payment-logo"
-                              onError={e => { e.target.style.display='none'; }}
-                            />
-                            <span className="payment-name">{bank.name}</span>
-                          </div>
-                        </label>
-                      ))}
+                    {/* Virtual Account — accordion */}
+                    <div className={`payment-accordion ${openAccordion === 'va' ? 'open' : ''}`}>
+                      <button
+                        type="button"
+                        className="accordion-header"
+                        onClick={() => toggleAccordion('va')}
+                      >
+                        <span className="accordion-title">
+                          🏦 Virtual Account
+                          {VA_BANKS.find(b => b.code === selectedPaymentMethod) && (
+                            <span className="accordion-selected-badge">
+                              {VA_BANKS.find(b => b.code === selectedPaymentMethod)?.name}
+                            </span>
+                          )}
+                        </span>
+                        <span className="accordion-chevron">{openAccordion === 'va' ? '▲' : '▼'}</span>
+                      </button>
+                      {openAccordion === 'va' && (
+                        <div className="accordion-body">
+                          {VA_BANKS.map(bank => (
+                            <label
+                              key={bank.code}
+                              className={`payment-option ${selectedPaymentMethod === bank.code ? 'selected' : ''}`}
+                            >
+                              <input
+                                type="radio"
+                                name="paymentMethod"
+                                value={bank.code}
+                                checked={selectedPaymentMethod === bank.code}
+                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                              />
+                              <div className="payment-info">
+                                <img
+                                  src={`${process.env.PUBLIC_URL}${paymentLogos[bank.logo]}`}
+                                  alt={bank.name}
+                                  className="payment-logo"
+                                  onError={e => { e.target.style.display='none'; }}
+                                />
+                                <span className="payment-name">{bank.name}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {/* QRIS aktif — Nusapay (SQ) */}
-                    <div className="payment-category">
-                      <h3>QRIS</h3>
-                      {QRIS_METHODS.map(qr => (
-                        <label
-                          key={qr.code}
-                          className={`payment-option ${selectedPaymentMethod === qr.code ? 'selected' : ''}`}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value={qr.code}
-                            checked={selectedPaymentMethod === qr.code}
-                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                          />
-                          <div className="payment-info">
-                            <img
-                              src={`${process.env.PUBLIC_URL}${paymentLogos[qr.logo]}`}
-                              alt={qr.name}
-                              className="payment-logo"
-                              onError={e => { e.target.style.display='none'; }}
-                            />
-                            <span className="payment-name">{qr.name}</span>
-                          </div>
-                        </label>
-                      ))}
+                    {/* QRIS — accordion */}
+                    <div className={`payment-accordion ${openAccordion === 'qris' ? 'open' : ''}`}>
+                      <button
+                        type="button"
+                        className="accordion-header"
+                        onClick={() => toggleAccordion('qris')}
+                      >
+                        <span className="accordion-title">
+                          📷 QRIS
+                          {QRIS_METHODS.find(q => q.code === selectedPaymentMethod) && (
+                            <span className="accordion-selected-badge">
+                              {QRIS_METHODS.find(q => q.code === selectedPaymentMethod)?.name}
+                            </span>
+                          )}
+                        </span>
+                        <span className="accordion-chevron">{openAccordion === 'qris' ? '▲' : '▼'}</span>
+                      </button>
+                      {openAccordion === 'qris' && (
+                        <div className="accordion-body">
+                          {QRIS_METHODS.map(qr => (
+                            <label
+                              key={qr.code}
+                              className={`payment-option ${selectedPaymentMethod === qr.code ? 'selected' : ''}`}
+                            >
+                              <input
+                                type="radio"
+                                name="paymentMethod"
+                                value={qr.code}
+                                checked={selectedPaymentMethod === qr.code}
+                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                              />
+                              <div className="payment-info">
+                                <img
+                                  src={`${process.env.PUBLIC_URL}${paymentLogos[qr.logo]}`}
+                                  alt={qr.name}
+                                  className="payment-logo"
+                                  onError={e => { e.target.style.display='none'; }}
+                                />
+                                <span className="payment-name">{qr.name}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {/* E-Wallet aktif */}
-                    <div className="payment-category">
-                      <h3>E-Wallet</h3>
-                      {EWALLET_METHODS.map(ew => (
-                        <label
-                          key={ew.code}
-                          className={`payment-option ${selectedPaymentMethod === ew.code ? 'selected' : ''}`}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value={ew.code}
-                            checked={selectedPaymentMethod === ew.code}
-                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                          />
-                          <div className="payment-info">
-                            <img
-                              src={`${process.env.PUBLIC_URL}${paymentLogos[ew.logo]}`}
-                              alt={ew.name}
-                              className="payment-logo"
-                              onError={e => { e.target.style.display='none'; }}
-                            />
-                            <span className="payment-name">{ew.name}</span>
-                          </div>
-                        </label>
-                      ))}
+                    {/* E-Wallet — accordion */}
+                    <div className={`payment-accordion ${openAccordion === 'ewallet' ? 'open' : ''}`}>
+                      <button
+                        type="button"
+                        className="accordion-header"
+                        onClick={() => toggleAccordion('ewallet')}
+                      >
+                        <span className="accordion-title">
+                          💳 E-Wallet
+                          {EWALLET_METHODS.find(e => e.code === selectedPaymentMethod) && (
+                            <span className="accordion-selected-badge">
+                              {EWALLET_METHODS.find(e => e.code === selectedPaymentMethod)?.name}
+                            </span>
+                          )}
+                        </span>
+                        <span className="accordion-chevron">{openAccordion === 'ewallet' ? '▲' : '▼'}</span>
+                      </button>
+                      {openAccordion === 'ewallet' && (
+                        <div className="accordion-body">
+                          {EWALLET_METHODS.map(ew => (
+                            <label
+                              key={ew.code}
+                              className={`payment-option ${selectedPaymentMethod === ew.code ? 'selected' : ''}`}
+                            >
+                              <input
+                                type="radio"
+                                name="paymentMethod"
+                                value={ew.code}
+                                checked={selectedPaymentMethod === ew.code}
+                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                              />
+                              <div className="payment-info">
+                                <img
+                                  src={`${process.env.PUBLIC_URL}${paymentLogos[ew.logo]}`}
+                                  alt={ew.name}
+                                  className="payment-logo"
+                                  onError={e => { e.target.style.display='none'; }}
+                                />
+                                <span className="payment-name">{ew.name}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

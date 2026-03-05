@@ -16,7 +16,7 @@ const getBrevoClient = () => {
 const generateInvoiceHTML = async (orderData) => {
   const {
     orderNumber,
-    customerName,
+    customerName: rawName,
     customerEmail,
     productName,
     userId,
@@ -31,6 +31,9 @@ const generateInvoiceHTML = async (orderData) => {
     vaNumber,
     expiryTime
   } = orderData;
+
+  // Fallback nama: pakai bagian sebelum @ dari email jika nama kosong
+  const customerName = (rawName && rawName.trim()) ? rawName.trim() : customerEmail.split('@')[0];
 
   // const logoUrl = process.env.LOGO_URL || 'https://segawontopup.net/images/logo.png';
   // Gunakan URL dari CDN tempat Anda upload logo email
@@ -69,7 +72,7 @@ const generateInvoiceHTML = async (orderData) => {
   const getPaymentInstructions = (method) => {
     const methodUpper = method.toUpperCase();
     
-    // QRIS (SQ = Nusapay, atau method lain yang QR-based)
+    // QRIS
     if (methodUpper === 'QRIS' || methodUpper === 'SQ') {
       return `
         <div class="instructions">
@@ -579,7 +582,6 @@ const generateInvoiceHTML = async (orderData) => {
         </p>
       </div>
       ` : ''}
-      
     </div>
     
     <!-- PAYMENT INSTRUCTIONS - TAMBAHAN BARU -->
@@ -694,7 +696,7 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
     <h1 style="margin:0">✅ Pembayaran Berhasil!</h1>
     <p>Order ${orderData.orderNumber}</p>
   </div>
-  <p>Hai <strong>${orderData.customerName}</strong>,</p>
+  <p>Hai <strong>${orderData.customerName || orderData.customerEmail.split('@')[0]}</strong>,</p>
   <p>Pembayaran Anda telah kami terima!</p>
   <div class="info-box">
     <strong>Detail Pesanan:</strong><br>
@@ -731,9 +733,12 @@ const sendOrderCompleteEmail = async (orderData) => {
     const logoHeaderUrl = process.env.LOGO_EMAIL_HEADER_URL || 'https://segawontopup.net/images/logo.png';
 
     const {
-      orderNumber, customerName, customerEmail, productName,
+      orderNumber, customerName: rawName, customerEmail, productName,
       userId, zoneId, voucherCode, isVoucher, totalAmount, productType
     } = orderData;
+
+    // Fallback nama: pakai bagian sebelum @ dari email jika nama kosong
+    const customerName = (rawName && rawName.trim()) ? rawName.trim() : customerEmail.split('@')[0];
 
     // Rupiah formatter
     const rp = (n) => n

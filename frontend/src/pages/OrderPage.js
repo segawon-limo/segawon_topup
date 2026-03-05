@@ -434,14 +434,6 @@ function OrderPage() {
     setOpenAccordion(prev => prev === key ? null : key);
   };
 
-  // Auto-open accordion sesuai metode yang dipilih (misal dari reset)
-  const getAccordionKey = (method) => {
-    if (VA_BANKS.find(b => b.code === method)) return 'va';
-    if (QRIS_METHODS.find(q => q.code === method)) return 'qris';
-    if (EWALLET_METHODS.find(e => e.code === method)) return 'ewallet';
-    return 'va';
-  };
-
   // NEW: Handle voucher code input
   const handleVoucherChange = (e) => {
     const code = e.target.value.toUpperCase();
@@ -694,10 +686,6 @@ function OrderPage() {
       newErrors.customerPhone = 'Format nomor HP tidak valid (contoh: 08123456789)';
     }
 
-    if (!formData.customerName.trim()) {
-      newErrors.customerName = 'Nama wajib diisi';
-    }
-
     if (!selectedProduct) {
       newErrors.product = 'Pilih produk terlebih dahulu';
     }
@@ -795,7 +783,6 @@ function OrderPage() {
     if (!formData.customerEmail.trim()) return false;
     if (!formData.customerPhone.trim()) return false;
     if (!/^(\+62|62|0)[0-9]{7,12}$/.test(formData.customerPhone.trim().replace(/\s|-/g, ''))) return false;
-    if (!formData.customerName.trim()) return false;
 
     // zoneId wajib hanya jika form punya 2 fields (misal ML: userId + zoneId)
     const fields = currentGameConfig.fields || [];
@@ -1131,7 +1118,7 @@ function OrderPage() {
                   <h2>3. Informasi Kontak</h2>
                   
                   <div className="form-group">
-                    <label>Nama *</label>
+                    <label>Nama <span style={{fontSize:'12px', color:'#9ca3af', fontWeight:'400'}}>(opsional)</span></label>
                     <input
                       type="text"
                       name="customerName"
@@ -1139,7 +1126,7 @@ function OrderPage() {
                       onChange={handleInputChange}
                       onKeyDown={allowOnlyAlphabet}
                       onPaste={handlePasteAlphabet}
-                      placeholder="Nama Lengkap"
+                      placeholder="Nama Lengkap (opsional)"
                       className={errors.customerName ? 'error' : ''}
                     />
                     {errors.customerName && <div className="error">{errors.customerName}</div>}
@@ -1190,18 +1177,14 @@ function OrderPage() {
               )}
 
               {/* Step 4: Payment Method - ONLY SHOW IF RIOT ID VALIDATED AND DATA FILLED */}
-              {selectedProduct && userIdValidated && formData.customerEmail && formData.customerName && formData.customerPhone && (
+              {selectedProduct && userIdValidated && formData.customerEmail && formData.customerPhone && (
                 <div className="form-section">
                   <h2>4. Pilih Pembayaran</h2>
                   
                   <div className="payment-methods">
                     {/* Virtual Account — accordion */}
                     <div className={`payment-accordion ${openAccordion === 'va' ? 'open' : ''}`}>
-                      <button
-                        type="button"
-                        className="accordion-header"
-                        onClick={() => toggleAccordion('va')}
-                      >
+                      <button type="button" className="accordion-header" onClick={() => toggleAccordion('va')}>
                         <span className="accordion-title">
                           🏦 Virtual Account
                           {VA_BANKS.find(b => b.code === selectedPaymentMethod) && (
@@ -1215,24 +1198,10 @@ function OrderPage() {
                       {openAccordion === 'va' && (
                         <div className="accordion-body">
                           {VA_BANKS.map(bank => (
-                            <label
-                              key={bank.code}
-                              className={`payment-option ${selectedPaymentMethod === bank.code ? 'selected' : ''}`}
-                            >
-                              <input
-                                type="radio"
-                                name="paymentMethod"
-                                value={bank.code}
-                                checked={selectedPaymentMethod === bank.code}
-                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                              />
+                            <label key={bank.code} className={`payment-option ${selectedPaymentMethod === bank.code ? 'selected' : ''}`}>
+                              <input type="radio" name="paymentMethod" value={bank.code} checked={selectedPaymentMethod === bank.code} onChange={(e) => handlePaymentMethodChange(e.target.value)} />
                               <div className="payment-info">
-                                <img
-                                  src={`${process.env.PUBLIC_URL}${paymentLogos[bank.logo]}`}
-                                  alt={bank.name}
-                                  className="payment-logo"
-                                  onError={e => { e.target.style.display='none'; }}
-                                />
+                                <img src={`${process.env.PUBLIC_URL}${paymentLogos[bank.logo]}`} alt={bank.name} className="payment-logo" onError={e => { e.target.style.display='none'; }} />
                                 <span className="payment-name">{bank.name}</span>
                               </div>
                             </label>
@@ -1243,11 +1212,7 @@ function OrderPage() {
 
                     {/* QRIS — accordion */}
                     <div className={`payment-accordion ${openAccordion === 'qris' ? 'open' : ''}`}>
-                      <button
-                        type="button"
-                        className="accordion-header"
-                        onClick={() => toggleAccordion('qris')}
-                      >
+                      <button type="button" className="accordion-header" onClick={() => toggleAccordion('qris')}>
                         <span className="accordion-title">
                           📷 QRIS
                           {QRIS_METHODS.find(q => q.code === selectedPaymentMethod) && (
@@ -1261,24 +1226,10 @@ function OrderPage() {
                       {openAccordion === 'qris' && (
                         <div className="accordion-body">
                           {QRIS_METHODS.map(qr => (
-                            <label
-                              key={qr.code}
-                              className={`payment-option ${selectedPaymentMethod === qr.code ? 'selected' : ''}`}
-                            >
-                              <input
-                                type="radio"
-                                name="paymentMethod"
-                                value={qr.code}
-                                checked={selectedPaymentMethod === qr.code}
-                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                              />
+                            <label key={qr.code} className={`payment-option ${selectedPaymentMethod === qr.code ? 'selected' : ''}`}>
+                              <input type="radio" name="paymentMethod" value={qr.code} checked={selectedPaymentMethod === qr.code} onChange={(e) => handlePaymentMethodChange(e.target.value)} />
                               <div className="payment-info">
-                                <img
-                                  src={`${process.env.PUBLIC_URL}${paymentLogos[qr.logo]}`}
-                                  alt={qr.name}
-                                  className="payment-logo"
-                                  onError={e => { e.target.style.display='none'; }}
-                                />
+                                <img src={`${process.env.PUBLIC_URL}${paymentLogos[qr.logo]}`} alt={qr.name} className="payment-logo" onError={e => { e.target.style.display='none'; }} />
                                 <span className="payment-name">{qr.name}</span>
                               </div>
                             </label>
@@ -1289,11 +1240,7 @@ function OrderPage() {
 
                     {/* E-Wallet — accordion */}
                     <div className={`payment-accordion ${openAccordion === 'ewallet' ? 'open' : ''}`}>
-                      <button
-                        type="button"
-                        className="accordion-header"
-                        onClick={() => toggleAccordion('ewallet')}
-                      >
+                      <button type="button" className="accordion-header" onClick={() => toggleAccordion('ewallet')}>
                         <span className="accordion-title">
                           💳 E-Wallet
                           {EWALLET_METHODS.find(e => e.code === selectedPaymentMethod) && (
@@ -1307,24 +1254,10 @@ function OrderPage() {
                       {openAccordion === 'ewallet' && (
                         <div className="accordion-body">
                           {EWALLET_METHODS.map(ew => (
-                            <label
-                              key={ew.code}
-                              className={`payment-option ${selectedPaymentMethod === ew.code ? 'selected' : ''}`}
-                            >
-                              <input
-                                type="radio"
-                                name="paymentMethod"
-                                value={ew.code}
-                                checked={selectedPaymentMethod === ew.code}
-                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                              />
+                            <label key={ew.code} className={`payment-option ${selectedPaymentMethod === ew.code ? 'selected' : ''}`}>
+                              <input type="radio" name="paymentMethod" value={ew.code} checked={selectedPaymentMethod === ew.code} onChange={(e) => handlePaymentMethodChange(e.target.value)} />
                               <div className="payment-info">
-                                <img
-                                  src={`${process.env.PUBLIC_URL}${paymentLogos[ew.logo]}`}
-                                  alt={ew.name}
-                                  className="payment-logo"
-                                  onError={e => { e.target.style.display='none'; }}
-                                />
+                                <img src={`${process.env.PUBLIC_URL}${paymentLogos[ew.logo]}`} alt={ew.name} className="payment-logo" onError={e => { e.target.style.display='none'; }} />
                                 <span className="payment-name">{ew.name}</span>
                               </div>
                             </label>
