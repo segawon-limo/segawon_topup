@@ -44,7 +44,7 @@ const getPaymentMethodName = (method) => {
     'NC': 'BNC Virtual Account', 'I1': 'BNI Virtual Account',
     'BV': 'BSI Virtual Account', 'B1': 'CIMB Niaga Virtual Account',
     'DM': 'Danamon Virtual Account', 'BT': 'Permata Bank Virtual Account',
-    'SQ': 'QRIS (Nusapay)', 'OV': 'OVO', 'SA': 'ShopeePay',
+    'SQ': 'QRIS', 'OV': 'OVO', 'SA': 'ShopeePay',
   };
   return names[method] || method;
 };
@@ -298,7 +298,7 @@ function CekTransaksiPage() {
                   {order.voucherDiscount > 0 && (
                     <div className="ct-info-row">
                       <span className="ct-info-key" style={{ color: '#10b981' }}>
-                        Diskon Voucher{order.voucherCode ? ` (${order.voucherCode})` : ''}
+                        Diskon Voucher
                       </span>
                       <span className="ct-info-val" style={{ color: '#10b981', fontWeight: 600 }}>
                         - {formatRupiah(order.voucherDiscount)}
