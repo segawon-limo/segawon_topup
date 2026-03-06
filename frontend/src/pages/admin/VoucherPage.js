@@ -82,7 +82,7 @@ function VoucherModal({ voucher, onSave, onClose }) {
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
-  const token      = localStorage.getItem('adminToken');
+  const token      = localStorage.getItem('admin_token');
   const authHeader = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
   const handleChange = (e) => {
@@ -212,7 +212,7 @@ function VoucherModal({ voucher, onSave, onClose }) {
 // ── Main Page ─────────────────────────────────────────────────
 export default function VoucherPage() {
   const navigate   = useNavigate();
-  const token      = localStorage.getItem('adminToken');
+  const token      = localStorage.getItem('admin_token');
   const authHeader = { Authorization: `Bearer ${token}` };
 
   const [tab,        setTab]        = useState('vouchers');
@@ -228,7 +228,7 @@ export default function VoucherPage() {
   const [search,     setSearch]     = useState('');
 
   const showToast  = (message, type = 'success') => setToast({ message, type });
-  const handleLogout = () => { localStorage.removeItem('adminToken'); navigate('/admin/login'); };
+  const handleLogout = () => { localStorage.removeItem('admin_token'); navigate('/admin/login'); };
 
   useEffect(() => { if (!token) navigate('/admin/login'); }, []); // eslint-disable-line
 
