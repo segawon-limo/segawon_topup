@@ -404,7 +404,7 @@ exports.pay = async (req, res) => {
         ref_id,                        // ← dipakai webhook untuk panggil Digiflazz
         periode:        inquiry.periode,
         lembar_tagihan: inquiry.lembar_tagihan,
-        detail:         inquiry.detail,
+        detail:         typeof inquiry.detail === 'string' ? JSON.parse(inquiry.detail) : inquiry.detail,
         // Untuk breakdown tampilan di PaymentPage
         admin_fee:      parseInt(inquiry.admin_fee) || 0,
         detail_tagihan: (inquiry.selling_price || 0) - (parseInt(inquiry.admin_fee) || 0),
@@ -452,21 +452,32 @@ exports.pay = async (req, res) => {
 
     // Update order dengan payment info dari Duitku
     // vaNumber & qrString di-merge ke provider_response agar bisa dibaca getOrderStatus
+    // Merge di JS (bukan PostgreSQL ||) untuk hindari issue jsonb parsing
+    const existingRow = await client.query(`SELECT provider_response FROM orders WHERE id = $1`, [orderId]);
+    let existingProvider = {};
+    try {
+      const raw = existingRow.rows[0]?.provider_response;
+      existingProvider = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+    } catch(e) {}
+
+    const mergedProvider = {
+      ...existingProvider,
+      vaNumber: paymentResult.vaNumber || null,
+      qrString: paymentResult.qrString || null,
+    };
+
     await client.query(`
       UPDATE orders SET
         payment_url        = $1,
         payment_reference  = $2,
         payment_expires_at = NOW() + INTERVAL '24 hours',
-        provider_response  = provider_response || $3::jsonb,
+        provider_response  = $3,
         updated_at         = NOW()
       WHERE id = $4
     `, [
       paymentResult.paymentUrl,
       paymentResult.reference,
-      JSON.stringify({
-        vaNumber: paymentResult.vaNumber || null,
-        qrString: paymentResult.qrString || null,
-      }),
+      JSON.stringify(mergedProvider),
       orderId
     ]);
 
