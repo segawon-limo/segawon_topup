@@ -183,10 +183,11 @@ exports.getUsageLog = async (req, res) => {
         vu.used_at,
         o.total_amount,
         o.voucher_discount,
-        o.product_name,
-        o.payment_status
+        o.payment_status,
+        p.name AS product_name
       FROM voucher_usages vu
-      LEFT JOIN orders o ON o.order_number = vu.order_id
+      LEFT JOIN orders o   ON o.order_number = vu.order_id
+      LEFT JOIN products p ON p.id = o.product_id
       ${where}
       ORDER BY vu.used_at DESC
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
