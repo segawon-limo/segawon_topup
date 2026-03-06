@@ -414,6 +414,12 @@ exports.pay = async (req, res) => {
 
     const orderId = orderInsert.rows[0].id;
 
+    // Increment voucher usage saat order dibuat
+    if (validatedVoucherCode) {
+      await voucherService.incrementVoucherUsage(validatedVoucherCode);
+      await voucherService.recordVoucherUsage(validatedVoucherCode, orderNumber, customer_email, customer_phone || null);
+    }
+
     // ── 6. Buat payment Duitku ─────────────────────────────────────────────
     // Digiflazz pay-pasca akan dipanggil oleh duitku.controller saat webhook sukses
     let paymentResult = null;

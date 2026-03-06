@@ -451,16 +451,22 @@ exports.pay = async (req, res) => {
     }
 
     // Update order dengan payment info dari Duitku
+    // vaNumber & qrString di-merge ke provider_response agar bisa dibaca getOrderStatus
     await client.query(`
       UPDATE orders SET
         payment_url        = $1,
         payment_reference  = $2,
         payment_expires_at = NOW() + INTERVAL '24 hours',
+        provider_response  = provider_response || $3::jsonb,
         updated_at         = NOW()
-      WHERE id = $3
+      WHERE id = $4
     `, [
       paymentResult.paymentUrl,
       paymentResult.reference,
+      JSON.stringify({
+        vaNumber: paymentResult.vaNumber || null,
+        qrString: paymentResult.qrString || null,
+      }),
       orderId
     ]);
 
