@@ -60,7 +60,7 @@ const adminVoucherController = require('../controllers/admin.voucher.controller'
 
 router.get   ('/vouchers',              adminVoucherController.getVouchers);
 router.post  ('/vouchers',              adminVoucherController.createVoucher);
+router.get   ('/vouchers/usage-log',    adminVoucherController.getUsageLog);
 router.put   ('/vouchers/:id',          adminVoucherController.updateVoucher);
 router.patch ('/vouchers/:id/toggle',   adminVoucherController.toggleVoucher);
 router.delete('/vouchers/:id',          adminVoucherController.deleteVoucher);
-router.get   ('/vouchers/usage-log',    adminVoucherController.getUsageLog);
