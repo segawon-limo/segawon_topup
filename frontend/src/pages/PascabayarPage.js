@@ -73,6 +73,8 @@ function PascabayarPage() {
 
   // ── Fee calculation (identik dengan OrderPage) ─────────────────────────────
   const sellingPrice       = inquiryData?.selling_price || 0;
+  const adminFee           = inquiryData?.admin_fee || 0;
+  const detailTagihan      = sellingPrice - adminFee; // tagihan murni tanpa biaya admin
   const priceAfterDiscount = sellingPrice - (voucherApplied ? voucherDiscount : 0);
 
   const calculatePaymentFee = (method) => {
@@ -445,7 +447,7 @@ function PascabayarPage() {
               <h3>Ringkasan Pesanan</h3>
 
               <div className="summary-item">
-                <span>Provider</span>
+                <span>Produk</span>
                 <span>{selectedProduct?.name}</span>
               </div>
               <div className="summary-item">
@@ -453,8 +455,8 @@ function PascabayarPage() {
                 <span>{inquiryData.customer_no}</span>
               </div>
               <div className="summary-item">
-                <span>Total Tagihan</span>
-                <span>{formatRupiah(sellingPrice)}</span>
+                <span>Tagihan</span>
+                <span>{formatRupiah(detailTagihan)}</span>
               </div>
 
               {inquiryData?.admin_fee > 0 && (
