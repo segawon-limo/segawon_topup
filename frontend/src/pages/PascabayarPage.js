@@ -457,6 +457,15 @@ function PascabayarPage() {
                 <span>{formatRupiah(sellingPrice)}</span>
               </div>
 
+              {inquiryData?.admin_fee > 0 && (
+                <div className="summary-item">
+                  <span>Biaya Admin</span>
+                  <span style={{ color: '#f59e0b', fontWeight: '700' }}>
+                    {formatRupiah(inquiryData.admin_fee)}
+                  </span>
+                </div>
+              )}
+
               {voucherApplied && voucherDiscount > 0 && (
                 <div className="summary-item voucher-discount">
                   <span>Diskon Voucher ({voucherCode})</span>
