@@ -383,11 +383,13 @@ exports.createOrder = async (req, res) => {
     let validatedVoucherCode = null;
     
     if (voucherCode && voucherCode.trim()) {
-      // Pass profitPrice for admin voucher support
+      // Pass profitPrice for admin voucher + email/phone for per-user limit
       const voucherResult = await voucherService.validateVoucher(
         voucherCode.trim(), 
         productPrice,
-        profitPrice  // NEW: Pass profit_price for admin voucher
+        profitPrice,
+        customerEmail || null,
+        phoneNumber   || null
       );
       
       if (voucherResult.valid) {
@@ -504,6 +506,7 @@ exports.createOrder = async (req, res) => {
     // NEW: Increment voucher usage if voucher was used
     if (validatedVoucherCode) {
       await voucherService.incrementVoucherUsage(validatedVoucherCode);
+      await voucherService.recordVoucherUsage(validatedVoucherCode, orderNumber, customerEmail, phoneNumber);
     }
 
     // 5. Create Duitku payment

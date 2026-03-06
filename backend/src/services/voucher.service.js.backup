@@ -11,11 +11,9 @@ const { pool } = require('../config/database');
  * @param {string} code - Voucher code
  * @param {number} orderAmount - Order amount before discount (selling_price)
  * @param {number} profitPrice - Profit price of product (for admin voucher)
- * @param {string} customerEmail - Customer email (for per-user limit check)
- * @param {string} customerPhone - Customer phone (for per-user limit check)
  * @returns {Object} - Validation result with discount info
  */
-exports.validateVoucher = async (code, orderAmount, profitPrice = null, customerEmail = null, customerPhone = null) => {
+exports.validateVoucher = async (code, orderAmount, profitPrice = null) => {
   try {
     // Get voucher from database
     const result = await pool.query(`
@@ -49,33 +47,12 @@ exports.validateVoucher = async (code, orderAmount, profitPrice = null, customer
       };
     }
 
-    // Check usage limit (total)
+    // Check usage limit
     if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
       return {
         valid: false,
         message: 'Voucher sudah mencapai batas penggunaan'
       };
-    }
-
-    // Check per-user limit (by email OR phone)
-    if (voucher.per_user_limit && (customerEmail || customerPhone)) {
-      const conditions = [];
-      const params = [voucher.id];
-      if (customerEmail) { params.push(customerEmail.toLowerCase()); conditions.push(`LOWER(customer_email) = $${params.length}`); }
-      if (customerPhone) { params.push(customerPhone);               conditions.push(`customer_phone = $${params.length}`); }
-
-      const usageCheck = await pool.query(`
-        SELECT COUNT(*) AS cnt FROM voucher_usages
-        WHERE voucher_id = $1 AND (${conditions.join(' OR ')})
-      `, params);
-
-      const usedByUser = parseInt(usageCheck.rows[0].cnt);
-      if (usedByUser >= voucher.per_user_limit) {
-        return {
-          valid: false,
-          message: 'Kamu sudah pernah menggunakan voucher ini sebelumnya'
-        };
-      }
     }
 
     // Check minimum purchase (skip for base_price type)
@@ -163,39 +140,6 @@ exports.incrementVoucherUsage = async (code) => {
     `, [code]);
   } catch (error) {
     console.error('Increment Voucher Usage Error:', error);
-  }
-};
-
-/**
- * Record voucher usage per user (for per_user_limit tracking)
- * @param {string} code - Voucher code
- * @param {string} orderNumber - Order number
- * @param {string} customerEmail - Customer email
- * @param {string} customerPhone - Customer phone
- */
-exports.recordVoucherUsage = async (code, orderNumber, customerEmail, customerPhone) => {
-  try {
-    const voucherResult = await pool.query(
-      `SELECT id, per_user_limit FROM vouchers WHERE UPPER(code) = UPPER($1)`, [code]
-    );
-    if (!voucherResult.rows.length) return;
-    const voucher = voucherResult.rows[0];
-
-    // Hanya catat jika voucher punya per_user_limit
-    if (!voucher.per_user_limit) return;
-
-    await pool.query(`
-      INSERT INTO voucher_usages (voucher_id, voucher_code, order_id, customer_email, customer_phone)
-      VALUES ($1, UPPER($2), $3, $4, $5)
-    `, [
-      voucher.id,
-      code,
-      orderNumber   || null,
-      customerEmail ? customerEmail.toLowerCase() : null,
-      customerPhone || null,
-    ]);
-  } catch (error) {
-    console.error('Record Voucher Usage Error:', error);
   }
 };
 

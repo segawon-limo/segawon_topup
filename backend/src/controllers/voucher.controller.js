@@ -16,7 +16,7 @@ const { pool } = require('../config/database');
  */
 exports.validateVoucher = async (req, res) => {
   try {
-    const { code, orderAmount, productId, profitPrice: profitPriceDirect } = req.body;
+    const { code, orderAmount, productId, profitPrice: profitPriceDirect, customerEmail, customerPhone } = req.body;
 
     if (!code || !orderAmount) {
       return res.status(400).json({
@@ -41,11 +41,13 @@ exports.validateVoucher = async (req, res) => {
       }
     }
 
-    // Validate voucher with profit price
+    // Validate voucher with profit price + per-user check (email/phone)
     const result = await voucherService.validateVoucher(
       code, 
       parseFloat(orderAmount),
-      profitPrice  // Pass profit_price instead of base_price
+      profitPrice,
+      customerEmail || null,
+      customerPhone || null
     );
 
     if (result.valid) {
