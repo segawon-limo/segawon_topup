@@ -11,20 +11,20 @@ router.post('/login', adminController.login);
 // ══════════════════════════════════════════════════════════════
 // PROTECTED ROUTES (require JWT token)
 // ══════════════════════════════════════════════════════════════
-router.use(authAdmin); // All routes below require authentication
+router.use(authAdmin);
 
 // Dashboard Overview
 router.get('/dashboard', adminController.getDashboard);
 
 // Statistics
-router.get('/stats/daily', adminController.getDailyStats);
-router.get('/stats/top-products', adminController.getTopProducts);
+router.get('/stats/daily',           adminController.getDailyStats);
+router.get('/stats/top-products',    adminController.getTopProducts);
 router.get('/stats/payment-methods', adminController.getPaymentStats);
-router.get('/stats/hourly-pattern', adminController.getHourlyPattern);
+router.get('/stats/hourly-pattern',  adminController.getHourlyPattern);
 
 // Orders Management
-router.get('/orders', adminController.getOrders);
-router.post('/orders/retry', adminController.retryFailedOrders);
+router.get ('/orders',        adminController.getOrders);
+router.post('/orders/retry',  adminController.retryFailedOrders);
 
 // Alerts
 router.get('/alerts', adminController.getAlerts);
@@ -48,8 +48,6 @@ router.put   ('/catalog/products/:id',      catalogController.updateProduct);
 router.delete('/catalog/products/:id',      catalogController.deleteProduct);
 router.post  ('/catalog/products/bulk',     catalogController.bulkCreateProducts);
 
-module.exports = router;
-
 // Image Upload (base64, no multer)
 router.post('/catalog/upload-image', catalogController.uploadImage);
 
@@ -58,9 +56,12 @@ router.post('/catalog/upload-image', catalogController.uploadImage);
 // ══════════════════════════════════════════════════════════════
 const adminVoucherController = require('../controllers/admin.voucher.controller');
 
-router.get   ('/vouchers',              adminVoucherController.getVouchers);
-router.post  ('/vouchers',              adminVoucherController.createVoucher);
-router.get   ('/vouchers/usage-log',    adminVoucherController.getUsageLog);
-router.put   ('/vouchers/:id',          adminVoucherController.updateVoucher);
-router.patch ('/vouchers/:id/toggle',   adminVoucherController.toggleVoucher);
-router.delete('/vouchers/:id',          adminVoucherController.deleteVoucher);
+router.get   ('/vouchers',           adminVoucherController.getVouchers);
+router.post  ('/vouchers',           adminVoucherController.createVoucher);
+router.get   ('/vouchers/usage-log', adminVoucherController.getUsageLog);
+router.put   ('/vouchers/:id',       adminVoucherController.updateVoucher);
+router.patch ('/vouchers/:id/toggle',adminVoucherController.toggleVoucher);
+router.delete('/vouchers/:id',       adminVoucherController.deleteVoucher);
+
+// ══════════════════════════════════════════════════════════════
+module.exports = router;
