@@ -18,6 +18,7 @@ const https          = require('https');
 const { pool }       = require('../config/database');
 const duitkuService  = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
+const emailService   = require('../services/email.service');
 
 const DIGIFLAZZ_USERNAME = process.env.DIGIFLAZZ_USERNAME;
 const DIGIFLAZZ_API_KEY  = process.env.NODE_ENV === 'production'
@@ -491,6 +492,33 @@ exports.pay = async (req, res) => {
     await client.query('COMMIT');
 
     console.log(`[PASCABAYAR] Order created: ${orderNumber} — menunggu pembayaran Duitku`);
+
+    // Kirim Invoice Email otomatis via Brevo (non-blocking)
+    try {
+      const emailData = {
+        orderNumber:     orderNumber,
+        customerName:    customer_name || inquiry.customer_name || customer_email,
+        customerEmail:   customer_email,
+        productName:     `Tagihan ${inquiry.buyer_sku_code.toUpperCase()} — ${inquiry.customer_no}`,
+        userId:          inquiry.customer_no,
+        zoneId:          null,
+        amount:          inquiry.selling_price || 0,
+        voucherCode:     validatedVoucherCode || null,
+        voucherDiscount: voucherDiscount || 0,
+        paymentFee:      paymentFee,
+        totalAmount:     totalAmount,
+        paymentMethod:   payment_method,
+        paymentUrl:      paymentResult.paymentUrl || '',
+        qrUrl:           paymentResult.qrString   || null,
+        vaNumber:        paymentResult.vaNumber    || null,
+        expiryTime:      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+      emailService.sendInvoiceEmail(emailData).catch(err => {
+        console.error('[PASCABAYAR] Email sending error (non-blocking):', err);
+      });
+    } catch (emailErr) {
+      console.error('[PASCABAYAR] Email service error:', emailErr);
+    }
 
     return res.json({
       success:        true,

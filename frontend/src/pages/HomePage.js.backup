@@ -6,9 +6,18 @@ import GameCard from '../components/GameCard';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+// Label & urutan tampil di homepage per category
+const CATEGORY_CONFIG = {
+  games:      { label: 'Pilih Game Favorit Kamu',      icon: '🎮', order: 1 },
+  voucher:    { label: 'Voucher & Top Up',              icon: '🎁', order: 2 },
+  utilities:  { label: 'Utilitas',                      icon: '⚡', order: 3 },
+  pulsa_data: { label: 'Pulsa & Paket Data',            icon: '📱', order: 4 },
+};
+
 function HomePage() {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [grouped, setGrouped]   = useState({});
+  const [games, setGames]       = useState([]);   // flat list (kompatibel lama)
+  const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
     fetchGames();
@@ -17,7 +26,8 @@ function HomePage() {
   const fetchGames = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/games`);
-      setGames(response.data.games);
+      setGames(response.data.games || []);
+      setGrouped(response.data.grouped || {});
     } catch (error) {
       console.error('Error fetching games:', error);
     } finally {
@@ -102,24 +112,52 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Games Section */}
+      {/* Product Sections — dikelompokkan per category */}
       <section id="games" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-            Pilih Game Favorit Kamu
-          </h2>
-
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600">Loading games...</p>
+              <p className="mt-4 text-gray-600">Memuat produk...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
-              {games.map((game) => (
-                <GameCard key={game.id} game={game} />
-              ))}
-            </div>
+            <>
+              {/* Render tiap category sesuai urutan CATEGORY_CONFIG */}
+              {Object.entries(CATEGORY_CONFIG)
+                .sort((a, b) => a[1].order - b[1].order)
+                .map(([catKey, catCfg]) => {
+                  const items = grouped[catKey];
+                  if (!items || items.length === 0) return null;
+                  return (
+                    <div key={catKey} className="mb-16">
+                      <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">
+                        <span className="mr-2">{catCfg.icon}</span>
+                        {catCfg.label}
+                      </h2>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+                        {items.map((game) => (
+                          <GameCard key={game.id} game={game} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              }
+
+              {/* Fallback: kalau grouped kosong (misal API lama), tampilkan flat */}
+              {Object.keys(grouped).length === 0 && (
+                <div>
+                  <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">
+                    🎮 Pilih Game Favorit Kamu
+                  </h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
+                    {games.map((game) => (
+                      <GameCard key={game.id} game={game} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

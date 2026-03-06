@@ -130,13 +130,12 @@ exports.digiflazzWebhook = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
-    // ── 4b. Cari order di database ────────────────────────────
-    // LEFT JOIN karena pascabayar punya product_id = NULL
+    // ── 4b. Cari order di database (transaksi biasa) ──────────
     const orderResult = await pool.query(`
       SELECT o.*, p.sku, p.name AS product_name, g.product_type, g.category
       FROM orders o
-      LEFT JOIN products p ON p.id = o.product_id
-      LEFT JOIN games   g ON g.id  = p.game_id
+      JOIN products p ON p.id = o.product_id
+      JOIN games   g ON g.id  = p.game_id
       WHERE o.order_number = $1
     `, [ref_id]);
 
@@ -146,70 +145,6 @@ exports.digiflazzWebhook = async (req, res) => {
     }
 
     const order = orderResult.rows[0];
-
-    // ── 4c. Pascabayar — handle terpisah ──────────────────────
-    // product_id = NULL artinya ini order pascabayar
-    if (!order.product_id) {
-      console.log(`🌐 Webhook: Pascabayar order terdeteksi — ${ref_id}`);
-
-      if (['completed', 'success'].includes(order.order_status)) {
-        console.log(`⚠️  Webhook: Pascabayar ${ref_id} sudah diproses, skip.`);
-        return res.status(200).json({ success: true, message: 'Already processed' });
-      }
-
-      if (status === 'Sukses' || rc === '00') {
-        const providerData = typeof order.provider_response === 'string'
-          ? (() => { try { return JSON.parse(order.provider_response); } catch(e) { return {}; } })()
-          : (order.provider_response || {});
-
-        await pool.query(`
-          UPDATE orders SET
-            order_status           = 'completed',
-            provider_serial_number = $1,
-            provider_order_id      = $2,
-            provider_response      = provider_response || $3::jsonb,
-            processed_at           = NOW(),
-            updated_at             = NOW()
-          WHERE order_number = $4
-        `, [sn || null, ref_id, JSON.stringify({ digiflazz: { status, rc, sn, message } }), ref_id]);
-
-        await pool.query(
-          `UPDATE pascabayar_inquiries SET status = 'paid', updated_at = NOW() WHERE ref_id = $1`,
-          [providerData?.ref_id || ref_id]
-        ).catch(() => {});
-
-        // Kirim email sukses pascabayar
-        try {
-          const providerName = providerData?.provider_name || providerData?.buyer_sku_code || 'Pascabayar';
-          emailService.sendOrderCompleteEmail({
-            orderNumber:   order.order_number,
-            customerName:  order.customer_name,
-            customerEmail: order.customer_email,
-            productName:   providerName,
-            userId:        providerData?.customer_no || null,
-            zoneId:        null,
-            voucherCode:   sn || '-',
-            isVoucher:     false,
-            productType:   'pascabayar',
-            totalAmount:   order.total_amount,
-          }).catch(err => console.error('❌ Pascabayar email error:', err.message));
-        } catch (emailErr) {
-          console.error('❌ Pascabayar email service error:', emailErr);
-        }
-
-        console.log(`✅ Pascabayar ${ref_id} completed via webhook, sn=${sn}`);
-      } else if (status === 'Gagal' || rc === '12' || rc === '13') {
-        await pool.query(`
-          UPDATE orders SET order_status = 'failed', notes = $1, updated_at = NOW()
-          WHERE order_number = $2
-        `, [`Digiflazz: ${message || 'Transaksi gagal'}`, ref_id]);
-        console.error(`❌ Pascabayar ${ref_id} failed — ${message}`);
-      } else {
-        console.log(`⏳ Pascabayar ${ref_id} masih pending (${status})`);
-      }
-
-      return res.status(200).json({ success: true });
-    }
 
     // ── 5. Idempotency — jangan proses ulang yang sudah selesai ─
     if (['completed', 'success'].includes(order.order_status)) {

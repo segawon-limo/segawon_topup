@@ -141,8 +141,8 @@ function Navbar() {
             <Link to="/cek-transaksi" className="text-white hover:text-pink-100 font-medium transition-colors duration-200 text-sm">
               Cek Transaksi
             </Link>
-            <Link to="/pascabayar" className="text-white hover:text-pink-100 font-medium transition-colors duration-200 text-sm">
-              Tagihan Internet
+            <Link to="/pascabayar" className="bg-white/20 hover:bg-white/30 text-white font-semibold transition-all duration-200 text-sm px-3 py-1.5 rounded-lg border border-white/40 flex items-center gap-1.5">
+              🌐 Internet Pascabayar
             </Link>
             <a
               href={`https://wa.me/${WA_NUMBER}`}
@@ -239,7 +239,7 @@ function Navbar() {
       </div>
 
       {/* ── Mobile Dropdown Menu ── */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="bg-gradient-to-b from-red-600 to-red-700 px-4 pb-4 pt-2 flex flex-col gap-1 border-t border-white/20">
           <Link
             to="/"
@@ -267,7 +267,7 @@ function Navbar() {
             className="text-white font-medium py-3 px-4 rounded-lg hover:bg-white/10 transition-colors duration-200"
             onClick={() => setMenuOpen(false)}
           >
-            🌐 Tagihan Internet
+            🌐 Internet Pascabayar
           </Link>
           <a
             href={`https://wa.me/${WA_NUMBER}`}

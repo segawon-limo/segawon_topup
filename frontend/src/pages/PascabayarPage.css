@@ -290,7 +290,7 @@
   .pb-summary-col {
     position: relative;
     top: auto;
-    order: -1; /* stepper + summary muncul di ATAS form di mobile */
+    order: 2; /* summary muncul di BAWAH form di mobile */
   }
   .pb-page .order-summary {
     max-height: none;

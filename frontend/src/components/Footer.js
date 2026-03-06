@@ -126,28 +126,6 @@ function Footer() {
           </div>
         </div>
 
-        {/* Payment Methods */}
-        <div className="border-t border-gray-800 pt-6 mb-6">
-          <p className="text-sm text-gray-500 mb-3 text-center">Metode Pembayaran:</p>
-          <div className="flex justify-center items-center gap-4 flex-wrap">
-            <div className="bg-white px-3 py-2 rounded-md">
-              <img src="/images/qris-logo.png" alt="QRIS" className="h-6" />
-            </div>
-            <div className="bg-white px-3 py-2 rounded-md">
-              <img src="/images/gopay-logo.png" alt="GoPay" className="h-6" />
-            </div>
-            <div className="bg-white px-3 py-2 rounded-md">
-              <img src="/images/dana-logo.png" alt="DANA" className="h-6" />
-            </div>
-            <div className="bg-white px-3 py-2 rounded-md">
-              <img src="/images/ovo-logo.png" alt="OVO" className="h-6" />
-            </div>
-            <div className="bg-white px-3 py-2 rounded-md">
-              <img src="/images/shopeepay-logo.png" alt="ShopeePay" className="h-6" />
-            </div>
-          </div>
-        </div>
-
         {/* Copyright */}
         <div className="border-t border-gray-800 pt-6 text-center">
           <p className="text-gray-400 text-sm">
