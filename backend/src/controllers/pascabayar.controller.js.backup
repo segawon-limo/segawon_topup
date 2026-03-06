@@ -343,6 +343,9 @@ exports.pay = async (req, res) => {
       paymentFee = 4000;
     } else if (['BR','I1','BT','B1','DM','BV','NC'].includes(payment_method)) {
       paymentFee = 3000;
+    } else if (payment_method === 'SQ') {
+      // QRIS Nusapay — 0.7% dari harga setelah diskon
+      paymentFee = Math.round(basePrice / 0.993) - basePrice;
     } else if (payment_method === 'SA') {
       paymentFee = Math.round(basePrice / 0.98) - basePrice;
     } else if (payment_method === 'OV') {

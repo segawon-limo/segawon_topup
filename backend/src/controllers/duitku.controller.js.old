@@ -669,6 +669,13 @@ async function processDigiflazzTopup(order) {
           customerNo = zoneId ? `${userId}|${zoneId}` : userId;
           break;
 
+        case 'userId_comma_server':
+          // NBA Infinite
+          // customer_no = userId,serverId → contoh: 1234567,10021
+          if (!zoneId) throw new Error('Server wajib untuk NBA Infinite');
+          customerNo = `${userId},${zoneId}`;
+          break;
+
         case 'userId_only':
         default:
           // AOV, FF, HFH, HOK, MRV, PGM — hanya userId
