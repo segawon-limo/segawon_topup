@@ -8,7 +8,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
 const PRODUCT_TYPES   = ['topup_game', 'voucher_code', 'token_pln', 'pulsa', 'data_package'];
 const CATEGORIES      = ['games', 'voucher', 'utilities', 'pulsa_data'];
-const FORMAT_KEYS     = ['userId_only', 'userId_concat_zoneId', 'userId_pipe_server', 'roleId_pipe_server', 'riotId_hash_tag'];
+const FORMAT_KEYS     = ['userId_only', 'userId_concat_zoneId', 'userId_pipe_server', 'roleId_pipe_server', 'riotId_hash_tag', 'userId_comma_server'];
 
 const FORMAT_KEY_LABELS = {
   userId_only:          'userId saja (AOV, FF, HFH, HOK, MRV, PGM)',
@@ -16,6 +16,7 @@ const FORMAT_KEY_LABELS = {
   userId_pipe_server:   'userId|server (GIP, HSR, ZZZ)',
   roleId_pipe_server:   'roleId|server (PGR)',
   riotId_hash_tag:      'riotId#tag (Valorant, LoL)',
+  userId_comma_server:  'userId,server (NBA Infinite)',
 };
 
 const formatRupiah = (v) =>

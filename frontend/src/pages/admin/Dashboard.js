@@ -148,6 +148,7 @@ function AdminDashboard() {
       >
         <button onClick={() => navigate('/admin/orders')}   className="btn-secondary">📋 Orders</button>
         <button onClick={() => navigate('/admin/catalog')}  className="btn-secondary">🗂️ Catalog</button>
+        <button onClick={() => navigate('/admin/vouchers')}  className="btn-secondary">🎫 Vouchers</button>
         <button onClick={() => navigate('/admin/terminal')} className="btn-secondary">⌨️ Server</button>
         <button onClick={handleLogout} className="btn-danger">Logout</button>
       </AdminPageHeader>

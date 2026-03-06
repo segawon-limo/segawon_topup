@@ -1,0 +1,582 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Admin.css';
+import './Catalog.css';
+import AdminPageHeader from '../../components/AdminPageHeader';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
+
+const DISCOUNT_TYPES = [
+  { value: 'fixed',      label: 'Fixed (Rp)' },
+  { value: 'percentage', label: 'Persentase (%)' },
+  { value: 'base_price', label: 'Base Price (Admin)' },
+];
+
+const formatRupiah = (v) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
+
+const formatDate = (str) => {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const formatDatetime = (str) => {
+  if (!str) return '—';
+  return new Date(str).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+};
+
+const toInputDate = (str) => {
+  if (!str) return '';
+  return new Date(str).toISOString().slice(0, 16);
+};
+
+const isExpired    = (until) => until && new Date(until) < new Date();
+const isNotStarted = (from)  => from  && new Date(from)  > new Date();
+
+// ── Toast ────────────────────────────────────────────────────
+function Toast({ toast, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
+  if (!toast) return null;
+  return <div className={`toast toast-${toast.type}`}>{toast.message}</div>;
+}
+
+// ── ConfirmDialog ────────────────────────────────────────────
+function ConfirmDialog({ message, onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-box modal-sm" onClick={e => e.stopPropagation()}>
+        <h3 className="modal-title">⚠️ Konfirmasi</h3>
+        <p style={{ color: '#4a5568', margin: '16px 0 24px' }}>{message}</p>
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onCancel}>Batal</button>
+          <button className="btn-danger"    onClick={onConfirm}>Ya, Lanjutkan</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── VoucherModal ─────────────────────────────────────────────
+const EMPTY_FORM = {
+  code: '', discount_type: 'fixed', discount_value: '',
+  min_purchase: '', max_discount: '',
+  usage_limit: '', per_user_limit: '',
+  valid_from: '', valid_until: '',
+  is_active: true, is_admin_only: false, description: '',
+};
+
+function VoucherModal({ voucher, onSave, onClose }) {
+  const isEdit = !!voucher;
+  const [form, setForm] = useState(isEdit ? {
+    ...voucher,
+    discount_value: voucher.discount_value ?? '',
+    min_purchase:   voucher.min_purchase   ?? '',
+    max_discount:   voucher.max_discount   ?? '',
+    usage_limit:    voucher.usage_limit    ?? '',
+    per_user_limit: voucher.per_user_limit ?? '',
+    valid_from:     toInputDate(voucher.valid_from),
+    valid_until:    toInputDate(voucher.valid_until),
+  } : { ...EMPTY_FORM });
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
+
+  const token      = localStorage.getItem('adminToken');
+  const authHeader = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSave = async () => {
+    if (!form.code.trim())    return setError('Kode voucher wajib diisi');
+    if (!form.discount_value) return setError('Nilai diskon wajib diisi');
+    setError('');
+    setSaving(true);
+    try {
+      const url  = isEdit
+        ? `${API_URL}/api/admin/vouchers/${voucher.id}`
+        : `${API_URL}/api/admin/vouchers`;
+      const res  = await fetch(url, { method: isEdit ? 'PUT' : 'POST', headers: authHeader, body: JSON.stringify(form) });
+      const data = await res.json();
+      if (!data.success) { setError(data.message || 'Gagal menyimpan'); return; }
+      onSave(data.voucher, isEdit ? 'update' : 'create');
+    } catch { setError('Terjadi kesalahan koneksi'); }
+    finally   { setSaving(false); }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box modal-md" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">{isEdit ? '✏️ Edit Voucher' : '➕ Voucher Baru'}</h3>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-form">
+
+          <div className="form-group">
+            <label>Kode Voucher *</label>
+            <input className="catalog-input" name="code" value={form.code} onChange={handleChange}
+              placeholder="SGWELCOME" style={{ textTransform: 'uppercase' }} />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Tipe Diskon *</label>
+              <select className="catalog-input" name="discount_type" value={form.discount_type} onChange={handleChange}>
+                {DISCOUNT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Nilai {form.discount_type === 'percentage' ? '(%)' : '(Rp)'} *</label>
+              <input className="catalog-input" name="discount_value" type="number"
+                value={form.discount_value} onChange={handleChange}
+                placeholder={form.discount_type === 'percentage' ? '10' : '5000'} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Min. Pembelian (Rp)</label>
+              <input className="catalog-input" name="min_purchase" type="number"
+                value={form.min_purchase} onChange={handleChange} placeholder="50000" />
+            </div>
+            <div className="form-group">
+              <label>Maks. Diskon (Rp) <span className="label-hint">khusus %</span></label>
+              <input className="catalog-input" name="max_discount" type="number"
+                value={form.max_discount} onChange={handleChange} placeholder="15000"
+                disabled={form.discount_type !== 'percentage'} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Maks. Total Pakai <span className="label-hint">kosong = ∞</span></label>
+              <input className="catalog-input" name="usage_limit" type="number"
+                value={form.usage_limit} onChange={handleChange} placeholder="∞" />
+            </div>
+            <div className="form-group">
+              <label>Maks. Pakai / User <span className="label-hint">kosong = ∞</span></label>
+              <input className="catalog-input" name="per_user_limit" type="number"
+                value={form.per_user_limit} onChange={handleChange} placeholder="1" />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Berlaku Dari</label>
+              <input className="catalog-input" name="valid_from" type="datetime-local"
+                value={form.valid_from} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label>Berlaku Sampai</label>
+              <input className="catalog-input" name="valid_until" type="datetime-local"
+                value={form.valid_until} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Deskripsi</label>
+            <textarea className="catalog-input" name="description" value={form.description}
+              onChange={handleChange} rows={2} placeholder="Deskripsi voucher..."
+              style={{ resize: 'vertical' }} />
+          </div>
+
+          <div className="checkbox-group">
+            <label>
+              <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} />
+              <span>Aktif</span>
+            </label>
+            <label>
+              <input type="checkbox" name="is_admin_only" checked={form.is_admin_only} onChange={handleChange} />
+              <span>Admin Only</span>
+            </label>
+          </div>
+
+          {error && <p className="form-error">⚠️ {error}</p>}
+        </div>
+
+        <div className="modal-footer">
+          <button type="button" className="btn-secondary" onClick={onClose}>Batal</button>
+          <button type="button" className="btn-primary"   onClick={handleSave} disabled={saving}>
+            {saving ? 'Menyimpan...' : isEdit ? '💾 Simpan' : '➕ Buat Voucher'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────
+export default function VoucherPage() {
+  const navigate   = useNavigate();
+  const token      = localStorage.getItem('adminToken');
+  const authHeader = { Authorization: `Bearer ${token}` };
+
+  const [tab,        setTab]        = useState('vouchers');
+  const [vouchers,   setVouchers]   = useState([]);
+  const [usages,     setUsages]     = useState([]);
+  const [usageTotal, setUsageTotal] = useState(0);
+  const [usagePage,  setUsagePage]  = useState(1);
+  const [filterCode, setFilterCode] = useState('');
+  const [loading,    setLoading]    = useState(true);
+  const [vModal,     setVModal]     = useState(null);
+  const [confirmDel, setConfirmDel] = useState(null);
+  const [toast,      setToast]      = useState(null);
+  const [search,     setSearch]     = useState('');
+
+  const showToast  = (message, type = 'success') => setToast({ message, type });
+  const handleLogout = () => { localStorage.removeItem('adminToken'); navigate('/admin/login'); };
+
+  useEffect(() => { if (!token) navigate('/admin/login'); }, []); // eslint-disable-line
+
+  const loadVouchers = useCallback(async () => {
+    try {
+      const res  = await fetch(`${API_URL}/api/admin/vouchers`, { headers: authHeader });
+      const data = await res.json();
+      if (data.success) setVouchers(data.vouchers);
+      else showToast('Gagal memuat voucher', 'error');
+    } catch { showToast('Gagal memuat voucher', 'error'); }
+  }, []); // eslint-disable-line
+
+  const loadUsage = useCallback(async (page = 1, code = '') => {
+    try {
+      const params = new URLSearchParams({ page, limit: 50 });
+      if (code) params.set('voucher_code', code);
+      const res  = await fetch(`${API_URL}/api/admin/vouchers/usage-log?${params}`, { headers: authHeader });
+      const data = await res.json();
+      if (data.success) { setUsages(data.usages); setUsageTotal(data.total); }
+      else showToast('Gagal memuat usage log', 'error');
+    } catch { showToast('Gagal memuat usage log', 'error'); }
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([loadVouchers(), loadUsage()]).finally(() => setLoading(false));
+  }, []); // eslint-disable-line
+
+  const handleVoucherSaved = (saved, mode) => {
+    setVModal(null);
+    showToast(mode === 'create'
+      ? `Voucher "${saved.code}" berhasil dibuat!`
+      : `Voucher "${saved.code}" diperbarui.`);
+    loadVouchers();
+  };
+
+  const handleToggle = async (v) => {
+    try {
+      const res  = await fetch(`${API_URL}/api/admin/vouchers/${v.id}/toggle`,
+        { method: 'PATCH', headers: authHeader });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Voucher "${v.code}" ${data.voucher.is_active ? 'diaktifkan' : 'dinonaktifkan'}`);
+        loadVouchers();
+      }
+    } catch { showToast('Gagal toggle voucher', 'error'); }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await fetch(`${API_URL}/api/admin/vouchers/${confirmDel.id}`,
+        { method: 'DELETE', headers: authHeader });
+      showToast(`Voucher "${confirmDel.code}" dihapus`);
+      setConfirmDel(null);
+      loadVouchers();
+    } catch { showToast('Gagal hapus voucher', 'error'); }
+  };
+
+  const handleUsageSearch = (e) => {
+    e.preventDefault();
+    setUsagePage(1);
+    loadUsage(1, filterCode);
+  };
+
+  const getStatus = (v) => {
+    if (!v.is_active)               return { label: 'Nonaktif',    cls: 'badge badge-warning' };
+    if (isExpired(v.valid_until))   return { label: 'Kadaluarsa',  cls: 'badge badge-danger'  };
+    if (isNotStarted(v.valid_from)) return { label: 'Belum Mulai', cls: 'badge badge-pending' };
+    return                                 { label: 'Aktif',       cls: 'badge badge-success' };
+  };
+
+  const filteredVouchers = vouchers.filter(v =>
+    !search ||
+    v.code.toLowerCase().includes(search.toLowerCase()) ||
+    (v.description || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const USAGE_LIMIT = 50;
+  const totalPages  = Math.ceil(usageTotal / USAGE_LIMIT);
+
+  return (
+    <div className="admin-dashboard">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
+      <AdminPageHeader title="Voucher Manager" subtitle="Kelola Voucher & Monitor Penggunaan">
+        <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
+        <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
+        <button onClick={() => navigate('/admin/catalog')}   className="btn-secondary">🎮 Catalog</button>
+        <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
+        <button onClick={handleLogout}                       className="btn-danger">Logout</button>
+      </AdminPageHeader>
+
+      {/* ── Stats ── */}
+      <div className="catalog-stats">
+        <div className="cstat">
+          <strong>
+            {vouchers.filter(v => v.is_active && !isExpired(v.valid_until) && !isNotStarted(v.valid_from)).length}
+          </strong>{' '}Voucher Aktif
+        </div>
+        <div className="cstat">
+          <strong>{vouchers.filter(v => !v.is_active).length}</strong>{' '}Nonaktif
+        </div>
+        <div className="cstat cstat-divider" />
+        <div className="cstat">
+          <strong>{vouchers.filter(v => isExpired(v.valid_until)).length}</strong>{' '}Kadaluarsa
+        </div>
+        <div className="cstat cstat-divider" />
+        <div className="cstat">
+          <strong>{usageTotal}</strong>{' '}Total Pemakaian
+        </div>
+      </div>
+
+      {/* ── Tabs ── */}
+      <div className="catalog-tabs">
+        <button className={`tab-btn ${tab === 'vouchers' ? 'active' : ''}`}
+          onClick={() => setTab('vouchers')}>
+          🎫 Vouchers ({filteredVouchers.length})
+        </button>
+        <button className={`tab-btn ${tab === 'usage' ? 'active' : ''}`}
+          onClick={() => { setTab('usage'); loadUsage(usagePage, filterCode); }}>
+          📊 Usage Log ({usageTotal})
+        </button>
+      </div>
+
+      {/* ══════════════ TAB: VOUCHERS ══════════════ */}
+      {tab === 'vouchers' && (
+        <>
+          <div className="filters-bar">
+            <input className="search-input"
+              placeholder="🔍 Cari kode / deskripsi..."
+              value={search} onChange={e => setSearch(e.target.value)} />
+            <button className="btn-primary" onClick={() => setVModal('create')}>
+              ➕ Voucher Baru
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="loading">Memuat data...</div>
+          ) : (
+            <div className="table-container">
+              <table className="orders-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Kode</th>
+                    <th>Tipe</th>
+                    <th>Nilai</th>
+                    <th>Min. Beli</th>
+                    <th>Maks. Diskon</th>
+                    <th>Pakai / Limit</th>
+                    <th>Per User</th>
+                    <th>Berlaku</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredVouchers.length === 0 && (
+                    <tr>
+                      <td colSpan={11} style={{ textAlign: 'center', padding: 40, color: '#a0aec0' }}>
+                        Belum ada voucher
+                      </td>
+                    </tr>
+                  )}
+                  {filteredVouchers.map((v, i) => {
+                    const st = getStatus(v);
+                    return (
+                      <tr key={v.id}>
+                        <td style={{ color: '#a0aec0', fontSize: 12 }}>{i + 1}</td>
+
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <code style={{ fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>{v.code}</code>
+                            {v.is_admin_only && (
+                              <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', borderRadius: 4, padding: '1px 6px' }}>
+                                ADMIN
+                              </span>
+                            )}
+                          </div>
+                          {v.description && (
+                            <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>{v.description}</div>
+                          )}
+                        </td>
+
+                        <td>
+                          <span className="slug-badge">
+                            {v.discount_type === 'fixed' ? 'Fixed' : v.discount_type === 'percentage' ? 'Persen' : 'Base'}
+                          </span>
+                        </td>
+
+                        <td style={{ fontWeight: 600 }}>
+                          {v.discount_type === 'percentage'
+                            ? `${v.discount_value}%`
+                            : v.discount_type === 'fixed'
+                            ? formatRupiah(v.discount_value)
+                            : 'Base Price'}
+                        </td>
+
+                        <td style={{ fontSize: 13 }}>
+                          {parseFloat(v.min_purchase) > 0 ? formatRupiah(v.min_purchase) : '—'}
+                        </td>
+
+                        <td style={{ fontSize: 13 }}>
+                          {v.max_discount ? formatRupiah(v.max_discount) : '—'}
+                        </td>
+
+                        <td style={{ fontSize: 13 }}>
+                          <span style={{ color: v.usage_limit && v.used_count >= v.usage_limit ? '#e53e3e' : 'inherit', fontWeight: 600 }}>
+                            {v.used_count}
+                          </span>{' / '}{v.usage_limit || '∞'}
+                        </td>
+
+                        <td style={{ fontSize: 13 }}>{v.per_user_limit || '∞'}</td>
+
+                        <td style={{ fontSize: 12, lineHeight: 1.6 }}>
+                          <div>{v.valid_from  ? `Dari: ${formatDate(v.valid_from)}`  : 'Dari: ∞'}</div>
+                          <div style={{ color: isExpired(v.valid_until) ? '#e53e3e' : 'inherit' }}>
+                            {v.valid_until ? `S/d: ${formatDate(v.valid_until)}` : 'S/d: ∞'}
+                          </div>
+                        </td>
+
+                        <td><span className={st.cls}>{st.label}</span></td>
+
+                        <td>
+                          <div className="action-btns">
+                            <button className="btn-action btn-edit" title="Edit"
+                              onClick={() => setVModal(v)}>✏️</button>
+                            <button className="btn-action" title={v.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                              style={{ opacity: 0.8 }} onClick={() => handleToggle(v)}>
+                              {v.is_active ? '⏸' : '▶️'}
+                            </button>
+                            <button className="btn-action btn-del" title="Hapus"
+                              onClick={() => setConfirmDel(v)}>🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ══════════════ TAB: USAGE LOG ══════════════ */}
+      {tab === 'usage' && (
+        <>
+          <form className="filters-bar" onSubmit={handleUsageSearch}>
+            <input className="search-input"
+              placeholder="🔍 Filter kode voucher (contoh: SGWELCOME)..."
+              value={filterCode} onChange={e => setFilterCode(e.target.value)} />
+            <button type="submit" className="btn-primary">Cari</button>
+            {filterCode && (
+              <button type="button" className="btn-secondary"
+                onClick={() => { setFilterCode(''); loadUsage(1, ''); }}>
+                Reset
+              </button>
+            )}
+          </form>
+
+          <div className="table-container">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Voucher</th>
+                  <th>Order</th>
+                  <th>Email</th>
+                  <th>No. HP</th>
+                  <th>Produk</th>
+                  <th>Diskon</th>
+                  <th>Total Order</th>
+                  <th>Status</th>
+                  <th>Dipakai Pada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usages.length === 0 && (
+                  <tr>
+                    <td colSpan={10} style={{ textAlign: 'center', padding: 40, color: '#a0aec0' }}>
+                      Belum ada usage log
+                    </td>
+                  </tr>
+                )}
+                {usages.map((u, i) => (
+                  <tr key={u.id}>
+                    <td style={{ color: '#a0aec0', fontSize: 12 }}>{(usagePage - 1) * USAGE_LIMIT + i + 1}</td>
+                    <td><code style={{ fontWeight: 700, fontSize: 13 }}>{u.voucher_code}</code></td>
+                    <td><code style={{ fontSize: 12 }}>{u.order_id || '—'}</code></td>
+                    <td style={{ fontSize: 13 }}>{u.customer_email || '—'}</td>
+                    <td style={{ fontSize: 13 }}>{u.customer_phone || '—'}</td>
+                    <td style={{ fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {u.product_name || '—'}
+                    </td>
+                    <td style={{ fontSize: 13, color: '#38a169', fontWeight: 600 }}>
+                      {u.voucher_discount ? `- ${formatRupiah(u.voucher_discount)}` : '—'}
+                    </td>
+                    <td style={{ fontSize: 13, fontWeight: 600 }}>
+                      {u.total_amount ? formatRupiah(u.total_amount) : '—'}
+                    </td>
+                    <td>
+                      {u.payment_status === 'success' || u.payment_status === 'paid'
+                        ? <span className="badge badge-success">Lunas</span>
+                        : u.payment_status === 'pending'
+                        ? <span className="badge badge-pending">Pending</span>
+                        : <span className="badge badge-warning">{u.payment_status || '—'}</span>}
+                    </td>
+                    <td style={{ fontSize: 12, color: '#718096' }}>{formatDatetime(u.used_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, padding: '16px 0' }}>
+              <button className="btn-secondary" disabled={usagePage <= 1}
+                onClick={() => { const p = usagePage - 1; setUsagePage(p); loadUsage(p, filterCode); }}>
+                ← Prev
+              </button>
+              <span style={{ fontSize: 13, color: '#718096' }}>
+                Hal {usagePage} / {totalPages} &nbsp;({usageTotal} data)
+              </span>
+              <button className="btn-secondary" disabled={usagePage >= totalPages}
+                onClick={() => { const p = usagePage + 1; setUsagePage(p); loadUsage(p, filterCode); }}>
+                Next →
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Modals ── */}
+      {vModal && (
+        <VoucherModal
+          voucher={vModal === 'create' ? null : vModal}
+          onSave={handleVoucherSaved}
+          onClose={() => setVModal(null)}
+        />
+      )}
+      {confirmDel && (
+        <ConfirmDialog
+          message={`Hapus voucher "${confirmDel.code}"? Aksi ini tidak dapat dibatalkan.`}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDel(null)}
+        />
+      )}
+    </div>
+  );
+}

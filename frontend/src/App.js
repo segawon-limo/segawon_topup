@@ -21,6 +21,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminOrders from './pages/admin/Orders';
 import AdminCatalog  from './pages/admin/Catalog';
 import AdminTerminal from './pages/admin/Terminal';
+import AdminVouchers from './pages/admin/VoucherPage';
 import CekTransaksiPage from './pages/CekTransaksiPage';
 import PascabayarPage from './pages/PascabayarPage';
 
@@ -45,6 +46,7 @@ function AppContent() {
           <Route path="/admin/orders"    element={<AdminOrders />} />
           <Route path="/admin/terminal"  element={<AdminTerminal />} />
           <Route path="/admin/catalog"   element={<AdminCatalog />} />
+          <Route path="/admin/vouchers"  element={<AdminVouchers />} />
           <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
           <Route path="/pascabayar"      element={<PascabayarPage />} />
         </Routes>

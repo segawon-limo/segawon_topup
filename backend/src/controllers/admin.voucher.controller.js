@@ -1,0 +1,210 @@
+/**
+ * Admin Voucher Controller
+ * CRUD voucher + usage log monitoring
+ */
+
+const { pool } = require('../config/database');
+
+// ── GET all vouchers (admin) ─────────────────────────────────
+exports.getVouchers = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id, code, discount_type, discount_value,
+        min_purchase, max_discount,
+        usage_limit, used_count, per_user_limit,
+        valid_from, valid_until,
+        is_active, is_admin_only, description,
+        created_at, updated_at
+      FROM vouchers
+      ORDER BY created_at DESC
+    `);
+    res.json({ success: true, vouchers: result.rows });
+  } catch (err) {
+    console.error('getVouchers error:', err);
+    res.status(500).json({ success: false, message: 'Gagal mengambil data voucher' });
+  }
+};
+
+// ── CREATE voucher ───────────────────────────────────────────
+exports.createVoucher = async (req, res) => {
+  try {
+    const {
+      code, discount_type, discount_value,
+      min_purchase, max_discount,
+      usage_limit, per_user_limit,
+      valid_from, valid_until,
+      is_active, is_admin_only, description
+    } = req.body;
+
+    if (!code || !discount_type || discount_value === undefined) {
+      return res.status(400).json({ success: false, message: 'code, discount_type, discount_value wajib diisi' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO vouchers (
+        code, discount_type, discount_value,
+        min_purchase, max_discount,
+        usage_limit, per_user_limit,
+        valid_from, valid_until,
+        is_active, is_admin_only, description,
+        created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW(), NOW())
+      RETURNING *
+    `, [
+      code.trim().toUpperCase(),
+      discount_type,
+      parseFloat(discount_value),
+      min_purchase   ? parseFloat(min_purchase)   : 0,
+      max_discount   ? parseFloat(max_discount)   : null,
+      usage_limit    ? parseInt(usage_limit)       : null,
+      per_user_limit ? parseInt(per_user_limit)    : null,
+      valid_from  || null,
+      valid_until || null,
+      is_active    !== false,
+      is_admin_only === true,
+      description  || null,
+    ]);
+
+    res.status(201).json({ success: true, voucher: result.rows[0] });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ success: false, message: `Kode voucher "${req.body.code}" sudah digunakan` });
+    }
+    console.error('createVoucher error:', err);
+    res.status(500).json({ success: false, message: 'Gagal membuat voucher' });
+  }
+};
+
+// ── UPDATE voucher ───────────────────────────────────────────
+exports.updateVoucher = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      code, discount_type, discount_value,
+      min_purchase, max_discount,
+      usage_limit, per_user_limit,
+      valid_from, valid_until,
+      is_active, is_admin_only, description
+    } = req.body;
+
+    const result = await pool.query(`
+      UPDATE vouchers SET
+        code           = $1,
+        discount_type  = $2,
+        discount_value = $3,
+        min_purchase   = $4,
+        max_discount   = $5,
+        usage_limit    = $6,
+        per_user_limit = $7,
+        valid_from     = $8,
+        valid_until    = $9,
+        is_active      = $10,
+        is_admin_only  = $11,
+        description    = $12,
+        updated_at     = NOW()
+      WHERE id = $13
+      RETURNING *
+    `, [
+      code.trim().toUpperCase(),
+      discount_type,
+      parseFloat(discount_value),
+      min_purchase   ? parseFloat(min_purchase)   : 0,
+      max_discount   ? parseFloat(max_discount)   : null,
+      usage_limit    ? parseInt(usage_limit)       : null,
+      per_user_limit ? parseInt(per_user_limit)    : null,
+      valid_from  || null,
+      valid_until || null,
+      is_active    !== false,
+      is_admin_only === true,
+      description  || null,
+      id,
+    ]);
+
+    if (!result.rows.length) return res.status(404).json({ success: false, message: 'Voucher tidak ditemukan' });
+    res.json({ success: true, voucher: result.rows[0] });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ success: false, message: `Kode voucher "${req.body.code}" sudah digunakan` });
+    }
+    console.error('updateVoucher error:', err);
+    res.status(500).json({ success: false, message: 'Gagal update voucher' });
+  }
+};
+
+// ── TOGGLE active ────────────────────────────────────────────
+exports.toggleVoucher = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`
+      UPDATE vouchers SET is_active = NOT is_active, updated_at = NOW()
+      WHERE id = $1 RETURNING id, code, is_active
+    `, [id]);
+    if (!result.rows.length) return res.status(404).json({ success: false, message: 'Voucher tidak ditemukan' });
+    res.json({ success: true, voucher: result.rows[0] });
+  } catch (err) {
+    console.error('toggleVoucher error:', err);
+    res.status(500).json({ success: false, message: 'Gagal toggle voucher' });
+  }
+};
+
+// ── DELETE voucher ───────────────────────────────────────────
+exports.deleteVoucher = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM vouchers WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('deleteVoucher error:', err);
+    res.status(500).json({ success: false, message: 'Gagal hapus voucher' });
+  }
+};
+
+// ── GET usage log ────────────────────────────────────────────
+exports.getUsageLog = async (req, res) => {
+  try {
+    const { voucher_code, page = 1, limit = 50 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const params = [];
+    let where = '';
+
+    if (voucher_code) {
+      params.push(voucher_code.toUpperCase());
+      where = `WHERE UPPER(vu.voucher_code) = $${params.length}`;
+    }
+
+    const dataResult = await pool.query(`
+      SELECT
+        vu.id,
+        vu.voucher_code,
+        vu.order_id,
+        vu.customer_email,
+        vu.customer_phone,
+        vu.used_at,
+        o.total_amount,
+        o.voucher_discount,
+        o.product_name,
+        o.payment_status
+      FROM voucher_usages vu
+      LEFT JOIN orders o ON o.order_number = vu.order_id
+      ${where}
+      ORDER BY vu.used_at DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `, [...params, parseInt(limit), offset]);
+
+    const countResult = await pool.query(`
+      SELECT COUNT(*) AS total FROM voucher_usages vu ${where}
+    `, params);
+
+    res.json({
+      success: true,
+      usages: dataResult.rows,
+      total: parseInt(countResult.rows[0].total),
+      page: parseInt(page),
+      limit: parseInt(limit),
+    });
+  } catch (err) {
+    console.error('getUsageLog error:', err);
+    res.status(500).json({ success: false, message: 'Gagal mengambil usage log' });
+  }
+};
