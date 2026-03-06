@@ -687,6 +687,13 @@ exports.getOrderStatus = async (req, res) => {
         paymentFee: parseFloat(order.payment_fee) || 0,
         total: parseFloat(order.total_amount),
         customer_email: order.customer_email,
+        notes: order.notes || null,
+        // Pascabayar: cek apakah order ini pascabayar (product_id = NULL)
+        isPascabayar: !order.product_id,
+        // Untuk pascabayar: parse admin_fee dari provider_response jika ada
+        adminFee: providerData?.type === 'pascabayar'
+          ? (providerData.admin_fee || 0)
+          : 0,
         payment: {
           method: order.payment_method,
           gateway: order.payment_gateway,

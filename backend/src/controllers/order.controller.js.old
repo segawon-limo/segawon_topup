@@ -646,8 +646,8 @@ exports.getOrderStatus = async (req, res) => {
         g.product_type,
         g.slug as game_slug
       FROM orders o
-      JOIN products p ON o.product_id = p.id
-      JOIN games g ON p.game_id = g.id
+      LEFT JOIN products p ON o.product_id = p.id
+      LEFT JOIN games g ON p.game_id = g.id
       WHERE o.order_number = $1
     `, [orderNumber]);
 
@@ -742,8 +742,8 @@ exports.getOrderHistory = async (req, res) => {
         p.name as product_name,
         g.name as game_name
       FROM orders o
-      JOIN products p ON o.product_id = p.id
-      JOIN games g ON p.game_id = g.id
+      LEFT JOIN products p ON o.product_id = p.id
+      LEFT JOIN games g ON p.game_id = g.id
       WHERE o.customer_email = $1
       ORDER BY o.created_at DESC
       LIMIT 50

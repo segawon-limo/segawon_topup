@@ -4,8 +4,9 @@
  * Handles pascabayar (postpaid) transactions via Digiflazz
  * Flow:
  *   1. POST /api/pascabayar/inquiry  → cek tagihan (inq-pasca) ke Digiflazz
- *   2. POST /api/pascabayar/pay      → bayar tagihan (pay-pasca) + buat order + proses Duitku
+ *   2. POST /api/pascabayar/pay      → buat order + proses Duitku (TANPA hit Digiflazz dulu)
  *   3. GET  /api/pascabayar/inquiry/:refId → ambil data inquiry tersimpan
+ *   4. [Duitku webhook sukses]        → baru hit Digiflazz pay-pasca (via duitku.controller)
  * 
  * Catatan Digiflazz:
  *   - ref_id harus SAMA antara inq-pasca dan pay-pasca
@@ -251,11 +252,11 @@ exports.getInquiry = async (req, res) => {
  * 
  * Flow:
  *   1. Validasi inquiry masih pending & belum expired
- *   2. Bayar ke Digiflazz (pay-pasca) dengan ref_id yang SAMA
+ *   2. Validasi voucher (opsional)
  *   3. Hitung fee payment method
- *   4. Buat order di tabel orders
- *   5. Buat payment di Duitku
- *   6. Update inquiry → status = 'paid', link ke order_id
+ *   4. Buat order di tabel orders (status: pending)
+ *   5. Buat payment di Duitku → customer bayar
+ *   6. [Duitku webhook] → Digiflazz pay-pasca dipanggil setelah pembayaran sukses
  */
 exports.pay = async (req, res) => {
   const client = await pool.connect();
@@ -310,62 +311,16 @@ exports.pay = async (req, res) => {
       });
     }
 
-    // ── 2. Bayar ke Digiflazz ──────────────────────────────────────────────
-    const sign = makeSign(ref_id); // ref_id SAMA dengan inquiry
-
-    console.log(`[PASCABAYAR] Pay: ref=${ref_id} sku=${inquiry.buyer_sku_code}`);
-
-    const digiJson = await digiflazzPost({
-      commands:       'pay-pasca',
-      username:       DIGIFLAZZ_USERNAME,
-      buyer_sku_code: inquiry.buyer_sku_code,
-      customer_no:    inquiry.customer_no,
-      ref_id,
-      sign,
-      ...(!IS_PRODUCTION && { testing: true })
-    });
-
-    const data = digiJson?.data;
-
-    console.log(`[PASCABAYAR] Pay response:`, JSON.stringify(data));
-
-    if (!data || data.rc === '13') {
-      // rc 13 = tagihan sudah dibayar
-      return res.status(400).json({
-        success: false,
-        message: 'Tagihan ini sudah pernah dibayar.',
-        rc: data?.rc
-      });
-    }
-
-    if (!data || (data.status === 'Gagal' && data.rc !== '00')) {
-      return res.status(400).json({
-        success: false,
-        message: data?.message || 'Gagal memproses pembayaran tagihan',
-        rc:      data?.rc
-      });
-    }
-
-    // Status bisa 'Sukses' atau 'Pending' — keduanya lanjut buat order
-    const digiStatus = data.status; // 'Sukses' | 'Pending'
-    const sn         = data.sn || null;
-
-    // ── 3. Validasi voucher (opsional) ────────────────────────────────────
+    // ── 2. Validasi voucher (opsional) ─────────────────────────────────────
     let voucherDiscount      = 0;
     let validatedVoucherCode = null;
 
     if (voucher_code && voucher_code.trim()) {
-      const sellingPrice  = inquiry.selling_price || 0;
-      // profit = selisih selling_price - price (dari inquiry_data)
-      const inquiryRaw    = typeof inquiry.inquiry_data === 'string'
-        ? JSON.parse(inquiry.inquiry_data)
-        : inquiry.inquiry_data;
-      const profitPrice   = sellingPrice - (inquiryRaw?.price || sellingPrice);
-
+      // Gunakan inquiry.komisi langsung sebagai profitPrice (sudah dihitung saat inquiry)
       const voucherResult = await voucherService.validateVoucher(
         voucher_code.trim(),
-        sellingPrice,
-        profitPrice
+        inquiry.selling_price || 0,
+        inquiry.komisi || 0
       );
 
       if (voucherResult.valid) {
@@ -380,7 +335,7 @@ exports.pay = async (req, res) => {
       }
     }
 
-    // ── 4. Hitung payment fee Duitku ───────────────────────────────────────
+    // ── 3. Hitung payment fee Duitku ───────────────────────────────────────
     const basePrice = (inquiry.selling_price || 0) - voucherDiscount;
     let paymentFee  = 0;
 
@@ -407,8 +362,8 @@ exports.pay = async (req, res) => {
     // ── 5. Begin transaction DB ────────────────────────────────────────────
     await client.query('BEGIN');
 
-    // Insert order — gunakan product_id = NULL untuk pascabayar
-    // Simpan info pascabayar di kolom notes / provider_response
+    // Insert order — product_id = NULL untuk pascabayar
+    // provider_response menyimpan ref_id agar webhook Duitku bisa panggil Digiflazz pay-pasca
     const orderInsert = await client.query(`
       INSERT INTO orders (
         order_number, product_id, customer_email, customer_name,
@@ -432,31 +387,29 @@ exports.pay = async (req, res) => {
       customer_email,
       customer_name    || inquiry.customer_name,
       customer_phone   || null,
-      inquiry.selling_price || 0,   // amount = selling_price sebelum diskon
+      inquiry.selling_price || 0,
       paymentFee,
       totalAmount,
       payment_method,
       validatedVoucherCode,
       voucherDiscount,
-      // notes: simpan info pascabayar ringkas
       `PASCABAYAR | ${inquiry.buyer_sku_code.toUpperCase()} | ${inquiry.customer_no} | ${inquiry.periode || '-'}`,
       JSON.stringify({
         type:           'pascabayar',
         buyer_sku_code: inquiry.buyer_sku_code,
         customer_no:    inquiry.customer_no,
-        ref_id,
-        digiflazz_status: digiStatus,
-        sn,
+        ref_id,                        // ← dipakai webhook untuk panggil Digiflazz
         periode:        inquiry.periode,
         lembar_tagihan: inquiry.lembar_tagihan,
         detail:         inquiry.detail,
-        digiflazz_data: data
+        // digiflazz_status & sn akan diisi setelah webhook Duitku sukses
       })
     ]);
 
     const orderId = orderInsert.rows[0].id;
 
-    // ── 6. Buat payment Duitku via duitkuService langsung ────────────────
+    // ── 6. Buat payment Duitku ─────────────────────────────────────────────
+    // Digiflazz pay-pasca akan dipanggil oleh duitku.controller saat webhook sukses
     let paymentResult = null;
 
     try {
@@ -464,7 +417,7 @@ exports.pay = async (req, res) => {
         merchantOrderId: orderNumber,
         paymentAmount:   totalAmount,
         paymentMethod:   payment_method,
-        productDetails:  `${inquiry.buyer_sku_code.toUpperCase()} - ${inquiry.periode || inquiry.customer_no}`,
+        productDetails:  `Tagihan ${inquiry.buyer_sku_code.toUpperCase()} - ${inquiry.periode || inquiry.customer_no}`,
         email:           customer_email,
         customerVaName:  customer_name || inquiry.customer_name || customer_email,
         phoneNumber:     customer_phone || '08000000000',
@@ -491,26 +444,24 @@ exports.pay = async (req, res) => {
         payment_url        = $1,
         payment_reference  = $2,
         payment_expires_at = NOW() + INTERVAL '24 hours',
-        provider_response  = $3,
         updated_at         = NOW()
-      WHERE id = $4
+      WHERE id = $3
     `, [
       paymentResult.paymentUrl,
       paymentResult.reference,
-      JSON.stringify({ duitku: paymentResult }),
       orderId
     ]);
 
-    // Update inquiry → paid, link ke order
+    // Link inquiry ke order — status tetap 'pending' sampai Duitku webhook sukses
     await client.query(`
       UPDATE pascabayar_inquiries
-      SET status = 'paid', order_id = $1, updated_at = NOW()
+      SET order_id = $1, updated_at = NOW()
       WHERE ref_id = $2
     `, [orderId, ref_id]);
 
     await client.query('COMMIT');
 
-    console.log(`[PASCABAYAR] Order created: ${orderNumber} orderId=${orderId}`);
+    console.log(`[PASCABAYAR] Order created: ${orderNumber} — menunggu pembayaran Duitku`);
 
     return res.json({
       success:        true,

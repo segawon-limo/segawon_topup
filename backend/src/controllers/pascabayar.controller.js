@@ -402,6 +402,9 @@ exports.pay = async (req, res) => {
         periode:        inquiry.periode,
         lembar_tagihan: inquiry.lembar_tagihan,
         detail:         inquiry.detail,
+        // Untuk breakdown tampilan di PaymentPage
+        admin_fee:      parseInt(inquiry.admin_fee) || 0,
+        detail_tagihan: (inquiry.selling_price || 0) - (parseInt(inquiry.admin_fee) || 0),
         // digiflazz_status & sn akan diisi setelah webhook Duitku sukses
       })
     ]);
@@ -470,6 +473,8 @@ exports.pay = async (req, res) => {
       paymentUrl:     paymentResult.paymentUrl,
       paymentMethod:  payment_method,
       sellingPrice:   inquiry.selling_price || 0,
+      adminFee:       parseInt(inquiry.admin_fee) || 0,
+      detailTagihan:  (inquiry.selling_price || 0) - (parseInt(inquiry.admin_fee) || 0),
       voucherDiscount,
       voucherCode:    validatedVoucherCode,
       basePrice,
