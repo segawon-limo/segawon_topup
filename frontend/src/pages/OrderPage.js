@@ -351,6 +351,14 @@ function OrderPage() {
     };
   }, [gameSlug]); // Re-run when game changes
 
+  // Reset metode pembayaran jika VA dipilih tapi tiba-tiba tidak tersedia
+  useEffect(() => {
+    if (!showVA && VA_BANKS.some(b => b.code === selectedPaymentMethod)) {
+      setSelectedPaymentMethod('');
+      setOpenAccordion(null);
+    }
+  }, [showVA]);
+
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -403,6 +411,9 @@ function OrderPage() {
     : 0;
   
   const totalAmount = priceAfterDiscount + paymentFee;
+
+  // VA minimum Rp 10.000 (kebijakan Duitku) — cek harga produk langsung
+  const showVA = priceAfterDiscount >= 10000;
   
   // Format currency
   const formatRupiah = (amount) => {
@@ -1184,7 +1195,8 @@ function OrderPage() {
                   <h2>4. Pilih Pembayaran</h2>
                   
                   <div className="payment-methods">
-                    {/* Virtual Account — accordion */}
+                    {/* Virtual Account — accordion (hanya tampil jika total >= Rp 10.000) */}
+                    {showVA ? (
                     <div className={`payment-accordion ${openAccordion === 'va' ? 'open' : ''}`}>
                       <button type="button" className="accordion-header" onClick={() => toggleAccordion('va')}>
                         <span className="accordion-title">
@@ -1211,6 +1223,11 @@ function OrderPage() {
                         </div>
                       )}
                     </div>
+                    ) : (
+                      <div className="va-unavailable-notice">
+                        🏦 <strong>Virtual Account</strong> tidak tersedia — minimum transaksi VA adalah <strong>Rp 10.000</strong>. Slahkan gunakan QRIS atau E-Wallet.
+                      </div>
+                    )}
 
                     {/* QRIS — accordion */}
                     <div className={`payment-accordion ${openAccordion === 'qris' ? 'open' : ''}`}>

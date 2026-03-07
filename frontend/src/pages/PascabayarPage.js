@@ -113,6 +113,9 @@ function PascabayarPage() {
   const paymentFee  = selectedPaymentMethod ? calculatePaymentFee(selectedPaymentMethod) : 0;
   const totalAmount = priceAfterDiscount + paymentFee;
 
+  // VA minimum Rp 10.000 (kebijakan Duitku) — cek harga produk langsung
+  const showVA = priceAfterDiscount >= 10000;
+
   // ── Form handlers — identik dengan OrderPage ───────────────────────────────
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -141,6 +144,14 @@ function PascabayarPage() {
     const timer = setTimeout(() => validateEmail(formData.customerEmail), 1200);
     return () => clearTimeout(timer);
   }, [formData.customerEmail, touched.customerEmail]);
+
+  // Reset metode pembayaran jika VA dipilih tapi tiba-tiba tidak tersedia
+  useEffect(() => {
+    if (!showVA && VA_BANKS.some(b => b.code === selectedPaymentMethod)) {
+      setSelectedPaymentMethod('');
+      setOpenAccordion(null);
+    }
+  }, [showVA]);
 
   const allowPhoneInput = (e) => {
     const { key, target } = e;
@@ -482,7 +493,8 @@ function PascabayarPage() {
 
                   <div className="payment-methods">
 
-                    {/* Virtual Account */}
+                    {/* Virtual Account — hanya tampil jika total >= Rp 10.000 */}
+                    {showVA ? (
                     <div className={`payment-accordion ${openAccordion === 'va' ? 'open' : ''}`}>
                       <button type="button" className="accordion-header" onClick={() => toggleAccordion('va')}>
                         <span className="accordion-title">
@@ -512,6 +524,11 @@ function PascabayarPage() {
                         </div>
                       )}
                     </div>
+                    ) : (
+                      <div className="va-unavailable-notice">
+                        🏦 <strong>Virtual Account</strong> tidak tersedia — minimum transaksi VA adalah <strong>Rp 10.000</strong>. Silahkan gunakan QRIS atau E-Wallet.
+                      </div>
+                    )}
 
                     {/* QRIS */}
                     <div className={`payment-accordion ${openAccordion === 'qris' ? 'open' : ''}`}>

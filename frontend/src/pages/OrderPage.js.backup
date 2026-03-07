@@ -472,6 +472,8 @@ function OrderPage() {
           code: voucherCode.trim(),
           orderAmount: selectedProduct.price,
           productId: selectedProduct.id,
+          customerEmail: formData.customerEmail.trim() || null,
+          customerPhone: formData.customerPhone.trim() || null,
         }),
       });
 
