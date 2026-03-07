@@ -351,14 +351,6 @@ function OrderPage() {
     };
   }, [gameSlug]); // Re-run when game changes
 
-  // Reset metode pembayaran jika VA dipilih tapi tiba-tiba tidak tersedia
-  useEffect(() => {
-    if (!showVA && VA_BANKS.some(b => b.code === selectedPaymentMethod)) {
-      setSelectedPaymentMethod('');
-      setOpenAccordion(null);
-    }
-  }, [showVA]);
-
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -414,6 +406,14 @@ function OrderPage() {
 
   // VA minimum Rp 10.000 (kebijakan Duitku) — cek harga produk langsung
   const showVA = priceAfterDiscount >= 10000;
+
+  // Reset metode pembayaran jika VA dipilih tapi tidak lagi tersedia
+  useEffect(() => {
+    if (!showVA && VA_BANKS.some(b => b.code === selectedPaymentMethod)) {
+      setSelectedPaymentMethod('');
+      setOpenAccordion(null);
+    }
+  }, [showVA]);
   
   // Format currency
   const formatRupiah = (amount) => {
@@ -1225,7 +1225,7 @@ function OrderPage() {
                     </div>
                     ) : (
                       <div className="va-unavailable-notice">
-                        🏦 <strong>Virtual Account</strong> tidak tersedia — minimum transaksi VA adalah <strong>Rp 10.000</strong>. Slahkan gunakan QRIS atau E-Wallet.
+                        🏦 <strong>Virtual Account</strong> tidak tersedia — minimum transaksi VA adalah <strong>Rp 10.000</strong>. Silahkan gunakan QRIS atau E-Wallet.
                       </div>
                     )}
 
