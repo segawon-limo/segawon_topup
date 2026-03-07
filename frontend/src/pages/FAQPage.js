@@ -13,7 +13,7 @@ const FAQ_DATA = [
       },
       {
         q: 'Apakah topup bisa gagal? Apa yang terjadi jika gagal?',
-        a: 'Dalam kasus yang sangat jarang, topup bisa gagal karena gangguan server game atau ID yang tidak valid. Jika ini terjadi, tim kami akan segera memproses refund atau pengiriman ulang. Kamu bisa menghubungi CS kami lewat WhatsApp.',
+        a: 'Dalam kasus yang sangat jarang, topup bisa gagal karena gangguan server game atau ID yang tidak valid. Jika ini terjadi, silahkan hubungi CS kami lewat WhatsApp untuk informasi lebih lanjut.',
       },
       {
         q: 'Bagaimana cara memastikan User ID saya benar?',
