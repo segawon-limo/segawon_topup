@@ -990,7 +990,11 @@ function AdminCatalog() {
 
             {(buildState === 'done' || buildState === 'error') && (
               <button
-                onClick={() => { setBuildState(null); setBuildLog([]); }}
+                onClick={() => {
+                  if (buildState === 'done') window.location.reload();
+                  setBuildState(null);
+                  setBuildLog([]);
+                }}
                 style={{
                   marginTop: '16px', width: '100%', padding: '10px',
                   background: buildState === 'done' ? '#38a169' : '#e53e3e',
