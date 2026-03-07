@@ -160,7 +160,7 @@ function PaymentPage() {
       'BT': 'Permata Bank Virtual Account',
       'SA': 'ShopeePay',
       'OV': 'OVO',
-      'SQ': 'QRIS (Nusapay)',
+      'SQ': 'QRIS',
       // legacy keys
       'va_bri':     'BRI Virtual Account',
       'va_mandiri': 'Mandiri Virtual Account',
@@ -296,9 +296,13 @@ function PaymentPage() {
                 <div className="order-details-collapse">
                   <div className="detail-row">
                     <span className="detail-label">Produk</span>
-                    <span className="detail-value">{paymentData.productName}</span>
+                    <span className="detail-value">
+                      {paymentData.isPascabayar
+                        ? (paymentData.notes?.split('|')?.[1]?.trim() || 'Tagihan Internet')
+                        : paymentData.productName}
+                    </span>
                   </div>
-                  {paymentData.gameUserId && (
+                  {paymentData.gameUserId && !paymentData.isPascabayar && (
                     <div className="detail-row">
                       <span className="detail-label">Game ID</span>
                       <span className="detail-value">
@@ -312,22 +316,52 @@ function PaymentPage() {
                     <span className="detail-value">{paymentData.customer_email}</span>
                   </div>
                   <div className="detail-divider"></div>
-                  <div className="detail-row">
-                    <span className="detail-label">Harga Produk</span>
-                    <span className="detail-value">{formatRupiah(paymentData.amount)}</span>
-                  </div>
-                  
-                  {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
-                    <div className="detail-row voucher">
-                      <span className="detail-label">Diskon Voucher ({paymentData.voucherCode})</span>
-                      <span className="detail-value discount">- {formatRupiah(paymentData.voucherDiscount)}</span>
-                    </div>
+
+                  {paymentData.isPascabayar ? (
+                    /* ── Pascabayar breakdown ── */
+                    <>
+                      <div className="detail-row">
+                        <span className="detail-label">Tagihan</span>
+                        <span className="detail-value">
+                          {formatRupiah(paymentData.amount - (paymentData.adminFee || 0))}
+                        </span>
+                      </div>
+                      {paymentData.adminFee > 0 && (
+                        <div className="detail-row">
+                          <span className="detail-label">Biaya Admin</span>
+                          <span className="detail-value">{formatRupiah(paymentData.adminFee)}</span>
+                        </div>
+                      )}
+                      {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
+                        <div className="detail-row voucher">
+                          <span className="detail-label">Diskon Voucher ({paymentData.voucherCode})</span>
+                          <span className="detail-value discount">- {formatRupiah(paymentData.voucherDiscount)}</span>
+                        </div>
+                      )}
+                      <div className="detail-row">
+                        <span className="detail-label">Biaya Layanan</span>
+                        <span className="detail-value">{formatRupiah(paymentData.paymentFee)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    /* ── Regular topup breakdown ── */
+                    <>
+                      <div className="detail-row">
+                        <span className="detail-label">Harga Produk</span>
+                        <span className="detail-value">{formatRupiah(paymentData.amount)}</span>
+                      </div>
+                      {paymentData.voucherCode && paymentData.voucherDiscount > 0 && (
+                        <div className="detail-row voucher">
+                          <span className="detail-label">Diskon Voucher ({paymentData.voucherCode})</span>
+                          <span className="detail-value discount">- {formatRupiah(paymentData.voucherDiscount)}</span>
+                        </div>
+                      )}
+                      <div className="detail-row">
+                        <span className="detail-label">Biaya Admin</span>
+                        <span className="detail-value">{formatRupiah(paymentData.paymentFee)}</span>
+                      </div>
+                    </>
                   )}
-                  
-                  <div className="detail-row">
-                    <span className="detail-label">Biaya Admin</span>
-                    <span className="detail-value">{formatRupiah(paymentData.paymentFee)}</span>
-                  </div>
 
                   {/* Note biaya bank Mandiri — info saja, tidak masuk total */}
                   {paymentData.payment?.method === 'M2' && (() => {
