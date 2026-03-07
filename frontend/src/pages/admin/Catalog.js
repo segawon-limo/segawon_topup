@@ -991,9 +991,10 @@ function AdminCatalog() {
             {(buildState === 'done' || buildState === 'error') && (
               <button
                 onClick={() => {
-                  if (buildState === 'done') window.location.reload();
+                  const wasSuccess = buildState === 'done';
                   setBuildState(null);
                   setBuildLog([]);
+                  if (wasSuccess) setTimeout(() => window.location.reload(), 100);
                 }}
                 style={{
                   marginTop: '16px', width: '100%', padding: '10px',
