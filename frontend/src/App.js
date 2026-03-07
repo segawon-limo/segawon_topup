@@ -24,6 +24,7 @@ import AdminTerminal from './pages/admin/Terminal';
 import AdminVouchers from './pages/admin/VoucherPage';
 import CekTransaksiPage from './pages/CekTransaksiPage';
 import PascabayarPage from './pages/PascabayarPage';
+import FAQPage from './pages/FAQPage';
 
 function AppContent() {
   const location = useLocation();
@@ -49,6 +50,7 @@ function AppContent() {
           <Route path="/admin/vouchers"  element={<AdminVouchers />} />
           <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
           <Route path="/pascabayar"      element={<PascabayarPage />} />
+          <Route path="/faq"             element={<FAQPage />} />
         </Routes>
       </main>
       {!isAdminPage && <Footer />}

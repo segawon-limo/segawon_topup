@@ -77,7 +77,7 @@ function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/faq" className="hover:text-white transition-colors duration-200">
+                <a href="/#faq" className="hover:text-white transition-colors duration-200">
                   ❓ FAQ
                 </a>
               </li>
