@@ -10,9 +10,10 @@ const path  = require('path');
 const fs    = require('fs');
 const UAParser = require('ua-parser-js');
 
-// Folder simpan gambar feedback (di dalam frontend/public agar langsung accessible)
+// Folder simpan gambar feedback — di dalam backend/uploads/feedback/
+// Di-serve via express.static di server.js dengan URL /uploads/feedback/
 const FEEDBACK_UPLOAD_DIR = process.env.FEEDBACK_UPLOAD_PATH
-  || path.resolve(__dirname, '..', '..', '..', 'frontend', 'public', 'uploads', 'feedback');
+  || path.resolve(__dirname, '..', '..', 'uploads', 'feedback');
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const MAX_FILES     = 3;

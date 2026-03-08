@@ -40,6 +40,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// 3b. Static file serving — feedback uploads
+const path = require('path');
+app.use('/uploads/feedback', express.static(
+  path.join(__dirname, '..', 'uploads', 'feedback')
+));
+
 // 4. Logging
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
