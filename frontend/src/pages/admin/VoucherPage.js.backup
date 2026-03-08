@@ -318,7 +318,6 @@ export default function VoucherPage() {
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
         <button onClick={() => navigate('/admin/catalog')}   className="btn-secondary">🎮 Catalog</button>
         <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
-        <button onClick={() => navigate('/admin/feedback')}   className="btn-secondary">💬 Feedback</button>
         <button onClick={handleLogout}                       className="btn-danger">Logout</button>
       </AdminPageHeader>
 

@@ -1,0 +1,273 @@
+/* ══════════════════════════════════════════
+   ADMIN FEEDBACK PAGE
+   ══════════════════════════════════════════ */
+
+.af-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+/* ── List ── */
+.af-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Card ── */
+.af-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.af-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.af-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.af-meta-id {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.af-meta-date {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.af-meta-device {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ── Message ── */
+.af-message {
+  font-size: 14px;
+  color: #1e293b;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Images ── */
+.af-images {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.af-thumb {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.af-thumb:hover {
+  border-color: #e91e63;
+  transform: scale(1.04);
+}
+
+/* ── Info tags ── */
+.af-info-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.af-info-tag {
+  font-size: 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.af-info-tag--ip {
+  color: #94a3b8;
+}
+
+/* ── Delete button ── */
+.af-btn-del {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.af-btn-del:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* ── Empty state ── */
+.af-empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.af-empty-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+}
+
+.af-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.af-empty-sub {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+/* ── Lightbox ── */
+.af-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.af-lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+  cursor: default;
+}
+
+.af-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.af-lightbox-close:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+/* ── Delete dialog ── */
+.af-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.af-dialog {
+  background: white;
+  border-radius: 18px;
+  padding: 36px 32px;
+  width: 360px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+}
+
+.af-dialog-icon {
+  font-size: 44px;
+  margin-bottom: 14px;
+}
+
+.af-dialog h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.af-dialog p {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.af-dialog-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.af-btn-cancel {
+  flex: 1;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.af-btn-cancel:hover:not(:disabled) { background: #e2e8f0; }
+.af-btn-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.af-btn-delete {
+  flex: 1;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.af-btn-delete:hover:not(:disabled) { background: #b91c1c; }
+.af-btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
