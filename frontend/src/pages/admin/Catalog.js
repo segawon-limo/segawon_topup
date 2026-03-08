@@ -1087,7 +1087,6 @@ function AdminCatalog() {
                 <th>Format Key</th>
                 <th>Products</th>
                 <th>Status</th>
-                <th>Stock</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -1155,6 +1154,7 @@ function AdminCatalog() {
                 <th>Profit</th>
                 <th>Sort</th>
                 <th>Status</th>
+                <th>Stock</th>
                 <th>Aksi</th>
               </tr>
             </thead>
