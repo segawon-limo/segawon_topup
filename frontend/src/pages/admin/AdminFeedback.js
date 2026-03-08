@@ -165,10 +165,10 @@ export default function AdminFeedback() {
                       {images.map((img, i) => (
                         <img
                           key={i}
-                          src={img.url}
+                          src={`${API_URL}${img.url}`}
                           alt={`feedback-${fb.id}-${i}`}
                           className="af-thumb"
-                          onClick={() => setLightbox(img.url)}
+                          onClick={() => setLightbox(`${API_URL}${img.url}`)}
                           title="Klik untuk perbesar"
                         />
                       ))}
