@@ -772,7 +772,7 @@ function AdminCatalog() {
       if (msg.type === 'authed' || (msg.type === 'auth' && msg.success === true)) {
         clearTimeout(authTimeout);
         setBuildState('building');
-        ws.send(JSON.stringify({ type: 'run', command: 'npm_build' }));
+        ws.send(JSON.stringify({ type: 'run', command: 'frontend_deploy' }));
         return;
       }
       if (msg.type === 'auth_error' || (msg.type === 'auth' && msg.success === false)) {
@@ -1003,7 +1003,7 @@ function AdminCatalog() {
                   fontWeight: '700', fontSize: '14px', cursor: 'pointer',
                 }}
               >
-                {buildState === 'done' ? '✓ Tutup' : '✕ Tutup'}
+                {buildState === 'done' ? '✓ Tutup & Refresh' : '✕ Tutup'}
               </button>
             )}
           </div>

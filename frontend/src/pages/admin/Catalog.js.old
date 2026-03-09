@@ -1015,6 +1015,7 @@ function AdminCatalog() {
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
         <button onClick={() => navigate('/admin/vouchers')}  className="btn-secondary">🎫 Vouchers</button>
         <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
+        <button onClick={() => navigate('/admin/feedback')}   className="btn-secondary">💬 Feedback</button>
         <button onClick={handleLogout} className="btn-danger">Logout</button>
       </AdminPageHeader>
 
@@ -1086,7 +1087,6 @@ function AdminCatalog() {
                 <th>Format Key</th>
                 <th>Products</th>
                 <th>Status</th>
-                <th>Stock</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -1154,6 +1154,7 @@ function AdminCatalog() {
                 <th>Profit</th>
                 <th>Sort</th>
                 <th>Status</th>
+                <th>Stock</th>
                 <th>Aksi</th>
               </tr>
             </thead>
