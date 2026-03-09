@@ -24,7 +24,7 @@ const pool = new Pool({ connectionString: DB_URL });
 
 // ── Helpers ──────────────────────────────────────────────────
 
-function httpsPost(hostname, path, payload) {
+function httpsPost(hostname, path, payload, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const req = https.request({
@@ -38,10 +38,34 @@ function httpsPost(hostname, path, payload) {
         catch { resolve(data); }
       });
     });
+
+    // Timeout — jangan tunggu selamanya
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error(`Request timeout setelah ${timeoutMs / 1000}s`));
+    });
+
     req.on('error', reject);
     req.write(body);
     req.end();
   });
+}
+
+// Retry wrapper — coba ulang N kali dengan jeda
+async function httpsPostWithRetry(hostname, path, payload, { retries = 3, delayMs = 5000 } = {}) {
+  let lastErr;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await httpsPost(hostname, path, payload);
+    } catch (err) {
+      lastErr = err;
+      console.warn(`⚠️  Attempt ${attempt}/${retries} gagal: ${err.message}`);
+      if (attempt < retries) {
+        console.log(`   Retry dalam ${delayMs / 1000}s...`);
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 function sendTelegram(message) {
@@ -53,7 +77,7 @@ function sendTelegram(message) {
     chat_id: CHAT_ID,
     text: message,
     parse_mode: 'HTML',
-  });
+  }, 10000); // timeout 10 detik untuk Telegram
 }
 
 function formatRupiah(num) {
@@ -80,7 +104,7 @@ async function main() {
 
   let priceList;
   try {
-    const res = await httpsPost('api.digiflazz.com', '/v1/price-list', {
+    const res = await httpsPostWithRetry('api.digiflazz.com', '/v1/price-list', {
       cmd: 'prepaid', username: USERNAME, sign,
     });
     priceList = res.data || [];

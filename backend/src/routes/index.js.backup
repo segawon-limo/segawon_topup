@@ -68,6 +68,12 @@ const telegramController = require('../controllers/telegram.controller');
 router.post('/telegram/webhook',   telegramController.handleWebhook);
 router.get ('/telegram/register',  telegramController.registerWebhook);  // panggil sekali untuk setup
 
+// ========================================
+// FEEDBACK
+// ========================================
+const feedbackController = require('../controllers/feedback.controller');
+router.post('/feedback', feedbackController.submitFeedback);
+
 module.exports = router;
 
 // ══════════════════════════════════════════════════════════════

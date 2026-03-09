@@ -74,6 +74,32 @@ router.get ('/telegram/register',  telegramController.registerWebhook);  // pang
 const feedbackController = require('../controllers/feedback.controller');
 router.post('/feedback', feedbackController.submitFeedback);
 
+// ========================================
+// CONTACT VALIDATION (email + phone)
+// ========================================
+const validationService = require('../services/validation.service');
+
+router.post('/validate-contact', async (req, res) => {
+  const { type, value } = req.body;
+  if (!type || !value) {
+    return res.status(400).json({ success: false, message: 'type dan value wajib diisi' });
+  }
+  try {
+    if (type === 'email') {
+      const result = await validationService.validateEmailFull(value);
+      return res.json({ success: true, ...result });
+    }
+    if (type === 'phone') {
+      const result = validationService.validatePhone(value);
+      return res.json({ success: true, ...result });
+    }
+    return res.status(400).json({ success: false, message: 'type harus "email" atau "phone"' });
+  } catch (err) {
+    console.error('[validate-contact] error:', err);
+    return res.json({ success: true, valid: true, source: 'server_error_fallback' });
+  }
+});
+
 module.exports = router;
 
 // ══════════════════════════════════════════════════════════════

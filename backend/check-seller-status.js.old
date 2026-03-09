@@ -102,6 +102,41 @@ async function main() {
   console.log(`🔴 Seller unavailable: ${unavailable.length}`);
   console.log(`🟢 Seller available  : ${available.length}`);
 
+  // 3b. Cek harga: bandingkan price Digiflazz dengan base_price di DB
+  const availableSkus = available.map(p => p.buyer_sku_code);
+  let priceMismatch = [];
+  if (availableSkus.length > 0) {
+    const client0 = await pool.connect();
+    try {
+      const result = await client0.query(
+        `SELECT p.sku, p.name, p.base_price, g.name as game_name
+         FROM products p
+         LEFT JOIN games g ON p.game_id = g.id
+         WHERE p.sku = ANY($1) AND p.base_price IS NOT NULL`,
+        [availableSkus]
+      );
+      result.rows.forEach(dbProd => {
+        const dfProd = available.find(p => p.buyer_sku_code === dbProd.sku);
+        if (!dfProd) return;
+        const dbPrice = parseFloat(dbProd.base_price);
+        const dfPrice = parseFloat(dfProd.price);
+        if (dbPrice !== dfPrice) {
+          priceMismatch.push({
+            sku:       dbProd.sku,
+            name:      dbProd.name,
+            game_name: dbProd.game_name,
+            db_price:  dbPrice,
+            df_price:  dfPrice,
+            diff:      dfPrice - dbPrice,
+          });
+        }
+      });
+    } finally {
+      client0.release();
+    }
+  }
+  console.log(`⚠️  Harga tidak sinkron: ${priceMismatch.length} produk`);
+
   // 4. Update DB
   const client = await pool.connect();
   try {
@@ -141,10 +176,29 @@ async function main() {
     }
 
     // 5. Kirim notif Telegram
+    // Notif harga mismatch (terpisah dari unavailable)
+    if (priceMismatch.length > 0) {
+      let priceMsg = `⚠️ <b>Segawon Monitor — Harga Tidak Sinkron</b>\n\n`;
+      priceMsg += `Ditemukan <b>${priceMismatch.length} produk</b> dengan harga Digiflazz berbeda dari DB:\n\n`;
+      priceMismatch.forEach(p => {
+        const arrow = p.diff > 0 ? '📈 naik' : '📉 turun';
+        priceMsg += `• <b>${p.name}</b> (${p.sku})\n`;
+        priceMsg += `  DB: ${formatRupiah(p.db_price)} → Digiflazz: ${formatRupiah(p.df_price)} (${arrow} ${formatRupiah(Math.abs(p.diff))})\n\n`;
+      });
+      priceMsg += `⚠️ Segera update harga di DB atau Catalog!\n`;
+      priceMsg += `🕐 ${now()}`;
+      await sendTelegram(priceMsg);
+      console.log('📨 Notif Telegram harga mismatch terkirim:', priceMismatch.length, 'produk');
+    }
+
     if (unavailable.length === 0) {
-      const msg = `✅ <b>Segawon Monitor</b>\n\nSemua produk Games/Voucher/PLN <b>available</b>!\n\n🕐 ${now()}`;
-      await sendTelegram(msg);
-      console.log('📨 Notif Telegram: semua available');
+      const allOkMsg = priceMismatch.length === 0
+        ? `✅ <b>Segawon Monitor</b>\n\nSemua produk Games/Voucher/PLN <b>available</b> dan harga <b>sinkron</b>!\n\n🕐 ${now()}`
+        : null;
+      if (allOkMsg) {
+        await sendTelegram(allOkMsg);
+        console.log('📨 Notif Telegram: semua available dan harga sinkron');
+      }
     } else {
       // Group by game/brand
       const grouped = {};

@@ -145,15 +145,24 @@ const server = app.listen(PORT, () => {
 // Init WebSocket terminal
 initWebSocket(server);
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server...');
+// Graceful shutdown — SIGTERM (pm2 stop/restart) & SIGINT (pm2 reload)
+const gracefulShutdown = (signal) => {
+  console.log(`${signal} received, closing server gracefully...`);
   server.close(() => {
     pool.end(() => {
-      console.log('Server closed');
+      console.log('Server closed.');
       process.exit(0);
     });
   });
-});
+
+  // Force kill jika tidak selesai dalam 10 detik
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout.');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
 module.exports = app;

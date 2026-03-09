@@ -18,6 +18,7 @@ const DB_HOST      = process.env.DB_HOST   || 'localhost';
 const DB_PASS      = process.env.DB_PASS   || "Seg@wonlim0";
 
 const COMMANDS = {
+  deploy:           { label:'🚀 Zero Downtime Deploy',   cmd:'bash', args:[`${APP_ROOT}/deploy.sh`], cwd:APP_ROOT, color:'#68d391', icon:'🚀', group:'Build', confirm:true },
   pm2_status:       { label:'PM2 Status',           cmd:'pm2',        args:['list'],                                         color:'#48bb78', icon:'📊', group:'PM2'                   },
   pm2_restart:      { label:'PM2 Restart Backend',    cmd:'pm2',        args:['restart','segawon-backend'],                    color:'#ed8936', icon:'🔄', group:'PM2',     confirm:true  },
   pm2_logs:         { label:'PM2 Logs (80)',          cmd:'pm2',        args:['logs','segawon-backend','--nostream','--lines','80'],  color:'#4299e1', icon:'📋', group:'PM2'             },
@@ -25,6 +26,7 @@ const COMMANDS = {
   npm_build:        { label:'npm run build',          cmd:'npm',        args:['run','build'],      cwd:FRONTEND_DIR,           color:'#f6ad55', icon:'🔨', group:'Build',   confirm:true  },
   expire_orders:    { label:'Run: Expire Orders',     cmd:'node',       args:[`${BACKEND_DIR}/expire-orders.js`],             color:'#9f7aea', icon:'⏰', group:'Scripts', confirm:true  },
   seller_check:     { label:'Run: Seller Check',      cmd:'node',       args:[`${BACKEND_DIR}/check-seller-status.js`],       color:'#9f7aea', icon:'🔍', group:'Scripts', confirm:true  },
+  verify_emails:    { label:'Run: Verify Emails',     cmd:'node',       args:[`${BACKEND_DIR}/verify-emails.js`],             color:'#63b3ed', icon:'📧', group:'Scripts', confirm:true  },
   disk_usage:       { label:'Disk Usage',             cmd:'df',         args:['-h'],                                          color:'#38b2ac', icon:'💾', group:'System'                },
   memory:           { label:'Memory',                 cmd:'free',       args:['-m'],                                          color:'#38b2ac', icon:'🧠', group:'System'                },
   uptime:           { label:'Uptime',                 cmd:'uptime',     args:[],                                              color:'#38b2ac', icon:'⏱️', group:'System'                },
@@ -124,6 +126,36 @@ function initWebSocket(server) {
         if (!def) { ws.send(JSON.stringify({ type:'error', message:'Command tidak dikenal' })); return; }
         console.log(`[Terminal] run: ${def.cmd} ${def.args.join(' ')}`);
         ws.send(JSON.stringify({ type:'start', command:msg.command, label:def.label }));
+
+        // Deploy — fase 1 (build+swap+nginx), lalu fase 2 (pm2 reload) dengan peringatan
+        if (msg.command === 'deploy') {
+          const proc = spawn(def.cmd, def.args, {
+            cwd: def.cwd || BACKEND_DIR,
+            env: { ...process.env, FORCE_COLOR: '0', TERM: 'xterm' },
+            shell: false,
+          });
+          proc.stdout.on('data', d => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'stdout', data:d.toString() })));
+          proc.stderr.on('data', d => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'stderr', data:d.toString() })));
+          proc.on('error', err => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'error', message:err.message })));
+          proc.on('close', code => {
+            if (code !== 0) {
+              ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'done', code, success:false }));
+              return;
+            }
+            // Kirim peringatan ke frontend — koneksi akan putus dalam 3 detik
+            ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'deploy_reload_warning' }));
+            // Fase 2: pm2 reload setelah 3 detik
+            setTimeout(() => {
+              console.log('[Terminal] Deploy fase 2: pm2 reload segawon-backend');
+              spawn('pm2', ['reload', 'segawon-backend'], {
+                env: { ...process.env },
+                shell: false,
+              });
+            }, 3000);
+          });
+          return;
+        }
+
         runProc(ws, def.cmd, def.args, def.cwd || BACKEND_DIR);
         return;
       }
