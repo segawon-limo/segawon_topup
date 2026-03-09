@@ -14,6 +14,7 @@ function PaymentPage() {
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState('');
   const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [showDetails, setShowDetails] = useState(false); // ← STATE BARU UNTUK TOGGLE
@@ -145,6 +146,19 @@ function PaymentPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const downloadQRIS = () => {
+    if (!qrCodeDataUrl) return;
+    const orderNumber = paymentData?.order?.orderNumber || 'qris';
+    const link = document.createElement('a');
+    link.href = qrCodeDataUrl;
+    link.download = `QRIS-${orderNumber}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2000);
   };
 
   const getPaymentMethodName = (method) => {
@@ -463,6 +477,12 @@ function PaymentPage() {
                   <div className="qris-container">
                     <p className="qris-info">Scan QR Code di bawah dengan aplikasi e-wallet Anda</p>
                     <img src={qrCodeDataUrl} alt="QRIS Code" className="qr-code" />
+                    <button
+                      className={`btn-download-qris ${downloaded ? 'downloaded' : ''}`}
+                      onClick={downloadQRIS}
+                    >
+                      {downloaded ? '✓ Tersimpan' : '⬇️ Simpan QR Code'}
+                    </button>
                     <div className="qr-note">
                       <strong>💡 Tip:</strong> Gunakan aplikasi GoPay, OVO, DANA, ShopeePay, atau mobile banking yang support QRIS
                     </div>
