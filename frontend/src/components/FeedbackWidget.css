@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  pointer-events: none; /* container tidak block klik — hanya elemen di dalamnya */
 }
 
 /* ── FAB Button ── */
@@ -29,6 +30,7 @@
   white-space: nowrap;
   overflow: hidden;
   max-width: 52px; /* collapsed = icon only */
+  pointer-events: all; /* pastikan FAB tetap bisa diklik */
 }
 
 .fb-fab:hover {
