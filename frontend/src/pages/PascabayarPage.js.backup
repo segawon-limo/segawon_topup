@@ -72,6 +72,8 @@ function PascabayarPage() {
     customerName:  false,
     customerPhone: false,
   });
+  const [emailValidating, setEmailValidating] = useState(false);
+  const [phoneValidating, setPhoneValidating] = useState(false);
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [openAccordion, setOpenAccordion]                 = useState(null);
@@ -122,20 +124,72 @@ function PascabayarPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+  const PHONE_REGEX = /^(\+62|62|0)[0-9]{9,12}$/;
+
   const handleBlur = (e) => {
     const { name } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
     if (name === 'customerEmail') validateEmail(formData.customerEmail);
+    if (name === 'customerPhone') validatePhone(formData.customerPhone);
   };
 
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validateEmail = async (email) => {
     if (!email) {
       setErrors(prev => ({ ...prev, customerEmail: 'Email wajib diisi' }));
-    } else if (!regex.test(email)) {
+      return;
+    }
+    if (!EMAIL_REGEX.test(email.trim())) {
       setErrors(prev => ({ ...prev, customerEmail: 'Format email tidak valid' }));
-    } else {
+      return;
+    }
+    setEmailValidating(true);
+    try {
+      const res = await fetch(`${API_URL}/api/validate-contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'email', value: email.trim() }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setErrors(prev => ({ ...prev, customerEmail: data.message || 'Email tidak valid' }));
+      } else {
+        setErrors(prev => { const n = { ...prev }; delete n.customerEmail; return n; });
+      }
+    } catch {
       setErrors(prev => { const n = { ...prev }; delete n.customerEmail; return n; });
+    } finally {
+      setEmailValidating(false);
+    }
+  };
+
+  const validatePhone = async (phone) => {
+    if (!phone || !phone.trim()) {
+      setErrors(prev => ({ ...prev, customerPhone: 'Nomor HP wajib diisi' }));
+      return;
+    }
+    const clean = phone.trim().replace(/[\s\-]/g, '');
+    if (!PHONE_REGEX.test(clean)) {
+      setErrors(prev => ({ ...prev, customerPhone: 'Format nomor HP tidak valid (contoh: 08123456789)' }));
+      return;
+    }
+    setPhoneValidating(true);
+    try {
+      const res = await fetch(`${API_URL}/api/validate-contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'phone', value: clean }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setErrors(prev => ({ ...prev, customerPhone: data.message || 'Nomor HP tidak valid' }));
+      } else {
+        setErrors(prev => { const n = { ...prev }; delete n.customerPhone; return n; });
+      }
+    } catch {
+      setErrors(prev => { const n = { ...prev }; delete n.customerPhone; return n; });
+    } finally {
+      setPhoneValidating(false);
     }
   };
 
@@ -446,15 +500,21 @@ function PascabayarPage() {
 
                 <div className="form-group">
                   <label>Email <span style={{ color: '#ef4444' }}>*</span></label>
-                  <input
-                    type="email"
-                    name="customerEmail"
-                    value={formData.customerEmail}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    placeholder="email@example.com"
-                    className={touched.customerEmail && errors.customerEmail ? 'error' : ''}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="email"
+                      name="customerEmail"
+                      value={formData.customerEmail}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      placeholder="email@example.com"
+                      className={touched.customerEmail && errors.customerEmail ? 'error' : ''}
+                      style={{ paddingRight: emailValidating ? '36px' : undefined }}
+                    />
+                    {emailValidating && (
+                      <span style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#9ca3af' }}>⏳</span>
+                    )}
+                  </div>
                   {touched.customerEmail && errors.customerEmail && (
                     <div className="error">{errors.customerEmail}</div>
                   )}
@@ -466,17 +526,24 @@ function PascabayarPage() {
                     Nomor HP {selectedPaymentMethod === 'OV' ? '(OVO) ' : '(WhatsApp) '}
                     <span style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <input
-                    type="tel"
-                    name="customerPhone"
-                    value={formData.customerPhone}
-                    onChange={handleInputChange}
-                    onKeyDown={allowPhoneInput}
-                    onPaste={handlePastePhone}
-                    inputMode="numeric"
-                    placeholder="081234567890"
-                    className={errors.customerPhone ? 'error' : ''}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="tel"
+                      name="customerPhone"
+                      value={formData.customerPhone}
+                      onChange={handleInputChange}
+                      onKeyDown={allowPhoneInput}
+                      onPaste={handlePastePhone}
+                      onBlur={handleBlur}
+                      inputMode="numeric"
+                      placeholder="081234567890"
+                      className={errors.customerPhone ? 'error' : ''}
+                      style={{ paddingRight: phoneValidating ? '36px' : undefined }}
+                    />
+                    {phoneValidating && (
+                      <span style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#9ca3af' }}>⏳</span>
+                    )}
+                  </div>
                   {errors.customerPhone && <div className="error">{errors.customerPhone}</div>}
                   {selectedPaymentMethod === 'OV' && (
                     <div className="info-box-ovo">
