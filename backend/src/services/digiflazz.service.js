@@ -5,19 +5,51 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 // Helper: parse SN dari PLNCEK
-// Format 1: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"  (spasi sebelum tarif)
-// Format 2: "IDPEL:12345678@NAMA :BUDI SANTOSO/R1/900"                  (slash sebelum tarif)
+// Format 1: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"
+// Format 2: "IDPEL:12345678@NAMA :BUDI SANTOSO/R1/900"
+// Format 3: "HJ HILDA RAHMANI@NOMETER:541103672629@TARIF/DAYA :R1M/900@RP ADM : 4000"
 function parsePlnCekSn(sn) {
   if (!sn) return {};
 
-  // IDPEL: hanya angka
-  const idpelMatch = sn.match(/IDPEL[:\s]*(\d+)/i);
-  const idpel = idpelMatch ? idpelMatch[1] : null;
+  let idpel = null, nama = null, tarif = null, daya = null;
 
-  let nama = null, tarif = null, daya = null;
+  // ── Format 3: delimiter @ dengan segment NOMETER / TARIF/DAYA ──
+  // Ciri khas: tidak ada prefix "IDPEL:", tapi ada "NOMETER:" atau "TARIF/DAYA"
+  if (sn.includes('NOMETER:') || sn.includes('TARIF/DAYA')) {
+    const segments = sn.split('@').map(s => s.trim());
+
+    segments.forEach(seg => {
+      const segUp = seg.toUpperCase();
+
+      // NOMETER:541103672629
+      const noMeterM = seg.match(/NOMETER[:\s]*(\d+)/i);
+      if (noMeterM) { idpel = noMeterM[1]; return; }
+
+      // TARIF/DAYA :R1M/900
+      const tarifM = seg.match(/TARIF\/DAYA\s*[:\s]+([A-Z0-9]+)\/(\d+)/i);
+      if (tarifM) {
+        tarif = tarifM[1];
+        daya  = tarifM[2] + ' VA';
+        return;
+      }
+
+      // Segment pertama yang tidak punya ":" kemungkinan adalah NAMA
+      if (!seg.includes(':') && !segUp.includes('RP ') && seg.length > 2) {
+        nama = seg;
+      }
+    });
+
+    return { idpel, nama, tarif, daya };
+  }
+
+  // ── Format 1 & 2: IDPEL: prefix ──────────────────────────────
+  const idpelMatch = sn.match(/IDPEL[:\s]*(\d+)/i);
+  idpel = idpelMatch ? idpelMatch[1] : null;
+
   const namaTarifMatch = sn.match(/NAMA\s*:\s*(.+)/i);
   if (namaTarifMatch) {
     const rest = namaTarifMatch[1].trim();
+
     // Format slash: NAMA/TARIF/DAYA
     const slashM = rest.match(/^(.+?)\/([A-Z]\d+)\/(\d+)\s*$/);
     if (slashM) {
