@@ -225,43 +225,164 @@ exports.checkPlnMeter = async (req, res) => {
     const sign    = crypto.createHash('md5').update(username + apiKey + meter).digest('hex');
     const payload = JSON.stringify({ username, customer_no: meter, sign });
 
-    // Direct HTTPS call ke Digiflazz inquiry-pln
-    const data = await new Promise((resolve, reject) => {
-      const options = {
-        hostname: 'api.digiflazz.com',
-        path:     '/v1/inquiry-pln',
-        method:   'POST',
-        headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-      };
-      const reqHttp = https.request(options, (response) => {
-        let body = '';
-        response.on('data', chunk => body += chunk);
-        response.on('end', () => {
-          try { resolve(JSON.parse(body)); }
-          catch (e) { reject(new Error('Invalid JSON response dari Digiflazz')); }
+    // ── Helper: HTTPS POST dengan timeout ────────────────────
+    function httpsPost(path, body) {
+      return new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'api.digiflazz.com',
+          path,
+          method:   'POST',
+          headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        };
+        const req = https.request(options, (response) => {
+          let data = '';
+          response.on('data', chunk => data += chunk);
+          response.on('end', () => {
+            try { resolve(JSON.parse(data)); }
+            catch (e) { reject(new Error('Invalid JSON dari Digiflazz')); }
+          });
         });
+        req.setTimeout(15000, () => {
+          req.destroy(new Error('Digiflazz inquiry-pln timeout'));
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
       });
-      reqHttp.on('error', reject);
-      reqHttp.write(payload);
-      reqHttp.end();
-    });
+    }
 
-    const d = data.data || data;
-    console.log(`[PLN Inquiry] ${meter} → status: ${d.status}, rc: ${d.rc}, nama: ${d.name}`);
+    // ── Fase 1: Coba inquiry-pln dulu ────────────────────────
+    let useInquiry = true;
+    let data;
+    try {
+      console.log(`[PLN Inquiry] Mencoba inquiry-pln untuk ${meter}...`);
+      data = await httpsPost('/v1/inquiry-pln', payload);
+      const d = data.data || data;
+      console.log(`[PLN Inquiry] inquiry-pln response → status: ${d.status}, rc: ${d.rc}, nama: ${d.name}`);
 
-    if (d.status === 'Sukses' || d.rc === '00') {
-      return res.json({
-        success: true,
-        idpel:   d.customer_no || meter,
-        nama:    d.name        || null,
-        tarif:   d.segment_power?.split('/')?.[0]?.trim() || null,
-        daya:    d.segment_power?.split('/')?.[1]?.trim() || null,
-        noMeter: d.meter_no    || meter,
-      });
-    } else {
-      return res.status(400).json({
+      if (d.status === 'Sukses' || d.rc === '00') {
+        // Normalisasi segment_power → tarif & daya
+        // inquiry-pln: "R1/900" → split → tarif="R1", daya="900"
+        // Tambahkan " VA" agar konsisten dengan format PLNCEK
+        const parts  = (d.segment_power || '').split('/').map(s => s.trim());
+        const tarif  = parts[0] || null;
+        const dayaRaw = parts[1] || null;
+        const daya   = dayaRaw ? (dayaRaw.toUpperCase().endsWith('VA') ? dayaRaw : dayaRaw + ' VA') : null;
+
+        return res.json({
+          success: true,
+          idpel:   d.customer_no || meter,
+          nama:    d.name        || null,
+          tarif,
+          daya,
+          noMeter: d.meter_no    || meter,
+          method:  'inquiry-pln',
+        });
+      }
+
+      // inquiry-pln gagal dengan error tertentu → coba fallback
+      const rc = d.rc || '';
+      const msg = (d.message || '').toLowerCase();
+      // RC yang menandakan service down (bukan salah user)
+      const isServiceError = ['14', '20', '21', '26', '30'].includes(rc) || 
+                             msg.includes('timeout') || msg.includes('service') ||
+                             msg.includes('tidak tersedia') || msg.includes('unavailable') ||
+                             msg.includes('maintenance');
+
+      if (!isServiceError) {
+        // Nomor memang tidak ditemukan — langsung return error, jangan fallback
+        return res.status(400).json({
+          success: false,
+          message: d.message || 'Nomor meter tidak ditemukan',
+        });
+      }
+
+      console.warn(`[PLN Inquiry] inquiry-pln service error (rc=${rc}), fallback ke PLNCEK...`);
+      useInquiry = false;
+
+    } catch (inquiryErr) {
+      console.warn(`[PLN Inquiry] inquiry-pln gagal: ${inquiryErr.message}, fallback ke PLNCEK...`);
+      useInquiry = false;
+    }
+
+    // ── Fase 2: Fallback ke PLNCEK (async + poll) ────────────
+    if (!useInquiry) {
+      const digiflazzService = require('../services/digiflazz.service');
+      console.log(`[PLN PLNCEK] Menjalankan PLNCEK untuk ${meter}...`);
+
+      const plncekResult = await digiflazzService.checkPlnMeter(meter);
+
+      if (!plncekResult.success) {
+        return res.status(400).json({
+          success: false,
+          message: plncekResult.message || 'Nomor meter tidak ditemukan',
+        });
+      }
+
+      // PLNCEK sukses langsung (sync response)
+      if (plncekResult.idpel || plncekResult.nama) {
+        return res.json({
+          success: true,
+          idpel:   plncekResult.idpel  || meter,
+          nama:    plncekResult.nama   || null,
+          tarif:   plncekResult.tarif  || null,
+          daya:    plncekResult.daya   || null,
+          noMeter: meter,
+          method:  'plncek-sync',
+        });
+      }
+
+      // PLNCEK async — polling hingga selesai (max 30 detik)
+      const { pool: dbPool } = require('../config/database');
+      const refId = plncekResult.refId;
+      console.log(`[PLN PLNCEK] Polling refId: ${refId}`);
+
+      const POLL_INTERVAL = 2000;  // 2 detik
+      const POLL_TIMEOUT  = 30000; // 30 detik max
+      const startTime = Date.now();
+
+      while (Date.now() - startTime < POLL_TIMEOUT) {
+        await new Promise(r => setTimeout(r, POLL_INTERVAL));
+
+        const row = await dbPool.query(
+          `SELECT status, idpel, nama, tarif, daya, message
+           FROM pln_meter_checks
+           WHERE ref_id = $1`,
+          [refId]
+        );
+
+        if (row.rows.length === 0) continue;
+        const check = row.rows[0];
+
+        if (check.status === 'success') {
+          console.log(`[PLN PLNCEK] ✅ ${meter} → nama: ${check.nama}`);
+          return res.json({
+            success: true,
+            idpel:   check.idpel  || meter,
+            nama:    check.nama   || null,
+            tarif:   check.tarif  || null,
+            daya:    check.daya   || null,
+            noMeter: meter,
+            method:  'plncek-async',
+          });
+        }
+
+        if (check.status === 'failed') {
+          return res.status(400).json({
+            success: false,
+            message: check.message || 'Nomor meter tidak ditemukan',
+          });
+        }
+
+        // status masih 'pending' → lanjut poll
+        console.log(`[PLN PLNCEK] Masih pending... (${Math.round((Date.now() - startTime) / 1000)}s)`);
+      }
+
+      // Timeout polling
+      console.error(`[PLN PLNCEK] Timeout setelah 30 detik untuk refId: ${refId}`);
+      return res.status(504).json({
         success: false,
-        message: d.message || 'Nomor meter tidak ditemukan',
+        message: 'Pengecekan nomor meter timeout. Silakan coba lagi.',
       });
     }
 
@@ -676,9 +797,7 @@ exports.getOrderStatus = async (req, res) => {
       success: true,
       order: {
         orderNumber: order.order_number,
-        productName: !order.product_id
-          ? (providerData?.provider_name || providerData?.buyer_sku_code || 'Pascabayar')
-          : order.product_name,
+        productName: order.product_name,
         gameName: order.game_name,
         gameUserId: order.game_user_id,
         gameUserTag: order.game_user_tag,

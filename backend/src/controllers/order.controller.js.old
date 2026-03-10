@@ -676,7 +676,9 @@ exports.getOrderStatus = async (req, res) => {
       success: true,
       order: {
         orderNumber: order.order_number,
-        productName: order.product_name,
+        productName: !order.product_id
+          ? (providerData?.provider_name || providerData?.buyer_sku_code || 'Pascabayar')
+          : order.product_name,
         gameName: order.game_name,
         gameUserId: order.game_user_id,
         gameUserTag: order.game_user_tag,
