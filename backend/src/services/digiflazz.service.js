@@ -5,66 +5,55 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 // Helper: parse SN dari PLNCEK
+// Format gabungan: "IDPEL:541103672629@NAMA :HJ HILDA RAHMANI@NOMETER:541103672629@TARIF/DAYA :R1M/900@RP ADM : 4000"
 // Format 1: "IDPEL:45107107679@NAMA :PT. PERMAI ABADI SENTOSA R1/2200"
 // Format 2: "IDPEL:12345678@NAMA :BUDI SANTOSO/R1/900"
 // Format 3: "HJ HILDA RAHMANI@NOMETER:541103672629@TARIF/DAYA :R1M/900@RP ADM : 4000"
+// Semua di-handle dengan satu parser berbasis segment @
 function parsePlnCekSn(sn) {
   if (!sn) return {};
 
   let idpel = null, nama = null, tarif = null, daya = null;
+  const segments = sn.split('@').map(s => s.trim());
 
-  // ── Format 3: delimiter @ dengan segment NOMETER / TARIF/DAYA ──
-  // Ciri khas: tidak ada prefix "IDPEL:", tapi ada "NOMETER:" atau "TARIF/DAYA"
-  if (sn.includes('NOMETER:') || sn.includes('TARIF/DAYA')) {
-    const segments = sn.split('@').map(s => s.trim());
+  segments.forEach(seg => {
+    // IDPEL:541103672629
+    const idpelM = seg.match(/^IDPEL[:\s]*(\d+)$/i);
+    if (idpelM) { idpel = idpelM[1]; return; }
 
-    segments.forEach(seg => {
-      const segUp = seg.toUpperCase();
+    // NAMA :HJ HILDA RAHMANI  (bisa ada spasi sebelum colon)
+    const namaM = seg.match(/^NAMA\s*[:\s]+(.+)$/i);
+    if (namaM) { nama = namaM[1].trim(); return; }
 
-      // NOMETER:541103672629
-      const noMeterM = seg.match(/NOMETER[:\s]*(\d+)/i);
-      if (noMeterM) { idpel = noMeterM[1]; return; }
+    // NOMETER:541103672629 — jadikan idpel hanya jika IDPEL belum ada
+    const noMeterM = seg.match(/^NOMETER[:\s]*(\d+)$/i);
+    if (noMeterM) { if (!idpel) idpel = noMeterM[1]; return; }
 
-      // TARIF/DAYA :R1M/900
-      const tarifM = seg.match(/TARIF\/DAYA\s*[:\s]+([A-Z0-9]+)\/(\d+)/i);
-      if (tarifM) {
-        tarif = tarifM[1];
-        daya  = tarifM[2] + ' VA';
-        return;
-      }
+    // TARIF/DAYA :R1M/900
+    const tarifM = seg.match(/TARIF\/DAYA\s*[:\s]+([A-Z0-9]+)\/(\d+)/i);
+    if (tarifM) { tarif = tarifM[1]; daya = tarifM[2] + ' VA'; return; }
 
-      // Segment pertama yang tidak punya ":" kemungkinan adalah NAMA
-      if (!seg.includes(':') && !segUp.includes('RP ') && seg.length > 2) {
-        nama = seg;
-      }
-    });
+    // Segment tanpa ":" dan bukan "RP ..." = nama (fallback Format 3 tanpa prefix NAMA:)
+    const segUp = seg.toUpperCase();
+    if (!seg.includes(':') && !segUp.startsWith('RP ') && seg.length > 2 && !nama) {
+      nama = seg;
+    }
+  });
 
-    return { idpel, nama, tarif, daya };
-  }
-
-  // ── Format 1 & 2: IDPEL: prefix ──────────────────────────────
-  const idpelMatch = sn.match(/IDPEL[:\s]*(\d+)/i);
-  idpel = idpelMatch ? idpelMatch[1] : null;
-
-  const namaTarifMatch = sn.match(/NAMA\s*:\s*(.+)/i);
-  if (namaTarifMatch) {
-    const rest = namaTarifMatch[1].trim();
-
-    // Format slash: NAMA/TARIF/DAYA
-    const slashM = rest.match(/^(.+?)\/([A-Z]\d+)\/(\d+)\s*$/);
+  // Format 1/2: nama segment bisa mengandung tarif/daya di akhir
+  // contoh: "PT. PERMAI ABADI SENTOSA R1/2200" atau "BUDI SANTOSO/R1/900"
+  if (nama && !tarif) {
+    const slashM = nama.match(/^(.+?)\/([A-Z]\d+[A-Z]*)\/(\d+)\s*$/);
     if (slashM) {
       nama  = slashM[1].trim();
       tarif = slashM[2];
       daya  = slashM[3] + ' VA';
     } else {
-      // Format spasi: NAMA TARIF/DAYA
-      const spaceM = rest.match(/^(.+?)\s+([A-Z]\d+)\/(\d+)\s*$/);
+      const spaceM = nama.match(/^(.+?)\s+([A-Z]\d+[A-Z]*)\/(\d+)\s*$/);
       if (spaceM) {
         nama  = spaceM[1].trim();
         tarif = spaceM[2];
         daya  = spaceM[3] + ' VA';
-      } else {
-        nama = rest;
       }
     }
   }
