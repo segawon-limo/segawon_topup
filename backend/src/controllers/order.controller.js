@@ -280,24 +280,29 @@ exports.checkPlnMeter = async (req, res) => {
         });
       }
 
-      // inquiry-pln gagal dengan error tertentu → coba fallback
-      const rc = d.rc || '';
+      // inquiry-pln gagal → tentukan apakah ini salah user atau service error
+      const rc  = d.rc || '';
       const msg = (d.message || '').toLowerCase();
-      // RC yang menandakan service down (bukan salah user)
-      const isServiceError = ['14', '20', '21', '26', '30'].includes(rc) || 
-                             msg.includes('timeout') || msg.includes('service') ||
-                             msg.includes('tidak tersedia') || msg.includes('unavailable') ||
-                             msg.includes('maintenance');
 
-      if (!isServiceError) {
-        // Nomor memang tidak ditemukan — langsung return error, jangan fallback
+      // RC yang PASTI salah nomor user (bukan service error) — jangan fallback
+      // RC 40 = nomor pelanggan tidak ditemukan
+      // RC 41 = nomor pelanggan tidak valid / format salah
+      const isUserError = ['40', '41'].includes(rc) ||
+                          msg.includes('tidak ditemukan') ||
+                          msg.includes('tidak valid') ||
+                          msg.includes('nomor salah') ||
+                          msg.includes('pelanggan tidak');
+
+      if (isUserError) {
+        // Nomor memang salah — langsung return error, jangan fallback
         return res.status(400).json({
           success: false,
           message: d.message || 'Nomor meter tidak ditemukan',
         });
       }
 
-      console.warn(`[PLN Inquiry] inquiry-pln service error (rc=${rc}), fallback ke PLNCEK...`);
+      // Semua RC lain (termasuk 02, 14, timeout, dll) → fallback ke PLNCEK
+      console.warn(`[PLN Inquiry] inquiry-pln gagal (rc=${rc}, msg="${d.message}"), fallback ke PLNCEK...`);
       useInquiry = false;
 
     } catch (inquiryErr) {
@@ -797,7 +802,9 @@ exports.getOrderStatus = async (req, res) => {
       success: true,
       order: {
         orderNumber: order.order_number,
-        productName: order.product_name,
+        productName: !order.product_id
+          ? (providerData?.provider_name || providerData?.buyer_sku_code || 'Pascabayar')
+          : order.product_name,
         gameName: order.game_name,
         gameUserId: order.game_user_id,
         gameUserTag: order.game_user_tag,
