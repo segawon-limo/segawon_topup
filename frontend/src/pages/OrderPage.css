@@ -1188,3 +1188,28 @@ input:disabled {
 }
 
 /* ── end ─────────────────────────────────────────────── */
+/* ── Product Section Labels ──────────────────────────── */
+.products-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a5568;
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e2e8f0;
+  letter-spacing: 0.3px;
+}
+
+.products-section-label:first-child {
+  margin-top: 4px;
+}
+
+/* Bundle section: 2 kolom penuh agar lebih menonjol */
+.products-grid--bundle {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 480px) {
+  .products-grid--bundle {
+    grid-template-columns: 1fr;
+  }
+}

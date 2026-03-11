@@ -364,6 +364,10 @@ body {
   border-color: #f56565;
 }
 
+.form-group input.valid {
+  border-color: #38a169;
+}
+
 .form-group small {
   display: block;
   margin-top: 4px;

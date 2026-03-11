@@ -176,6 +176,9 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
     fc_header_image:    game?.form_config?.headerImage   || '',
     fc_icon_file:       game?.form_config?.iconFile      || '',
     icon_product_url:   game?.icon_product_url            || '',
+    icon_product_bundle_url: game?.icon_product_bundle_url || '',
+    section_general_label:   game?.section_general_label   || '',
+    section_bundle_label:    game?.section_bundle_label    || '',
     fc_page_title:   game?.form_config?.pageTitle     || '',
     fc_display_fmt:  game?.form_config?.displayFormat || 'userId',
     fc_validation:   game?.form_config?.validation    || '',
@@ -218,7 +221,10 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
       slug:                 form.slug,
       description:          form.description || null,
       icon_url:             form.fc_icon_file ? `/images/games_icon/${form.fc_icon_file}` : null,
-      icon_product_url:     form.icon_product_url || null,
+      icon_product_url:         form.icon_product_url || null,
+      icon_product_bundle_url:  form.icon_product_bundle_url || null,
+      section_general_label:    form.section_general_label   || null,
+      section_bundle_label:     form.section_bundle_label    || null,
       category:             form.category,
       product_type:         form.product_type,
       digiflazz_format_key: form.digiflazz_format_key,
@@ -348,6 +354,38 @@ function GameModal({ game, onClose, onSaved, authHeader }) {
           </div>
 
           <div className="form-row">
+            <ImageUploadField
+              label="Icon Product Bundle URL"
+              hint="Icon khusus untuk produk section 'bundle' — simpan nama file saja"
+              type="icon_product"
+              value={form.icon_product_bundle_url}
+              onChange={(filename) => setForm(f => ({ ...f, icon_product_bundle_url: filename }))}
+              authHeader={authHeader}
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Label Section Umum <span className="label-hint">(kosong = "💎 Diamond &amp; Top Up")</span></label>
+              <input
+                name="section_general_label"
+                value={form.section_general_label}
+                onChange={handleChange}
+                placeholder="contoh: 💎 UC, 💎 Voucher, 💎 Kredit"
+              />
+            </div>
+            <div className="form-group">
+              <label>Label Section Bundle <span className="label-hint">(kosong = "🎁 Bundle &amp; Membership")</span></label>
+              <input
+                name="section_bundle_label"
+                value={form.section_bundle_label}
+                onChange={handleChange}
+                placeholder="contoh: 🎁 Paket Hemat, 🎁 Elite Pass"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
             <div className="form-group">
               <label>Page Title <span className="label-hint">(label currency di order page)</span></label>
               <input name="fc_page_title" value={form.fc_page_title} onChange={handleChange} placeholder="Diamonds" />
@@ -426,6 +464,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     is_active:        product?.is_active !== false,
     seller_available: product?.seller_available !== false,
     sort_order:       product?.sort_order       ?? 0,
+    section:          product?.section          || '',
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
@@ -681,6 +720,16 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
               <input name="sort_order" type="number" value={form.sort_order} onChange={handleChange} style={{ width: 100 }} />
             </div>
             <div className="form-group">
+              <label>Section <span className="label-hint">(pengelompokan di OrderPage)</span></label>
+              <select name="section" value={form.section} onChange={handleChange}>
+                <option value="">General (Diamond / Top Up)</option>
+                <option value="bundle">Bundle &amp; Membership</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
               <label>Description <span className="label-hint">(opsional)</span></label>
               <input name="description" value={form.description} onChange={handleChange} placeholder="Opsional" />
             </div>
@@ -868,6 +917,7 @@ function AdminCatalog() {
       const imageChanged =
         saved.icon_url                     !== (prevGame.icon_url                     || null) ||
         saved.icon_product_url             !== (prevGame.icon_product_url             || null) ||
+        saved.icon_product_bundle_url      !== (prevGame.icon_product_bundle_url      || null) ||
         saved.form_config?.headerImage     !== (prevGame.form_config?.headerImage     || null) ||
         saved.form_config?.iconFile        !== (prevGame.form_config?.iconFile        || null);
       if (imageChanged) triggerBuild();

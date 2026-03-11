@@ -120,6 +120,7 @@ function OrderPage() {
   const [userIdValidated, setUserIdValidated] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [plnCheckMethod, setPlnCheckMethod] = useState(null); // 'inquiry-pln' | 'plncek-sync' | 'plncek-async'
   const [plnInfo, setPlnInfo] = useState(null); // { idpel, nama, tarif, daya } dari PLNCEK
 
   // Form data
@@ -468,7 +469,7 @@ function OrderPage() {
       setOpenAccordion(null);
     }
   }, [showVA]);
-
+  
   // Format currency
   const formatRupiah = (amount) => {
     return new Intl.NumberFormat('id-ID', {
@@ -661,6 +662,7 @@ function OrderPage() {
         setValidating(true);
         setValidationError('');
         setPlnInfo(null);
+        setPlnCheckMethod(null);
 
         const res  = await fetch(`${API_URL}/api/check-pln-meter`, {
           method:  'POST',
@@ -671,6 +673,7 @@ function OrderPage() {
 
         if (data.success) {
           setPlnInfo({ idpel: data.idpel, nama: data.nama, tarif: data.tarif, daya: data.daya, noMeter: data.noMeter });
+          setPlnCheckMethod(data.method || null);
           setUserIdValidated(true);
           setValidationError('');
         } else {
@@ -1040,7 +1043,7 @@ function OrderPage() {
                       className="btn-validate"
                     >
                       {validating
-                        ? (productType === 'token_pln' ? 'Mengecek...' : 'Memverifikasi...')
+                        ? (productType === 'token_pln' ? '🔍 Mengecek... (maks 30 detik)' : 'Memverifikasi...')
                         : (productType === 'token_pln' ? '🔍 Cek Nomor Meter' : 'Verifikasi ID')}
                     </button>
                   )}
@@ -1202,14 +1205,14 @@ function OrderPage() {
                   <div className="form-group">
                     <label>Email *</label>
                     <div style={{ position: 'relative' }}>
-                      <input
-                        type="email"
-                        name="customerEmail"
-                        value={formData.customerEmail}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        placeholder="email@example.com"
-                        className={touched.customerEmail && errors.customerEmail ? 'error' : (touched.customerEmail && !errors.customerEmail && !emailValidating && formData.customerEmail ? 'valid' : '')}
+                    <input
+                      type="email"
+                      name="customerEmail"
+                      value={formData.customerEmail}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      placeholder="email@example.com"
+                      className={touched.customerEmail && errors.customerEmail ? 'error' : (touched.customerEmail && !errors.customerEmail && !emailValidating && formData.customerEmail ? 'valid' : '')}
                         style={{ paddingRight: (emailValidating || (touched.customerEmail && !errors.customerEmail && !emailValidating && formData.customerEmail)) ? '36px' : undefined }}
                       />
                       {emailValidating && (
@@ -1232,20 +1235,20 @@ function OrderPage() {
                       Nomor HP {selectedPaymentMethod === 'OV' ? '(OVO) *' : '(WhatsApp) *'}
                     </label>
                     <div style={{ position: 'relative' }}>
-                      <input
-                        type="tel"
-                        name="customerPhone"
-                        value={formData.customerPhone}
-                        onChange={handleInputChange}
-                        onKeyDown={allowPhoneInput}
-                        onPaste={handlePastePhone}
-                        onBlur={handleBlur}
-                        inputMode="numeric"
-                        placeholder="081234567890"
-                        className={errors.customerPhone ? 'error' : ''}
-                        style={{ paddingRight: phoneValidating ? '36px' : undefined }}
-                      />
-                      {phoneValidating && (
+                    <input
+                      type="tel"
+                      name="customerPhone"
+                      value={formData.customerPhone}
+                      onChange={handleInputChange}
+                      onKeyDown={allowPhoneInput}
+                      onPaste={handlePastePhone}
+                      onBlur={handleBlur}
+                      inputMode="numeric"
+                      placeholder="081234567890"
+                      className={errors.customerPhone ? 'error' : ''}
+                      style={{ paddingRight: phoneValidating ? '36px' : undefined }}
+                    />
+                    {phoneValidating && (
                         <span style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#9ca3af' }}>⏳</span>
                       )}
                     </div>

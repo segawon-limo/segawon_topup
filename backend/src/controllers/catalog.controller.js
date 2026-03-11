@@ -13,6 +13,8 @@ exports.getGames = async (req, res) => {
     const result = await pool.query(`
       SELECT
         id, name, slug, description, icon_url, icon_product_url,
+        icon_product_bundle_url,
+        section_general_label, section_bundle_label,
         category, product_type, digiflazz_format_key,
         form_config, is_active, sort_order,
         created_at, updated_at,
@@ -55,6 +57,8 @@ exports.createGame = async (req, res) => {
   try {
     const {
       name, slug, description, icon_url, icon_product_url,
+      icon_product_bundle_url,
+      section_general_label, section_bundle_label,
       category, product_type, digiflazz_format_key,
       form_config, is_active, sort_order
     } = req.body;
@@ -72,13 +76,18 @@ exports.createGame = async (req, res) => {
     const result = await pool.query(`
       INSERT INTO games (
         name, slug, description, icon_url, icon_product_url,
+        icon_product_bundle_url,
+        section_general_label, section_bundle_label,
         category, product_type, digiflazz_format_key,
         form_config, is_active, sort_order,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, NOW(), NOW())
       RETURNING *
     `, [
       name, slug, description || null, icon_url || null, icon_product_url || null,
+      icon_product_bundle_url || null,
+      section_general_label || null,
+      section_bundle_label || null,
       category || 'games',
       product_type || 'topup_game',
       digiflazz_format_key || 'userId_only',
@@ -103,6 +112,8 @@ exports.updateGame = async (req, res) => {
     const { id } = req.params;
     const {
       name, slug, description, icon_url, icon_product_url,
+      icon_product_bundle_url,
+      section_general_label, section_bundle_label,
       category, product_type, digiflazz_format_key,
       form_config, is_active, sort_order
     } = req.body;
@@ -124,17 +135,23 @@ exports.updateGame = async (req, res) => {
         description        = $3,
         icon_url           = $4,
         icon_product_url   = $5,
-        category           = COALESCE($6, category),
-        product_type       = COALESCE($7, product_type),
-        digiflazz_format_key = COALESCE($8, digiflazz_format_key),
-        form_config        = $9,
-        is_active          = COALESCE($10, is_active),
-        sort_order         = COALESCE($11, sort_order),
+        icon_product_bundle_url = $6,
+        section_general_label = $7,
+        section_bundle_label  = $8,
+        category           = COALESCE($9, category),
+        product_type       = COALESCE($10, product_type),
+        digiflazz_format_key = COALESCE($11, digiflazz_format_key),
+        form_config        = $12,
+        is_active          = COALESCE($13, is_active),
+        sort_order         = COALESCE($14, sort_order),
         updated_at         = NOW()
-      WHERE id = $12
+      WHERE id = $15
       RETURNING *
     `, [
       name, slug, description, icon_url, icon_product_url,
+      icon_product_bundle_url || null,
+      section_general_label || null,
+      section_bundle_label || null,
       category, product_type, digiflazz_format_key,
       form_config ? JSON.stringify(form_config) : null,
       is_active,
@@ -214,6 +231,7 @@ exports.getProducts = async (req, res) => {
         p.base_price, p.selling_price, p.profit_price,
         p.is_active, p.sort_order, p.seller_available,
         p.compare_price, p.compare_percentage,
+        p.section,
         g.icon_product_url,
         p.game_id,
         p.created_at, p.updated_at,
@@ -241,7 +259,8 @@ exports.createProduct = async (req, res) => {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
       is_active, sort_order, seller_available,
-      compare_price, compare_percentage
+      compare_price, compare_percentage,
+      section
     } = req.body;
 
     if (!game_id || !name || !sku || !selling_price) {
@@ -263,8 +282,9 @@ exports.createProduct = async (req, res) => {
         base_price, selling_price, profit_price,
         is_active, sort_order, seller_available,
         compare_price, compare_percentage,
+        section,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, NOW(), NOW())
       RETURNING *
     `, [
       game_id, name, description || null, sku,
@@ -276,6 +296,7 @@ exports.createProduct = async (req, res) => {
       seller_available !== false,
       compare_price ? parseFloat(compare_price) : null,
       compare_percentage ? parseFloat(compare_percentage) : null,
+      section || null,
     ]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -296,7 +317,8 @@ exports.updateProduct = async (req, res) => {
       game_id, name, description, sku,
       base_price, selling_price, profit_price,
       is_active, sort_order, seller_available,
-      compare_price, compare_percentage
+      compare_price, compare_percentage,
+      section
     } = req.body;
 
     // Cek SKU duplicate (exclude diri sendiri)
@@ -323,8 +345,9 @@ exports.updateProduct = async (req, res) => {
         seller_available = COALESCE($10, seller_available),
         compare_price      = $11,
         compare_percentage = $12,
+        section            = $13,
         updated_at       = NOW()
-      WHERE id = $13
+      WHERE id = $14
       RETURNING *
     `, [
       game_id, name, description, sku,
@@ -333,6 +356,7 @@ exports.updateProduct = async (req, res) => {
       seller_available !== undefined ? seller_available : null,
       compare_price ? parseFloat(compare_price) : null,
       compare_percentage ? parseFloat(compare_percentage) : null,
+      section !== undefined ? (section || null) : undefined,
       id
     ]);
 
