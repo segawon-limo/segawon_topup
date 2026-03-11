@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaGamepad, FaRocket, FaClock, FaShieldAlt } from 'react-icons/fa';
 import GameCard from '../components/GameCard';
+import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -36,6 +37,24 @@ function HomePage() {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Top Up Game Murah &amp; Cepat 24/7 - Segawon Topup</title>
+        <meta name="description" content="Platform top up game terpercaya #1 di Indonesia. Top up Mobile Legends, Free Fire, PUBG, Valorant, Genshin Impact & 100+ game lainnya. Proses otomatis, harga termurah!" />
+        <link rel="canonical" href="https://segawontopup.net/" />
+        <meta property="og:title" content="Top Up Game Murah & Cepat 24/7 - Segawon Topup" />
+        <meta property="og:description" content="Platform top up game terpercaya #1 di Indonesia. Proses otomatis, harga termurah!" />
+        <meta property="og:url" content="https://segawontopup.net/" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "Segawon Topup",
+          "url": "https://segawontopup.net",
+          "logo": "https://segawontopup.net/images/logo/logo-navbar@2x.png",
+          "description": "Platform top up game terpercaya di Indonesia",
+          "contactPoint": { "@type": "ContactPoint", "contactType": "customer service", "availableLanguage": "Indonesian" }
+        })}</script>
+      </Helmet>
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
@@ -326,6 +345,7 @@ function HomePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }
 

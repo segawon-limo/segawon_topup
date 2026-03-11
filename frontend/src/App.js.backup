@@ -25,6 +25,8 @@ import AdminVouchers from './pages/admin/VoucherPage';
 import CekTransaksiPage from './pages/CekTransaksiPage';
 import PascabayarPage from './pages/PascabayarPage';
 import FAQPage from './pages/FAQPage';
+import FeedbackWidget from './components/FeedbackWidget';
+import AdminFeedback from './pages/admin/AdminFeedback';
 
 function AppContent() {
   const location = useLocation();
@@ -48,12 +50,14 @@ function AppContent() {
           <Route path="/admin/terminal"  element={<AdminTerminal />} />
           <Route path="/admin/catalog"   element={<AdminCatalog />} />
           <Route path="/admin/vouchers"  element={<AdminVouchers />} />
+          <Route path="/admin/feedback"  element={<AdminFeedback />} />
           <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
           <Route path="/pascabayar"      element={<PascabayarPage />} />
           <Route path="/faq"             element={<FAQPage />} />
         </Routes>
       </main>
       {!isAdminPage && <Footer />}
+      {!isAdminPage && <FeedbackWidget />}
       <ToastContainer
         position="top-right"
         autoClose={3000}

@@ -76,6 +76,54 @@ app.use('/api/duitku', duitkuRoutes);
 app.use('/api/digiflazz', digiflazzRoutes);
 
 // ========================================
+// SITEMAP.XML — Dinamis dari DB games
+// ========================================
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const { pool } = require('./config/database');
+    const BASE_URL = 'https://segawontopup.net';
+    const today = new Date().toISOString().split('T')[0];
+
+    const result = await pool.query(
+      `SELECT slug, updated_at FROM games WHERE is_active = true ORDER BY sort_order ASC`
+    );
+
+    const staticUrls = [
+      { loc: '/',              priority: '1.0', changefreq: 'daily'   },
+      { loc: '/cek-transaksi', priority: '0.5', changefreq: 'monthly' },
+      { loc: '/pascabayar',    priority: '0.6', changefreq: 'monthly' },
+      { loc: '/faq',           priority: '0.5', changefreq: 'monthly' },
+    ];
+
+    const gameUrls = result.rows.map(g => ({
+      loc:        `/order/${g.slug}`,
+      priority:   '0.9',
+      changefreq: 'weekly',
+      lastmod:    g.updated_at ? g.updated_at.toISOString().split('T')[0] : today,
+    }));
+
+    const allUrls = [...staticUrls, ...gameUrls];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allUrls.map(u => `  <url>
+    <loc>${BASE_URL}${u.loc}</loc>
+    <lastmod>${u.lastmod || today}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.header('Cache-Control', 'public, max-age=3600'); // cache 1 jam
+    res.send(xml);
+  } catch (err) {
+    console.error('Sitemap error:', err);
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
+// ========================================
 // ROOT ENDPOINT
 // ========================================
 app.get('/', (req, res) => {

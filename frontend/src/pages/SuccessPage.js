@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import './SuccessPage.css';
+import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 const CODE_PRODUCT_TYPES = ['voucher_code', 'token_pln'];
@@ -123,6 +124,12 @@ export default function SuccessPage() {
   const timedOut  = !polling && isCode && !ready && pollCount >= MAX_POLLS;
 
   return (
+    <>
+      <Helmet>
+        <title>Pembayaran Berhasil - Segawon Topup</title>
+        <meta name="description" content="Transaksi top up game kamu berhasil diproses di Segawon Topup." />
+        <link rel="canonical" href="https://segawontopup.net/success" />
+      </Helmet>
     <div className="sp-page">
       {/* background blobs */}
       <div className="sp-blob sp-blob-1"/>
@@ -298,5 +305,6 @@ export default function SuccessPage() {
 
       </div>
     </div>
+    </>
   );
 }

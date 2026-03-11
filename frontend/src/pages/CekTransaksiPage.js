@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import './CekTransaksiPage.css';
+import { Helmet } from 'react-helmet-async';
 
 const API_URL   = process.env.REACT_APP_API_URL  || '';
 const WA_NUMBER = process.env.REACT_APP_WHATSAPP || '';
@@ -196,6 +197,12 @@ function CekTransaksiPage() {
   const payStatus   = order ? (PAYMENT_STATUS_CONFIG[order.payment?.status] || PAYMENT_STATUS_CONFIG.pending) : null;
 
   return (
+    <>
+      <Helmet>
+        <title>Cek Status Transaksi - Segawon Topup</title>
+        <meta name="description" content="Cek status transaksi top up game kamu di Segawon Topup. Masukkan nomor order untuk melihat status pembayaran dan pengiriman." />
+        <link rel="canonical" href="https://segawontopup.net/cek-transaksi" />
+      </Helmet>
     <div className="ct-page">
       <div className="ct-blob ct-blob-1" />
       <div className="ct-blob ct-blob-2" />
@@ -369,6 +376,7 @@ function CekTransaksiPage() {
         <PaymentModal order={order} onClose={() => setShowModal(false)} />
       )}
     </div>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PascabayarPage.css';
+import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
@@ -342,6 +343,12 @@ function PascabayarPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
+    <>
+      <Helmet>
+        <title>Internet Pascabayar - Segawon Topup</title>
+        <meta name="description" content="Bayar tagihan internet pascabayar dengan mudah di Segawon Topup. Proses cepat, aman, dan terpercaya." />
+        <link rel="canonical" href="https://segawontopup.net/pascabayar" />
+      </Helmet>
     <div className="pb-page">
 
       {/* ── Header Banner ──────────────────────────────────────────────────── */}
@@ -815,6 +822,7 @@ function PascabayarPage() {
 
       </div>
     </div>
+    </>
   );
 }
 

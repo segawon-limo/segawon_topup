@@ -200,6 +200,65 @@ function HomePage() {
         </div>
       </section> */}
 
+      {/* ── Internet Pascabayar Section ────────────────────────────────── */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-10">
+
+              {/* Left: Text */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
+                  🌐 Internet Pascabayar
+                </div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                  Bayar Tagihan Internet<br />
+                  <span className="text-blue-600">Lebih Mudah & Cepat</span>
+                </h2>
+                <p className="text-gray-500 mb-6 leading-relaxed">
+                  Bayar tagihan internet IndiHome, MyRepublic, XL Home, CBN langsung dari satu platform.
+                  Proses instan, tersedia berbagai metode pembayaran.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-6">
+                  <div className="flex items-center gap-2 text-gray-600 text-sm"><span className="text-green-500 font-bold">✓</span> Proses instan</div>
+                  <div className="flex items-center gap-2 text-gray-600 text-sm"><span className="text-green-500 font-bold">✓</span> Tanpa denda keterlambatan</div>
+                  <div className="flex items-center gap-2 text-gray-600 text-sm"><span className="text-green-500 font-bold">✓</span> Tersedia voucher diskon</div>
+                </div>
+                <Link
+                  to="/pascabayar"
+                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  🌐 Bayar Tagihan Sekarang
+                </Link>
+              </div>
+
+              {/* Right: Provider cards */}
+              <div className="flex-shrink-0 grid grid-cols-2 gap-3 w-full max-w-xs">
+                {[
+                  { name: 'IndiHome',    logo: '/images/pascabayar/indihome-logo.png',    color: '#e67e22' },
+                  { name: 'MyRepublic',  logo: '/images/pascabayar/myrepublic-logo.png',  color: '#e74c3c' },
+                  { name: 'XL Home',     logo: '/images/pascabayar/xlhome-logo.png',      color: '#2980b9' },
+                  { name: 'CBN',         logo: '/images/pascabayar/cbn-logo.png',         color: '#27ae60' },
+                ].map(p => (
+                  <Link
+                    key={p.name}
+                    to="/pascabayar"
+                    className="bg-white rounded-xl p-4 flex flex-col items-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-gray-100"
+                  >
+                    <img src={p.logo} alt={p.name}
+                      className="h-10 object-contain"
+                      onError={e => { e.target.style.display='none'; }}
+                    />
+                    <span className="text-xs font-semibold text-gray-700">{p.name}</span>
+                  </Link>
+                ))}
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">

@@ -942,8 +942,12 @@ function OrderPage() {
               {/* Step 1: Choose Product */}
               <div className="form-section">
                 <h2>1. Pilih Nominal</h2>
-                <div className="products-grid">
-                  {products.map(product => {
+                {(() => {
+                  const bundleProducts  = products.filter(p => p.section === 'bundle');
+                  const generalProducts = products.filter(p => p.section !== 'bundle');
+                  const hasSections     = bundleProducts.length > 0;
+
+                  const renderGrid = (list) => list.map(product => {
                     const isOos = product.seller_available === false;
                     const hasDiscount = product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price);
                     return (
@@ -986,8 +990,25 @@ function OrderPage() {
                       </div>
                     </div>
                     );
-                  })}
-                </div>
+                  });
+
+                  if (!hasSections) {
+                    return <div className="products-grid">{renderGrid(generalProducts)}</div>;
+                  }
+
+                  return (
+                    <>
+                      <div className="products-section-label">{game?.section_bundle_label  || '🎁 Bundle & Membership'}</div>
+                      <div className="products-grid products-grid--bundle">
+                        {renderGrid(bundleProducts)}
+                      </div>
+                      <div className="products-section-label">{game?.section_general_label || '💎 Diamond & Top Up'}</div>
+                      <div className="products-grid">
+                        {renderGrid(generalProducts)}
+                      </div>
+                    </>
+                  );
+                })()}
                 {errors.product && <div className="error">{errors.product}</div>}
               </div>
 

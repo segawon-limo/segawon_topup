@@ -508,15 +508,21 @@ function PascabayarPage() {
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       placeholder="email@example.com"
-                      className={touched.customerEmail && errors.customerEmail ? 'error' : ''}
-                      style={{ paddingRight: emailValidating ? '36px' : undefined }}
+                      className={touched.customerEmail && errors.customerEmail ? 'error' : (touched.customerEmail && !errors.customerEmail && !emailValidating && formData.customerEmail ? 'valid' : '')}
+                      style={{ paddingRight: (emailValidating || (touched.customerEmail && !errors.customerEmail && !emailValidating && formData.customerEmail)) ? '36px' : undefined }}
                     />
                     {emailValidating && (
                       <span style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#9ca3af' }}>⏳</span>
                     )}
+                    {!emailValidating && touched.customerEmail && !errors.customerEmail && formData.customerEmail && (
+                      <span style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'16px', color:'#38a169' }}>✓</span>
+                    )}
                   </div>
                   {touched.customerEmail && errors.customerEmail && (
                     <div className="error">{errors.customerEmail}</div>
+                  )}
+                  {!emailValidating && touched.customerEmail && !errors.customerEmail && formData.customerEmail && (
+                    <div style={{ fontSize:'12px', color:'#38a169', marginTop:'4px' }}>✓ Email valid</div>
                   )}
                   <small>Invoice akan dikirim ke email ini</small>
                 </div>

@@ -79,6 +79,38 @@ export default function SuccessPage() {
     ? 'Masukkan token ini di meteran listrik atau aplikasi PLN Mobile'
     : 'Di Steam: klik nama profil → Redeem a Steam Gift Card or Wallet Code';
 
+  // ── Parse SN Token PLN ───────────────────────────────────
+  // Format Digiflazz: TOKEN/NAMA_PELANGGAN/TARIF/DAYAva/KWH
+  // Contoh: 7233-2511-2857-7999-2172/PT.-PERMAI-ABADI-SENTOSA/R1/2200VA/13,2Kwh
+  const parsePlnSn = (sn) => {
+    if (!sn) return { token: sn, nama: null, tarif: null, daya: null, kwh: null };
+    const tokenMatch = sn.match(/^(\d{4}-\d{4}-\d{4}-\d{4}-\d{4})/);
+    if (!tokenMatch) return { token: sn, nama: null, tarif: null, daya: null, kwh: null };
+    const token = tokenMatch[1];
+    const rest  = sn.slice(token.length + 1); // skip leading /
+    const parts = rest.split('/');
+    if (parts.length < 3) return { token, nama: parts[0] || null, tarif: null, daya: null, kwh: null };
+    const kwh       = parts[parts.length - 1];
+    const dayaRaw   = parts[parts.length - 2]; // e.g. "2200VA"
+    const tarif     = parts[parts.length - 3]; // e.g. "R1"
+    const namaParts = parts.slice(0, parts.length - 3);
+    const nama      = namaParts.join('/');
+    const daya      = dayaRaw.replace(/VA$/i, '') + ' VA';
+    return { token, nama, tarif, daya, kwh };
+  };
+
+  // copy hanya token PLN (bukan full SN)
+  const copyPln = async (token) => {
+    try { await navigator.clipboard.writeText(token); }
+    catch {
+      const el = document.createElement('textarea');
+      el.value = token;
+      document.body.appendChild(el); el.select();
+      document.execCommand('copy'); document.body.removeChild(el);
+    }
+    setCopied(true); setTimeout(() => setCopied(false), 2500);
+  };
+
   // ── loading ───────────────────────────────────────────────
   if (loading) return (
     <div className="sp-page">
@@ -144,7 +176,48 @@ export default function SuccessPage() {
             )}
 
             {/* ready */}
-            {ready && (
+            {ready && order.productType === 'token_pln' ? (() => {
+              const pln = parsePlnSn(order.serialNumber);
+              return (
+                <div className="sp-code-ready">
+                  <div className="sp-code-label">TOKEN PLN</div>
+
+                  {/* Token utama — yang dicopy */}
+                  <div className="sp-code-value" onClick={() => copyPln(pln.token)} title="Klik untuk menyalin token">
+                    {pln.token}
+                  </div>
+                  <button className={`sp-btn-copy ${copied ? 'copied' : ''}`} onClick={() => copyPln(pln.token)}>
+                    {copied ? '✓ Tersalin!' : '📋 Salin Token'}
+                  </button>
+
+                  {/* Info detail pelanggan */}
+                  {pln.nama && (
+                    <div className="sp-pln-info">
+                      {pln.nama && (
+                        <div className="sp-pln-row">
+                          <span className="sp-pln-key">Nama Pelanggan</span>
+                          <span className="sp-pln-val">{pln.nama}</span>
+                        </div>
+                      )}
+                      {pln.tarif && pln.daya && (
+                        <div className="sp-pln-row">
+                          <span className="sp-pln-key">Tarif / Daya</span>
+                          <span className="sp-pln-val">{pln.tarif} / {pln.daya}</span>
+                        </div>
+                      )}
+                      {pln.kwh && (
+                        <div className="sp-pln-row">
+                          <span className="sp-pln-key">Jumlah kWh</span>
+                          <span className="sp-pln-val">{pln.kwh}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="sp-code-hint">Masukkan token di meteran listrik atau aplikasi PLN Mobile</p>
+                </div>
+              );
+            })() : ready && (
               <div className="sp-code-ready">
                 <div className="sp-code-label">{codeLabel(order.productType)}</div>
                 <div className="sp-code-value" onClick={copy} title="Klik untuk menyalin">
