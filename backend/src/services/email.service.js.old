@@ -30,7 +30,8 @@ const generateInvoiceHTML = async (orderData) => {
     paymentUrl,
     qrUrl,
     vaNumber,
-    expiryTime
+    expiryTime,
+    productType
   } = orderData;
 
   // Fallback nama: pakai bagian sebelum @ dari email jika nama kosong
@@ -53,6 +54,7 @@ const generateInvoiceHTML = async (orderData) => {
     'BT': 'Permata Bank Virtual Account',
     'SA': 'ShopeePay',
     'OV': 'OVO',
+    'DA': 'DANA',
     'SQ': 'QRIS',
   };
 
