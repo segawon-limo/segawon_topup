@@ -30,7 +30,8 @@ const generateInvoiceHTML = async (orderData) => {
     paymentUrl,
     qrUrl,
     vaNumber,
-    expiryTime
+    expiryTime,
+    productType
   } = orderData;
 
   // Fallback nama: pakai bagian sebelum @ dari email jika nama kosong
