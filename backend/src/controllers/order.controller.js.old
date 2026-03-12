@@ -74,7 +74,8 @@ exports.getProducts = async (req, res) => {
 
     // Get game — include category, product_type & form_config
     const gameResult = await pool.query(
-      `SELECT id, name, slug, icon_url, category, product_type, form_config
+      `SELECT id, name, slug, icon_url, category, product_type, form_config,
+              section_general_label, section_bundle_label
        FROM games WHERE slug = $1 AND is_active = true`,
       [gameSlug]
     );
@@ -95,7 +96,9 @@ exports.getProducts = async (req, res) => {
         p.base_price, p.selling_price, p.profit_price,
         p.is_active, p.sort_order, p.seller_available,
         p.compare_price, p.compare_percentage,
-        g.icon_product_url
+        p.section,
+        g.icon_product_url,
+        g.icon_product_bundle_url
       FROM products p
       JOIN games g ON g.id = p.game_id
       WHERE p.game_id = $1 AND p.is_active = true
@@ -111,7 +114,9 @@ exports.getProducts = async (req, res) => {
         icon_url:     game.icon_url,
         category:     game.category     || 'games',
         product_type: game.product_type || 'topup_game',
-        form_config:  game.form_config  || null,  // JSONB dari DB, null jika belum diisi
+        form_config:  game.form_config  || null,
+        section_general_label: game.section_general_label || null,
+        section_bundle_label:  game.section_bundle_label  || null,
       },
       products: productsResult.rows.map(p => ({
         id:               p.id,
@@ -120,7 +125,10 @@ exports.getProducts = async (req, res) => {
         sku:              p.sku,
         price:            parseFloat(p.selling_price),
         displayPrice:     `Rp ${parseFloat(p.selling_price).toLocaleString('id-ID')}`,
-        icon_product_url: p.icon_product_url || null,
+        section:          p.section || null,
+        icon_product_url: p.section === 'bundle'
+          ? (p.icon_product_bundle_url || p.icon_product_url || null)
+          : (p.icon_product_url || null),
         seller_available: p.seller_available !== false,
         compare_price:      p.compare_price ? parseFloat(p.compare_price) : null,
         compare_percentage: p.compare_percentage || null,

@@ -147,7 +147,7 @@ function PaymentPage() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
+  
   const downloadQRIS = () => {
     if (!qrCodeDataUrl) return;
     const orderNumber = paymentData?.order?.orderNumber || 'qris';
@@ -318,7 +318,9 @@ function PaymentPage() {
                   </div>
                   {paymentData.gameUserId && !paymentData.isPascabayar && (
                     <div className="detail-row">
-                      <span className="detail-label">Game ID</span>
+                      <span className="detail-label">
+                        {paymentData.gameSlug === 'token-pln' ? 'No. Meter' : 'Game ID'}
+                      </span>
                       <span className="detail-value">
                         {paymentData.gameUserId}
                         {paymentData.gameUserTag ? `#${paymentData.gameUserTag}` : ''}

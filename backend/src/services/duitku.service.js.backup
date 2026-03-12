@@ -322,6 +322,7 @@ class DuitkuService {
       'BV': 'BV', 'B1': 'B1', 'DM': 'DM', 'BT': 'BT',
       'SA': 'SA', // ShopeePay App
       'OV': 'OV', // OVO
+      'SQ': 'SQ', // QRIS Nusapay
     };
 
     if (channel) {
@@ -339,11 +340,11 @@ class DuitkuService {
     // Fee structure based on Duitku (approximate)
     // BETTER: Use actual fee from getPaymentMethods() response
     const feeStructure = {
-      'BC': { percentage: 0.7, fixed: 1000 },  // BCA VA
-      'M2': { percentage: 0.7, fixed: 1000 },  // Mandiri VA
-      'I1': { percentage: 0.7, fixed: 1000 },  // BNI VA
-      'BR': { percentage: 0.7, fixed: 1000 },  // BRI VA
-      'BT': { percentage: 0.7, fixed: 0 },     // QRIS
+      'BC': { percentage: 0, fixed: 3000 },  // BCA VA
+      'M2': { percentage: 0, fixed: 4000 },  // Mandiri VA
+      'I1': { percentage: 0, fixed: 3000 },  // BNI VA
+      'BR': { percentage: 0, fixed: 3000 },  // BRI VA
+      'SQ': { percentage: 0.7, fixed: 0 },     // QRIS
       'OV': { percentage: 3.03, fixed: 0 },     // OVO/GoPay
       'SA': { percentage: 2.0, fixed: 0 },     // ShopeePay
       'DA': { percentage: 2.0, fixed: 0 }      // DANA

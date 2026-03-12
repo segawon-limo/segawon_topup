@@ -499,7 +499,7 @@ const generateInvoiceHTML = async (orderData) => {
         <span class="info-value">${productName}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">User ID</span>
+        <span class="info-label">${productType === 'token_pln' ? 'No. Meter' : 'User ID'}</span>
         <span class="info-value">${userId}${zoneId ? ' (' + zoneId + ')' : ''}</span>
       </div>
     </div>
@@ -702,7 +702,7 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}
   <div class="info-box">
     <strong>Detail Pesanan:</strong><br>
     Produk: ${orderData.productName}<br>
-    User ID: ${orderData.userId}<br>
+    ${orderData.productType === 'token_pln' ? 'No. Meter' : 'User ID'}: ${orderData.userId}<br>
     Total: Rp ${orderData.totalAmount.toLocaleString('id-ID')}
   </div>
   <p>Terima kasih! 🎮</p>

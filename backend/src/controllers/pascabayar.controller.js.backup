@@ -78,6 +78,14 @@ const getTodayMidnight = () => {
 };
 
 
+// Map buyer_sku_code → nama provider yang ramah
+const PROVIDER_NAMES = {
+  'MYRPB': 'MyRepublic',
+  'SIHPB': 'IndiHome',
+  'XLHPB': 'XL Home',
+  'CBNPB': 'CBN',
+};
+
 /**
  * POST /api/pascabayar/inquiry
  * Body: { buyer_sku_code, customer_no }
@@ -401,6 +409,7 @@ exports.pay = async (req, res) => {
       JSON.stringify({
         type:           'pascabayar',
         buyer_sku_code: inquiry.buyer_sku_code,
+        provider_name:  PROVIDER_NAMES[inquiry.buyer_sku_code] || inquiry.buyer_sku_code,
         customer_no:    inquiry.customer_no,
         ref_id,                        // ← dipakai webhook untuk panggil Digiflazz
         periode:        inquiry.periode,
@@ -430,7 +439,7 @@ exports.pay = async (req, res) => {
         merchantOrderId: orderNumber,
         paymentAmount:   totalAmount,
         paymentMethod:   payment_method,
-        productDetails:  `Tagihan ${inquiry.buyer_sku_code.toUpperCase()} - ${inquiry.periode || inquiry.customer_no}`,
+        productDetails:  `Tagihan ${PROVIDER_NAMES[inquiry.buyer_sku_code] || inquiry.buyer_sku_code} - ${inquiry.periode || inquiry.customer_no}`,
         email:           customer_email,
         customerVaName:  customer_name || inquiry.customer_name || customer_email,
         phoneNumber:     customer_phone || '08000000000',
@@ -499,7 +508,7 @@ exports.pay = async (req, res) => {
         orderNumber:     orderNumber,
         customerName:    customer_name || inquiry.customer_name || customer_email,
         customerEmail:   customer_email,
-        productName:     `Tagihan ${inquiry.buyer_sku_code.toUpperCase()} — ${inquiry.customer_no}`,
+        productName:     `Tagihan ${PROVIDER_NAMES[inquiry.buyer_sku_code] || inquiry.buyer_sku_code} — ${inquiry.customer_no}`,
         userId:          inquiry.customer_no,
         zoneId:          null,
         amount:          inquiry.selling_price || 0,

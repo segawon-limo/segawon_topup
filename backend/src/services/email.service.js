@@ -53,6 +53,7 @@ const generateInvoiceHTML = async (orderData) => {
     'BT': 'Permata Bank Virtual Account',
     'SA': 'ShopeePay',
     'OV': 'OVO',
+    'DA': 'DANA',
     'SQ': 'QRIS',
   };
 

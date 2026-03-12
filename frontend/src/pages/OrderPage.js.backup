@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './OrderPage.css';
+import { Helmet } from 'react-helmet-async';
+
+
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
@@ -92,6 +95,7 @@ function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
+  // ── SEO: dynamic meta per game page
   // ── Derived dari data API ─────────────────────────────────────
   const productType = game?.product_type || 'topup_game';
 
@@ -883,6 +887,15 @@ function OrderPage() {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>{game ? `Top Up ${game.name} - Segawon Topup` : 'Top Up Game - Segawon Topup'}</title>
+        <meta name="description" content={game ? `Top up ${game.name} murah dan cepat di Segawon Topup. Proses otomatis 24/7, harga terjangkau, banyak metode pembayaran.` : 'Top up game murah dan cepat.'} />
+        <link rel="canonical" href={game ? `https://segawontopup.net/order/${game.slug}` : 'https://segawontopup.net'} />
+        <meta property="og:title" content={game ? `Top Up ${game.name} - Segawon Topup` : 'Top Up Game - Segawon Topup'} />
+        <meta property="og:description" content={game ? `Top up ${game.name} murah dan cepat di Segawon Topup.` : 'Top up game murah dan cepat.'} />
+        <meta property="og:url" content={game ? `https://segawontopup.net/order/${game.slug}` : 'https://segawontopup.net'} />
+      </Helmet>
     <div className="order-page">
       {/* Game Header Image */}
       {/* <div 
@@ -1558,6 +1571,7 @@ function OrderPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

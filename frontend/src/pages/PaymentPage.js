@@ -147,7 +147,7 @@ function PaymentPage() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-  
+
   const downloadQRIS = () => {
     if (!qrCodeDataUrl) return;
     const orderNumber = paymentData?.order?.orderNumber || 'qris';
@@ -174,6 +174,7 @@ function PaymentPage() {
       'BT': 'Permata Bank Virtual Account',
       'SA': 'ShopeePay',
       'OV': 'OVO',
+      'DA': 'DANA',
       'SQ': 'QRIS',
       // legacy keys
       'va_bri':     'BRI Virtual Account',
@@ -251,7 +252,7 @@ function PaymentPage() {
   // Determine payment type
   const isQRIS = paymentData?.payment?.method === 'SQ' || (paymentData?.payment?.qrString && !paymentData?.payment?.vaNumber);
   const isVA = paymentData?.payment?.vaNumber && !isQRIS;
-  const isEwallet = ['OV', 'SA'].includes(paymentData?.payment?.method);
+  const isEwallet = ['OV', 'SA', 'DA'].includes(paymentData?.payment?.method);
   const ewalletPaymentUrl = paymentData?.payment?.method === 'OV'
     ? getOVOConfirmUrl(paymentData?.payment?.url)
     : paymentData?.payment?.url;
@@ -535,6 +536,15 @@ function PaymentPage() {
                   <button className="btn-open-payment btn-ovo" onClick={openOvoPopup}>
                     💜 Bayar dengan OVO
                   </button>
+                ) : paymentData.payment.method === 'DA' ? (
+                  <a
+                    href={ewalletPaymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-open-payment btn-dana"
+                  >
+                    💙 Bayar dengan DANA
+                  </a>
                 ) : (
                   <a
                     href={ewalletPaymentUrl}
@@ -556,6 +566,15 @@ function PaymentPage() {
                       <li>Pilih: <strong>OVO Cash</strong>, <strong>OVO Points</strong>, atau <strong>Split</strong></li>
                       <li>Periksa detail ({formatRupiah(paymentData.total)}) lalu klik <strong>"Bayar"</strong></li>
                       <li>Selesaikan dalam <strong>60 detik</strong> setelah notifikasi muncul</li>
+                    </ol>
+                  ) : paymentData.payment.method === 'DA' ? (
+                    <ol>
+                      <li>Klik tombol <strong>"Bayar dengan DANA"</strong> di atas</li>
+                      <li>Anda akan diarahkan ke halaman DANA</li>
+                      <li>Masukkan nomor HP yang terdaftar di akun DANA kamu</li>
+                      <li>Buka aplikasi DANA — notifikasi pembayaran akan muncul</li>
+                      <li>Periksa detail ({formatRupiah(paymentData.total)}) lalu konfirmasi dengan PIN</li>
+                      <li>Tunggu notifikasi pembayaran berhasil</li>
                     </ol>
                   ) : (
                     <ol>

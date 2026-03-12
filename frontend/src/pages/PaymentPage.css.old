@@ -169,6 +169,33 @@
   background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
 }
 
+.btn-download-qris {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 12px auto 4px;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+
+.btn-download-qris:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(26, 115, 232, 0.4);
+}
+
+.btn-download-qris.downloaded {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
 /* ========== QRIS ========== */
 .qris-container {
   text-align: center;

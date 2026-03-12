@@ -322,6 +322,7 @@ class DuitkuService {
       'BV': 'BV', 'B1': 'B1', 'DM': 'DM', 'BT': 'BT',
       'SA': 'SA', // ShopeePay App
       'OV': 'OV', // OVO
+      'DA': 'DA', // DANA
       'SQ': 'SQ', // QRIS Nusapay
     };
 
@@ -346,8 +347,8 @@ class DuitkuService {
       'BR': { percentage: 0, fixed: 3000 },  // BRI VA
       'SQ': { percentage: 0.7, fixed: 0 },     // QRIS
       'OV': { percentage: 3.03, fixed: 0 },     // OVO/GoPay
-      'SA': { percentage: 2.0, fixed: 0 },     // ShopeePay
-      'DA': { percentage: 2.0, fixed: 0 }      // DANA
+      'SA': { percentage: 2.0,  fixed: 0 },     // ShopeePay
+      'DA': { percentage: 1.67, fixed: 0 },     // DANA
     };
 
     const fee = feeStructure[paymentMethodCode] || { percentage: 0.7, fixed: 1000 };

@@ -17,6 +17,7 @@ const paymentLogos = {
   'SA': '/images/shopeepay-logo.png',
   'OV': '/images/ovo-logo.png',
   'SQ': '/images/qris-logo.png',
+  'DA': '/images/dana-logo.png',
 };
 
 const VA_BANKS = [
@@ -33,6 +34,7 @@ const VA_BANKS = [
 const EWALLET_METHODS = [
   { code: 'OV', name: 'OVO',       logo: 'OV', feeValue: 3.03 },
   { code: 'SA', name: 'ShopeePay', logo: 'SA', feeValue: 2 },
+  { code: 'DA', name: 'DANA',      logo: 'DA', feeValue: 1.67 },
 ];
 
 const QRIS_METHODS = [
@@ -110,6 +112,7 @@ function PascabayarPage() {
     if (method === 'SQ') return Math.round(priceAfterDiscount / 0.993) - priceAfterDiscount;
     if (method === 'SA') return Math.round(priceAfterDiscount / 0.98)  - priceAfterDiscount;
     if (method === 'OV') return Math.round(priceAfterDiscount / 0.9697) - priceAfterDiscount;
+    if (method === 'DA') return Math.round(priceAfterDiscount / 0.9833) - priceAfterDiscount;
     return 3000;
   };
 
