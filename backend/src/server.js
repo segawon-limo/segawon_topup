@@ -124,6 +124,33 @@ ${allUrls.map(u => `  <url>
 });
 
 // ========================================
+// SHORT LINK REDIRECT
+// ========================================
+app.get('/r/:code', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const shortlinkService = require('./services/shortlink.service');
+    const longUrl = await shortlinkService.resolveShortLink(code);
+
+    if (!longUrl) {
+      return res.status(404).send(`
+        <html><body style="font-family:sans-serif;text-align:center;padding:40px;">
+          <h2>Link tidak ditemukan atau sudah kadaluarsa</h2>
+          <p>Silakan buka halaman order Anda untuk mendapatkan link pembayaran baru.</p>
+          <a href="${process.env.FRONTEND_URL || 'https://segawontopup.net'}">Kembali ke Segawon Topup</a>
+        </body></html>
+      `);
+    }
+
+    // 302 redirect ke URL asli e-wallet
+    res.redirect(302, longUrl);
+  } catch (err) {
+    console.error('[ShortLink] Redirect error:', err);
+    res.status(500).send('Terjadi kesalahan, silakan coba lagi.');
+  }
+});
+
+// ========================================
 // ROOT ENDPOINT
 // ========================================
 app.get('/', (req, res) => {
