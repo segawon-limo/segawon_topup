@@ -64,4 +64,12 @@ router.patch ('/vouchers/:id/toggle',adminVoucherController.toggleVoucher);
 router.delete('/vouchers/:id',       adminVoucherController.deleteVoucher);
 
 // ══════════════════════════════════════════════════════════════
+// FEEDBACK — List & Delete
+// ══════════════════════════════════════════════════════════════
+const feedbackController = require('../controllers/feedback.controller');
+
+router.get   ('/feedbacks',     feedbackController.getFeedbacks);
+router.delete('/feedbacks/:id', feedbackController.deleteFeedback);
+
+// ══════════════════════════════════════════════════════════════
 module.exports = router;

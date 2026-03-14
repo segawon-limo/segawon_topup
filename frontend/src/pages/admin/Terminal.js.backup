@@ -26,6 +26,8 @@ export default function AdminTerminal() {
   const [output,       setOutput]       = useState([{ line:'Menghubungkan ke server...', type:'system' }]);
   const [confirmCmd,   setConfirmCmd]   = useState(null);
   const [inputPanel,   setInputPanel]   = useState(null);
+  const [deployCountdown, setDeployCountdown] = useState(null); // null | number
+  const countdownRef = useRef(null);
 
   // Collapsible state: semua group terbuka by default
   const [openGroups,   setOpenGroups]   = useState({});
@@ -115,6 +117,25 @@ export default function AdminTerminal() {
           append('─'.repeat(55), 'divider');
           append(msg.success ? '✓ Selesai (exit 0)' : `✗ Exit code: ${msg.code}`, msg.success ? 'success' : 'error');
           append('', 'stdout');
+          break;
+        case 'deploy_reload_warning':
+          setRunning(null);
+          append('─'.repeat(55), 'divider');
+          append('✅ Build & swap selesai! Backend akan direload dalam 3 detik...', 'success');
+          append('⚠️  Koneksi akan terputus sebentar — halaman akan otomatis refresh.', 'system');
+          append('─'.repeat(55), 'divider');
+          // Mulai countdown 4 detik lalu refresh
+          setDeployCountdown(4);
+          countdownRef.current = setInterval(() => {
+            setDeployCountdown(prev => {
+              if (prev <= 1) {
+                clearInterval(countdownRef.current);
+                window.location.reload();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
           break;
         case 'error':
           setRunning(null);
@@ -209,6 +230,14 @@ export default function AdminTerminal() {
 
   return (
     <div className="terminal-page">
+
+      {/* Deploy Countdown Banner */}
+      {deployCountdown !== null && (
+        <div className="term-deploy-banner">
+          <span className="term-deploy-spinner">⚙️</span>
+          <span>Backend sedang direload... Halaman otomatis refresh dalam <strong>{deployCountdown}</strong> detik.</span>
+        </div>
+      )}
 
       {/* Confirm Modal */}
       {confirmCmd && (

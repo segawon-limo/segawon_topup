@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PromoPopup from '../components/PromoPopup';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaGamepad, FaRocket, FaClock, FaShieldAlt } from 'react-icons/fa';
@@ -19,6 +20,8 @@ function HomePage() {
   const [grouped, setGrouped]   = useState({});
   const [games, setGames]       = useState([]);   // flat list (kompatibel lama)
   const [loading, setLoading]   = useState(true);
+  const [promoVoucher, setPromoVoucher] = useState(null);
+  const [showPromo, setShowPromo]       = useState(false);
 
   useEffect(() => {
     fetchGames();
@@ -34,6 +37,29 @@ function HomePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Promo popup — tampil 1x per session, delay 1 detik
+  useEffect(() => {
+    const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
+    const seen = sessionStorage.getItem('promo_popup_seen');
+    if (seen) return;
+    const timer = setTimeout(async () => {
+      try {
+        const res  = await fetch(`${API_URL}/api/promo-popup`);
+        const data = await res.json();
+        if (data.success && data.voucher) {
+          setPromoVoucher(data.voucher);
+          setShowPromo(true);
+        }
+      } catch (e) { /* silent */ }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleClosePromo = () => {
+    setShowPromo(false);
+    sessionStorage.setItem('promo_popup_seen', '1');
   };
 
   return (
@@ -55,7 +81,10 @@ function HomePage() {
           "contactPoint": { "@type": "ContactPoint", "contactType": "customer service", "availableLanguage": "Indonesian" }
         })}</script>
       </Helmet>
-    <div className="min-h-screen">
+      {showPromo && promoVoucher && (
+        <PromoPopup voucher={promoVoucher} onClose={handleClosePromo} />
+      )}
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
         <div className="container mx-auto px-4">
@@ -218,7 +247,7 @@ function HomePage() {
           )}
         </div>
       </section> */}
-
+      
       {/* ── Internet Pascabayar Section ────────────────────────────────── */}
       <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="container mx-auto px-4">

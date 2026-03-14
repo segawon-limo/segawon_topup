@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useIdleTimeout from '../../hooks/useIdleTimeout';
 import './Admin.css';
 import './Catalog.css';
 import AdminPageHeader from '../../components/AdminPageHeader';
@@ -763,6 +764,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
 // ══════════════════════════════════════════════════════════════
 function AdminCatalog() {
   const navigate = useNavigate();
+  useIdleTimeout();
   const [tab,      setTab]      = useState('games');   // 'games' | 'products'
   const [games,    setGames]    = useState([]);
   const [products, setProducts] = useState([]);

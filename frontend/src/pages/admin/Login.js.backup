@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './Admin.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
 function AdminLogin() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const idleLogout = location.state?.reason === 'idle';
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,12 +48,7 @@ function AdminLogin() {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          {idleLogout && (
-          <div className="error-message" style={{background:'#fef3c7',color:'#92400e',borderColor:'#f59e0b'}}>
-            ⏰ Sesi berakhir karena tidak ada aktivitas selama 30 menit.
-          </div>
-        )}
-        {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
           
           <div className="form-group">
             <label>Username</label>

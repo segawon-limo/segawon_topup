@@ -6,7 +6,8 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/order.controller');
-const voucherController = require('../controllers/voucher.controller');
+const voucherController      = require('../controllers/voucher.controller');
+const adminVoucherController = require('../controllers/admin.voucher.controller');
 
 // ========================================
 // HEALTH CHECK
@@ -47,6 +48,9 @@ router.post('/vouchers/validate', voucherController.validateVoucher);
 
 // Get active vouchers (optional)
 router.get('/vouchers/active', voucherController.getActiveVouchers);
+
+// Promo popup — voucher yang di-set tampil di homepage
+router.get('/promo-popup', adminVoucherController.getPromoPopup);
 
 // ========================================
 // ORDER MANAGEMENT

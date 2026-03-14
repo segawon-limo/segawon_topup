@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useIdleTimeout from '../../hooks/useIdleTimeout';
 import './Admin.css';
 import AdminPageHeader from '../../components/AdminPageHeader';
 
@@ -192,6 +193,7 @@ function OrderDetailModal({ order, onClose, onRetry, retrying }) {
 // ── Main ──────────────────────────────────────────────────────
 function AdminOrders() {
   const navigate = useNavigate();
+  useIdleTimeout();
   const [orders,       setOrders]       = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [retrying,     setRetrying]     = useState(null);

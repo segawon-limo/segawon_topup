@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useIdleTimeout from '../../hooks/useIdleTimeout';
 import './Admin.css';
 import './Catalog.css';
 import AdminPageHeader from '../../components/AdminPageHeader';
@@ -64,7 +65,7 @@ const EMPTY_FORM = {
   min_purchase: '', max_discount: '',
   usage_limit: '', per_user_limit: '',
   valid_from: '', valid_until: '',
-  is_active: true, is_admin_only: false, description: '',
+  is_active: true, is_admin_only: false, description: '', show_in_popup: false,
 };
 
 function VoucherModal({ voucher, onSave, onClose }) {
@@ -212,6 +213,7 @@ function VoucherModal({ voucher, onSave, onClose }) {
 // ── Main Page ─────────────────────────────────────────────────
 export default function VoucherPage() {
   const navigate   = useNavigate();
+  useIdleTimeout();
   const token      = localStorage.getItem('admin_token');
   const authHeader = { Authorization: `Bearer ${token}` };
 
@@ -265,6 +267,25 @@ export default function VoucherPage() {
     loadVouchers();
   };
 
+
+  const handleTogglePopup = async (v) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const res   = await fetch(`${API_URL}/api/admin/vouchers/${v.id}/toggle-popup`,
+        { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
+      const data  = await res.json();
+      if (data.success) {
+        setVouchers(prev => prev.map(x =>
+          x.id === v.id
+            ? { ...x, show_in_popup: data.voucher.show_in_popup }
+            : { ...x, show_in_popup: false } // matikan yang lain
+        ));
+        showToast(data.voucher.show_in_popup
+          ? `Voucher "${v.code}" ditampilkan di popup homepage`
+          : `Voucher "${v.code}" disembunyikan dari popup`);
+      }
+    } catch { showToast('Gagal toggle popup', 'error'); }
+  };
   const handleToggle = async (v) => {
     try {
       const res  = await fetch(`${API_URL}/api/admin/vouchers/${v.id}/toggle`,
@@ -383,6 +404,7 @@ export default function VoucherPage() {
                     <th>Per User</th>
                     <th>Berlaku</th>
                     <th>Status</th>
+                    <th>Popup</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
@@ -452,6 +474,21 @@ export default function VoucherPage() {
                         </td>
 
                         <td><span className={st.cls}>{st.label}</span></td>
+
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            title={v.show_in_popup ? 'Sembunyikan dari popup' : 'Tampilkan di popup homepage'}
+                            onClick={() => handleTogglePopup(v)}
+                            style={{
+                              background: v.show_in_popup ? '#f59e0b' : '#e2e8f0',
+                              border: 'none', borderRadius: 6, padding: '4px 10px',
+                              cursor: 'pointer', fontSize: 16, lineHeight: 1,
+                              transition: 'background 0.2s'
+                            }}
+                          >
+                            {v.show_in_popup ? '🔔' : '🔕'}
+                          </button>
+                        </td>
 
                         <td>
                           <div className="action-btns">

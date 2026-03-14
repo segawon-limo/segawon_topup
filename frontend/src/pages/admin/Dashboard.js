@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useIdleTimeout from '../../hooks/useIdleTimeout';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
@@ -11,6 +12,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  useIdleTimeout();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState(null);
   const [dailyStats, setDailyStats] = useState([]);
