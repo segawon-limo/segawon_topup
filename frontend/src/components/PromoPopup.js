@@ -76,7 +76,7 @@ export default function PromoPopup({ voucher, onClose }) {
         {(minPurchase || expiry) && (
           <div className="promo-info">
             {minPurchase && <span>{minPurchase}</span>}
-            {expiry      && <span>{expiry}</span>}
+            {/* {expiry      && <span>{expiry}</span>} */}
           </div>
         )}
 
