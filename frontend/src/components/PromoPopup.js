@@ -48,12 +48,12 @@ export default function PromoPopup({ voucher, onClose }) {
           <div className="promo-ticket">
             <div className="ticket-left">
               <div className="ticket-logo-ring">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-                  <circle cx="14" cy="14" r="11" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2"/>
-                  <text x="14" y="18.5" textAnchor="middle" fontSize="9" fontWeight="500" fill="#fff" fontFamily="sans-serif">SG</text>
-                </svg>
+                <img
+                  src="/images/logo/logo-navbar@2x.png"
+                  alt="Segawon Topup"
+                  className="ticket-logo-img"
+                />
               </div>
-              <span className="ticket-logo-name">segawon</span>
             </div>
 
             <div className="ticket-notch-top" />
