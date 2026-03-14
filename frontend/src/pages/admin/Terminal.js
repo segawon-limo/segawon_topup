@@ -33,6 +33,8 @@ export default function AdminTerminal() {
 
   // Collapsible state: semua group terbuka by default
   const [openGroups,   setOpenGroups]   = useState({});
+  const [reconnecting, setReconnecting] = useState(false);
+  const manualReconn   = useRef(false);
 
   const token = localStorage.getItem('admin_token');
 
@@ -44,6 +46,38 @@ export default function AdminTerminal() {
     if (!token) { navigate('/admin/login'); return; }
     connect();
     return () => { wsRef.current?.close(); clearTimeout(reconnTimer.current); };
+  }, []);
+
+  // Manual reconnect
+  function handleManualReconnect() {
+    clearTimeout(reconnTimer.current);
+    manualReconn.current = true;
+    setReconnecting(true);
+    append('── Menghubungkan ulang...', 'system');
+    if (wsRef.current) {
+      try { wsRef.current.close(); } catch(e) {}
+    }
+    setTimeout(() => {
+      manualReconn.current = false;
+      connect();
+    }, 300);
+  }
+
+  // Visibility API — reconnect saat tab aktif kembali jika koneksi putus
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        const ws = wsRef.current;
+        const dead = !ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING;
+        if (dead) {
+          clearTimeout(reconnTimer.current);
+          append('── Tab aktif kembali, menghubungkan ulang...', 'system');
+          connect();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
   // Semua group tertutup by default, buka hanya PM2 pertama kali
@@ -77,6 +111,8 @@ export default function AdminTerminal() {
 
     ws.onopen = () => {
       setConnected(true);
+      setReconnecting(false);
+      manualReconn.current = false;
       ws.send(JSON.stringify({ type:'auth', token }));
     };
 
@@ -84,8 +120,11 @@ export default function AdminTerminal() {
       setConnected(false);
       setAuthed(false);
       setRunning(null);
-      append('── Koneksi terputus. Reconnect dalam 3s...', 'system');
-      reconnTimer.current = setTimeout(connect, 3000);
+      if (!manualReconn.current) {
+        append('── Koneksi terputus. Reconnect dalam 3s...', 'system');
+        setReconnecting(true);
+        reconnTimer.current = setTimeout(connect, 3000);
+      }
     };
 
     ws.onerror = () => append('── WebSocket error', 'error');
@@ -232,7 +271,7 @@ export default function AdminTerminal() {
 
   return (
     <div className="terminal-page">
-
+      
       {/* Deploy Countdown Banner */}
       {deployCountdown !== null && (
         <div className="term-deploy-banner">
@@ -331,8 +370,13 @@ export default function AdminTerminal() {
           <div className="term-status">
             <span className={`status-dot ${connected ? (authed ? 'dot-green' : 'dot-yellow') : 'dot-red'}`} />
             <span className="status-text">
-              {!connected ? 'Disconnected' : !authed ? 'Authenticating...' : 'Connected'}
+              {!connected ? (reconnecting ? 'Reconnecting...' : 'Disconnected') : !authed ? 'Authenticating...' : 'Connected'}
             </span>
+            {!connected && !reconnecting && (
+              <button className="term-reconnect-btn" onClick={handleManualReconnect} title="Hubungkan ulang">
+                ↺ Reconnect
+              </button>
+            )}
           </div>
         </div>
       </div>

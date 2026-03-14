@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useIdleTimeout from '../../hooks/useIdleTimeout';
 import './Terminal.css';
 
 const WS_URL = (() => {
@@ -14,6 +15,7 @@ function stripAnsi(s) { return s.replace(/\x1B\[[0-9;]*[mGKHF]/g, ''); }
 
 export default function AdminTerminal() {
   const navigate     = useNavigate();
+  useIdleTimeout();
   const wsRef        = useRef(null);
   const outputRef    = useRef(null);
   const reconnTimer  = useRef(null);
