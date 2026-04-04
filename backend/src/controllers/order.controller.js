@@ -466,6 +466,7 @@ exports.createOrder = async (req, res) => {
       gameUserId,      // Generic field
       gameZoneId,      // Generic field (optional)
       voucherCode,     // Voucher code
+      voucherSessionToken, // [ADDED] Token reservasi voucher dari frontend
       // Legacy support for Valorant
       riotId,
       riotTag
@@ -513,11 +514,28 @@ exports.createOrder = async (req, res) => {
       });
     }
 
+    // [MOVED UP] Generate order number lebih awal agar bisa dipakai di claimReservation
+    const rand = Math.random().toString(36).substring(2, 4).toUpperCase();
+    const tail = Date.now().toString().slice(-3);
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const orderNumber = `SGW-${date}-${rand}${tail}`;
+
     // NEW: Validate voucher if provided - WITH PROFIT PRICE
     let voucherDiscount = 0;
     let validatedVoucherCode = null;
     
     if (voucherCode && voucherCode.trim()) {
+      // [ADDED] Claim reservation — pastikan tab ini yang berhak pakai voucher
+      if (!voucherSessionToken) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, message: 'Session token voucher tidak ditemukan. Kembali ke form dan terapkan voucher kembali.' });
+      }
+      const claimResult = await voucherService.claimReservation(client, voucherCode.trim(), voucherSessionToken, orderNumber);
+      if (!claimResult.success) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, message: claimResult.message });
+      }
+
       // Pass profitPrice for admin voucher + email/phone for per-user limit
       const voucherResult = await voucherService.validateVoucher(
         voucherCode.trim(), 
@@ -590,11 +608,7 @@ exports.createOrder = async (req, res) => {
 
     const totalAmount = priceAfterDiscount + paymentFee;
 
-    // 3. Generate order number
-    const rand = Math.random().toString(36).substring(2, 4).toUpperCase();
-    const tail = Date.now().toString().slice(-3);
-    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const orderNumber = `SGW-${date}-${rand}${tail}`;
+    // 3. Generate order number — [MOVED UP before voucher block]
 
     // 4. Insert order
     const orderResult = await client.query(`

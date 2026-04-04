@@ -49,6 +49,9 @@ router.post('/vouchers/validate', voucherController.validateVoucher);
 // Get active vouchers (optional)
 router.get('/vouchers/active', voucherController.getActiveVouchers);
 
+// Promo popup — voucher yang di-set tampil di homepage
+router.get('/promo-popup', adminVoucherController.getPromoPopup);
+
 // ========================================
 // ORDER MANAGEMENT
 // ========================================

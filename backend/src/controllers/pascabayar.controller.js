@@ -276,7 +276,8 @@ exports.pay = async (req, res) => {
       customer_name,
       customer_phone,
       payment_method,
-      voucher_code     // opsional
+      voucher_code,     // opsional
+      voucher_session_token  // [ADDED] wajib ada jika pakai voucher
     } = req.body;
 
     // Validasi input
@@ -324,12 +325,37 @@ exports.pay = async (req, res) => {
     let voucherDiscount      = 0;
     let validatedVoucherCode = null;
 
+    // [MOVED UP] Generate order number lebih awal agar bisa dipakai di claimReservation
+    const today       = new Date();
+    const dateStr     = today.toISOString().slice(0,10).replace(/-/g,'');
+    const randomPart  = Math.random().toString(36).substring(2,7).toUpperCase();
+    const orderNumber = `SGW-${dateStr}-${randomPart}`;
+
+    // [MOVED UP] Begin transaction sebelum voucher block agar claimReservation bisa pakai client
+    await client.query('BEGIN');
+
     if (voucher_code && voucher_code.trim()) {
+      // [ADDED] session token wajib ada jika pakai voucher
+      if (!voucher_session_token) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, message: 'Session token voucher tidak ditemukan. Kembali ke form dan terapkan voucher kembali.' });
+      }
+
+      // [ADDED] Claim reservation — pastikan tab ini yang berhak pakai voucher
+      const claimResult = await voucherService.claimReservation(client, voucher_code.trim(), voucher_session_token, orderNumber);
+      if (!claimResult.success) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, message: claimResult.message });
+      }
+
       // Gunakan inquiry.komisi langsung sebagai profitPrice (sudah dihitung saat inquiry)
+      // [FIXED] Tambahkan customer_email & customer_phone agar per-user limit dicek dengan benar
       const voucherResult = await voucherService.validateVoucher(
         voucher_code.trim(),
         inquiry.selling_price || 0,
-        inquiry.komisi || 0
+        inquiry.komisi || 0,
+        customer_email || null,  // [ADDED] sebelumnya tidak dikirim → per-user limit tidak dicek
+        customer_phone || null   // [ADDED] sebelumnya tidak dikirim → per-user limit tidak dicek
       );
 
       if (voucherResult.valid) {
@@ -337,6 +363,7 @@ exports.pay = async (req, res) => {
         validatedVoucherCode = voucher_code.trim();
         console.log(`[PASCABAYAR] Voucher applied: ${voucher_code} discount=Rp${voucherDiscount}`);
       } else {
+        await client.query('ROLLBACK');
         return res.status(400).json({
           success: false,
           message: voucherResult.message || 'Voucher tidak valid'
@@ -368,14 +395,9 @@ exports.pay = async (req, res) => {
 
     const totalAmount = basePrice + paymentFee;
 
-    // ── 4. Generate order number ───────────────────────────────────────────
-    const today       = new Date();
-    const dateStr     = today.toISOString().slice(0,10).replace(/-/g,'');
-    const randomPart  = Math.random().toString(36).substring(2,7).toUpperCase();
-    const orderNumber = `SGW-${dateStr}-${randomPart}`;
+    // ── 4. Generate order number — [MOVED UP before voucher block]
 
-    // ── 5. Begin transaction DB ────────────────────────────────────────────
-    await client.query('BEGIN');
+    // ── 5. Begin transaction DB — [MOVED UP before voucher block]
 
     // Insert order — product_id = NULL untuk pascabayar
     // provider_response menyimpan ref_id agar webhook Duitku bisa panggil Digiflazz pay-pasca

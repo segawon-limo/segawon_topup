@@ -46,6 +46,9 @@ router.post('/check-pln-meter', orderController.checkPlnMeter);
 // Validate voucher code
 router.post('/vouchers/validate', voucherController.validateVoucher);
 
+// [ADDED] Release voucher reservation (user klik "Hapus" di form)
+router.delete('/vouchers/release', voucherController.releaseVoucher);
+
 // Get active vouchers (optional)
 router.get('/vouchers/active', voucherController.getActiveVouchers);
 

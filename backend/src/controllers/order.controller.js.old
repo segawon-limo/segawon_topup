@@ -7,7 +7,8 @@
 const { pool } = require('../config/database');
 const duitkuService = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
-const emailService = require('../services/email.service');
+const emailService   = require('../services/email.service');
+const shortlinkService = require('../services/shortlink.service');
 
 /**
  * Get all games
@@ -699,6 +700,24 @@ exports.createOrder = async (req, res) => {
 
     await client.query('COMMIT');
 
+    // Buat short link untuk e-wallet redirect (DANA, ShopeePay, OVO)
+    let finalPaymentUrl = paymentResult.paymentUrl || '';
+    if (duitkuEwallet.includes(paymentMethod) && paymentResult.paymentUrl) {
+      try {
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const shortUrl = await shortlinkService.createShortLink(
+          paymentResult.paymentUrl,
+          paymentMethod,
+          orderNumber,
+          expiresAt
+        );
+        if (shortUrl) finalPaymentUrl = shortUrl;
+      } catch (slErr) {
+        console.error('[ShortLink] Gagal buat short link, pakai URL asli:', slErr.message);
+        // Fallback ke URL asli — tidak block order
+      }
+    }
+
     // Kirim Invoice Email otomatis via Brevo
     try {
       const emailData = {
@@ -714,10 +733,11 @@ exports.createOrder = async (req, res) => {
         paymentFee: paymentFee,
         totalAmount: totalAmount,
         paymentMethod: paymentMethod,
-        paymentUrl: paymentResult.paymentUrl || '',
+        paymentUrl: finalPaymentUrl,
         qrUrl: paymentResult.qrString || null,
         vaNumber: paymentResult.vaNumber || null,
-        expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        productType: productType || 'topup_game'
       };
 
       // Kirim email async (non-blocking)
@@ -745,7 +765,7 @@ exports.createOrder = async (req, res) => {
         payment: {
           method: duitkuMethod,
           gateway: 'duitku',
-          url: paymentResult.paymentUrl,
+          url: finalPaymentUrl,
           vaNumber: paymentResult.vaNumber || null,
           qrString: paymentResult.qrString || null,
           reference: paymentResult.reference,

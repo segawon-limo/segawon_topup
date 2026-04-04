@@ -359,6 +359,9 @@ exports.pay = async (req, res) => {
       paymentFee = Math.round(basePrice / 0.98) - basePrice;
     } else if (payment_method === 'OV') {
       paymentFee = Math.round(basePrice / 0.9697) - basePrice;
+    } else if (payment_method === 'DA') {
+      // DANA — 1.67%
+      paymentFee = Math.round(basePrice / 0.9833) - basePrice;
     } else {
       paymentFee = 3000;
     }

@@ -13,16 +13,23 @@ const { pool } = require('../config/database');
  * Body: { code: string, orderAmount: number, productId: number }
  * 
  * UPDATED: Now fetches product's profit_price for admin vouchers
+ * UPDATED: Now calls reserveVoucher() instead of validateVoucher() to prevent dual-tab abuse.
+ *          Frontend wajib kirim sessionToken (crypto.randomUUID() dibuat saat komponen mount).
  */
 exports.validateVoucher = async (req, res) => {
   try {
-    const { code, orderAmount, productId, profitPrice: profitPriceDirect, customerEmail, customerPhone } = req.body;
+    const { code, orderAmount, productId, profitPrice: profitPriceDirect, customerEmail, customerPhone, sessionToken } = req.body;
 
     if (!code || !orderAmount) {
       return res.status(400).json({
         success: false,
         message: 'Kode voucher dan jumlah pesanan harus diisi'
       });
+    }
+
+    // [ADDED] sessionToken wajib ada untuk sistem reservasi
+    if (!sessionToken) {
+      return res.status(400).json({ success: false, message: 'sessionToken wajib diisi' });
     }
 
     // Prioritas: profitPrice langsung (untuk pascabayar) > ambil dari productId (untuk topup biasa)
@@ -41,25 +48,20 @@ exports.validateVoucher = async (req, res) => {
       }
     }
 
-    // Validate voucher with profit price + per-user check (email/phone)
-    const result = await voucherService.validateVoucher(
-      code, 
+    // [CHANGED] Panggil reserveVoucher (bukan validateVoucher) agar slot langsung dikunci
+    const result = await voucherService.reserveVoucher(
+      code,
       parseFloat(orderAmount),
       profitPrice,
       customerEmail || null,
-      customerPhone || null
+      customerPhone || null,
+      sessionToken
     );
 
-    if (result.valid) {
-      return res.json({
-        success: true,
-        ...result
-      });
+    if (result.success) {
+      return res.json({ success: true, ...result });
     } else {
-      return res.status(400).json({
-        success: false,
-        message: result.message
-      });
+      return res.status(400).json({ success: false, message: result.message });
     }
 
   } catch (error) {
@@ -92,6 +94,28 @@ exports.getActiveVouchers = async (req, res) => {
       success: false,
       message: 'Gagal mengambil daftar voucher'
     });
+  }
+};
+
+/**
+ * [ADDED] Release voucher reservation
+ * DELETE /api/vouchers/release
+ * Dipanggil saat user klik tombol "Hapus" voucher di form.
+ * Melepas reservation aktif → voucher bebas dipakai di produk/tab lain tanpa tunggu expired.
+ * Body: { code: string, sessionToken: string }
+ */
+exports.releaseVoucher = async (req, res) => {
+  try {
+    const { code, sessionToken } = req.body;
+    if (!code || !sessionToken) {
+      return res.status(400).json({ success: false, message: 'code dan sessionToken wajib diisi' });
+    }
+    await voucherService.releaseReservation(code, sessionToken);
+    // Selalu 200 — kalau reservation sudah expired pun tidak masalah
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Release Voucher Controller Error:', error);
+    res.status(500).json({ success: false, message: 'Gagal melepas reservasi voucher' });
   }
 };
 

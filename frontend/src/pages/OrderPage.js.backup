@@ -24,6 +24,7 @@ const paymentLogos = {
   // Coming soon
   'qris':    '/images/qris-logo.png',
   'SQ':      '/images/qris-logo.png',
+  'DA':      '/images/dana-logo.png',
   'ewallet': '/images/dana-logo.png',
 };
 
@@ -43,6 +44,7 @@ const VA_BANKS = [
 const EWALLET_METHODS = [
   { code: 'OV', name: 'OVO',       logo: 'OV', feeType: 'percent', feeValue: 3.03 },
   { code: 'SA', name: 'ShopeePay', logo: 'SA', feeType: 'percent', feeValue: 2 },
+  { code: 'DA', name: 'DANA',      logo: 'DA', feeType: 'percent', feeValue: 1.67 },
 ];
 
 // QRIS aktif
@@ -439,6 +441,8 @@ function OrderPage() {
     if (method === 'SA') return Math.round(priceAfterDiscount / 0.98) - priceAfterDiscount;
     // E-Wallet OVO — 3.03% dari harga setelah diskon
     if (method === 'OV') return Math.round(priceAfterDiscount / 0.9697) - priceAfterDiscount;
+    // E-Wallet DANA — 1.67% dari harga setelah diskon
+    if (method === 'DA') return Math.round(priceAfterDiscount / 0.9833) - priceAfterDiscount;
     return 3000; // default
   };
 
@@ -1266,7 +1270,7 @@ function OrderPage() {
 
                   <div className="form-group">
                     <label>
-                      Nomor HP {selectedPaymentMethod === 'OV' ? '(OVO) *' : '(WhatsApp) *'}
+                      Nomor HP {selectedPaymentMethod === 'OV' ? '(OVO) *' : selectedPaymentMethod === 'DA' ? '(DANA) *' : '(WhatsApp) *'}
                     </label>
                     <div style={{ position: 'relative' }}>
                     <input
