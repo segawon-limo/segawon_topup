@@ -18,7 +18,8 @@ const DB_HOST      = process.env.DB_HOST   || 'localhost';
 const DB_PASS      = process.env.DB_PASS   || "Seg@wonlim0";
 
 const COMMANDS = {
-  deploy:           { label:'🚀 Zero Downtime Deploy',   cmd:'bash', args:[`${APP_ROOT}/deploy.sh`], cwd:APP_ROOT, color:'#68d391', icon:'🚀', group:'Build', confirm:true },
+  deploy:           { label:'🚀 Zero Downtime Deploy',   cmd:'bash', args:[`${APP_ROOT}/deploy.sh`],          cwd:APP_ROOT, color:'#68d391', icon:'🚀', group:'Build', confirm:true },
+  frontend_deploy:  { label:'🎨 Deploy Frontend Only',   cmd:'bash', args:[`${APP_ROOT}/deploy-frontend.sh`], cwd:APP_ROOT, color:'#4299e1', icon:'🎨', group:'Build', confirm:true },
   pm2_status:       { label:'PM2 Status',           cmd:'pm2',        args:['list'],                                         color:'#48bb78', icon:'📊', group:'PM2'                   },
   pm2_restart:      { label:'PM2 Restart Backend',    cmd:'pm2',        args:['restart','segawon-backend'],                    color:'#ed8936', icon:'🔄', group:'PM2',     confirm:true  },
   pm2_logs:         { label:'PM2 Logs (80)',          cmd:'pm2',        args:['logs','segawon-backend','--nostream','--lines','80'],  color:'#4299e1', icon:'📋', group:'PM2'             },
