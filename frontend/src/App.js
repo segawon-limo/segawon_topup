@@ -28,6 +28,7 @@ import PascabayarPage from './pages/PascabayarPage';
 import FAQPage from './pages/FAQPage';
 import FeedbackWidget from './components/FeedbackWidget';
 import AdminFeedback from './pages/admin/AdminFeedback';
+import AdminVisitors from './pages/admin/VisitorPage'; // [ADDED]
 
 function AppContent() {
   const location = useLocation();
@@ -52,6 +53,7 @@ function AppContent() {
           <Route path="/admin/catalog"   element={<AdminCatalog />} />
           <Route path="/admin/vouchers"  element={<AdminVouchers />} />
           <Route path="/admin/feedback"  element={<AdminFeedback />} />
+          <Route path="/admin/visitors"  element={<AdminVisitors />} /> {/* [ADDED] */}
           <Route path="/cek-transaksi"   element={<CekTransaksiPage />} />
           <Route path="/pascabayar"      element={<PascabayarPage />} />
           <Route path="/faq"             element={<FAQPage />} />

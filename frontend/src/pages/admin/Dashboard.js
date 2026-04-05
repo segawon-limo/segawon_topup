@@ -19,6 +19,7 @@ function AdminDashboard() {
   const [topProducts, setTopProducts] = useState([]);
   const [paymentStats, setPaymentStats] = useState([]);
   const [pendingRetry, setPendingRetry] = useState([]);
+  const [visitorStats, setVisitorStats] = useState(null); // [ADDED]
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -72,6 +73,11 @@ function AdminDashboard() {
       if (retryData.success) {
         setPendingRetry(retryData.data);
       }
+
+      // [ADDED] Load visitor stats (7 hari)
+      const visitorRes  = await fetch(`${API_URL}/api/admin/visitors/stats?days=7`, { headers });
+      const visitorData = await visitorRes.json();
+      if (visitorData.success) setVisitorStats(visitorData.data);
 
       setLoading(false);
     } catch (error) {
@@ -151,6 +157,7 @@ function AdminDashboard() {
         <button onClick={() => navigate('/admin/orders')}   className="btn-secondary">📋 Orders</button>
         <button onClick={() => navigate('/admin/catalog')}  className="btn-secondary">🗂️ Catalog</button>
         <button onClick={() => navigate('/admin/vouchers')}  className="btn-secondary">🎫 Vouchers</button>
+        <button onClick={() => navigate('/admin/visitors')} className="btn-secondary">👁️ Visitors</button>
         <button onClick={() => navigate('/admin/terminal')} className="btn-secondary">⌨️ Server</button>
         <button onClick={() => navigate('/admin/feedback')}  className="btn-secondary">💬 Feedback</button>
         <button onClick={handleLogout} className="btn-danger">Logout</button>
@@ -182,6 +189,14 @@ function AdminDashboard() {
           <h3>Digiflazz Saldo</h3>
           <div className="stat-value">{formatRupiah(overview?.digiflazz?.deposit)}</div>
           <div className="stat-label">Status: {overview?.digiflazz?.status || 'N/A'}</div>
+        </div>
+
+        {/* [ADDED] Visitor card */}
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/visitors')}>
+          <h3>👁️ Visitors (7 Hari)</h3>
+          <div className="stat-value">{parseInt(visitorStats?.summary?.views_7days || 0).toLocaleString('id-ID')}</div>
+          <div className="stat-label">{parseInt(visitorStats?.summary?.unique_sessions || 0).toLocaleString('id-ID')} sesi unik</div>
+          <div className="stat-profit" style={{ color: '#667eea' }}>Hari ini: {parseInt(visitorStats?.summary?.views_today || 0).toLocaleString('id-ID')} views</div>
         </div>
       </div>
 

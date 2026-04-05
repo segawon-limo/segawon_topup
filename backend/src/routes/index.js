@@ -56,6 +56,14 @@ router.get('/vouchers/active', voucherController.getActiveVouchers);
 router.get('/promo-popup', adminVoucherController.getPromoPopup);
 
 // ========================================
+// VISITOR TRACKING
+// ========================================
+const visitorController = require('../controllers/visitor.controller');
+
+// [ADDED] Record page view (dipanggil frontend saat user buka halaman produk)
+router.post('/track/pageview', visitorController.trackPageView);
+
+// ========================================
 // ORDER MANAGEMENT
 // ========================================
 

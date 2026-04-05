@@ -87,6 +87,8 @@ function PascabayarPage() {
   const [voucherApplied, setVoucherApplied]       = useState(false);
   const [voucherValidating, setVoucherValidating] = useState(false);
   const [voucherError, setVoucherError]           = useState('');
+  // [ADDED] UUID unik per tab — dibuat sekali saat mount, dipakai untuk reservation system
+  const [voucherSessionToken] = useState(() => crypto.randomUUID());
 
   // Pay
   const [loadingPay, setLoadingPay] = useState(false);
@@ -282,9 +284,12 @@ function PascabayarPage() {
       const res  = await fetch(`${API_URL}/api/vouchers/validate`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code:        voucherCode.trim(),
-          orderAmount: sellingPrice,
-          profitPrice: inquiryData?.komisi ?? null,
+          code:          voucherCode.trim(),
+          orderAmount:   sellingPrice,
+          profitPrice:   inquiryData?.komisi ?? null,
+          customerEmail: formData.customerEmail?.trim() || null, // [ADDED]
+          customerPhone: formData.customerPhone?.trim() || null, // [ADDED]
+          sessionToken:  voucherSessionToken,                    // [ADDED]
         }),
       });
       const data = await res.json();
@@ -294,7 +299,16 @@ function PascabayarPage() {
     finally  { setVoucherValidating(false); }
   };
 
+  // [UPDATED] Panggil /vouchers/release agar reservation langsung dilepas di backend
+  //           → voucher bisa langsung dipakai di produk/tab lain tanpa tunggu 10 menit expired
   const handleRemoveVoucher = () => {
+    if (voucherApplied && voucherCode.trim()) {
+      fetch(`${API_URL}/api/vouchers/release`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: voucherCode.trim(), sessionToken: voucherSessionToken }),
+      }).catch(() => {/* reservation akan auto-expire jika request gagal */});
+    }
     setVoucherCode(''); setVoucherDiscount(0); setVoucherApplied(false); setVoucherError('');
   };
 
@@ -315,7 +329,10 @@ function PascabayarPage() {
           customer_name:  formData.customerName.trim() || inquiryData.customer_name,
           customer_phone: formData.customerPhone.trim(),
           payment_method: selectedPaymentMethod,
-          ...(voucherApplied && voucherCode ? { voucher_code: voucherCode.trim() } : {}),
+          ...(voucherApplied && voucherCode ? {
+            voucher_code:          voucherCode.trim(),
+            voucher_session_token: voucherSessionToken, // [ADDED]
+          } : {}),
         }),
       });
       const json = await res.json();

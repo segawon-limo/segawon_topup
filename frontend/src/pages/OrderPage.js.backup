@@ -144,6 +144,8 @@ function OrderPage() {
   const [voucherApplied, setVoucherApplied] = useState(false);
   const [voucherValidating, setVoucherValidating] = useState(false);
   const [voucherError, setVoucherError] = useState('');
+  // [ADDED] UUID unik per tab — dibuat sekali saat mount, dipakai untuk reservation system
+  const [voucherSessionToken] = useState(() => crypto.randomUUID());
 
   const [errors, setErrors] = useState({});
   const [emailValidating, setEmailValidating] = useState(false);
@@ -548,6 +550,7 @@ function OrderPage() {
           productId: selectedProduct.id,
           customerEmail: formData.customerEmail.trim() || null,
           customerPhone: formData.customerPhone.trim() || null,
+          sessionToken: voucherSessionToken, // [ADDED]
         }),
       });
 
@@ -573,7 +576,16 @@ function OrderPage() {
   };
 
   // NEW: Remove applied voucher
+  // [UPDATED] Panggil /vouchers/release agar reservation langsung dilepas di backend
+  //           → voucher bisa langsung dipakai di produk/tab lain tanpa tunggu 10 menit expired
   const handleRemoveVoucher = () => {
+    if (voucherApplied && voucherCode.trim()) {
+      fetch(`${API_URL}/api/vouchers/release`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: voucherCode.trim(), sessionToken: voucherSessionToken }),
+      }).catch(() => {/* reservation akan auto-expire jika request gagal */});
+    }
     setVoucherCode('');
     setVoucherDiscount(0);
     setVoucherApplied(false);
@@ -805,6 +817,7 @@ function OrderPage() {
         customerName: formData.customerName.trim(),
         paymentMethod: selectedPaymentMethod,
         voucherCode: voucherApplied ? voucherCode.trim() : null, // NEW: Include voucher if applied
+        voucherSessionToken: voucherApplied ? voucherSessionToken : null, // [ADDED]
       };
 
       console.log('Creating order:', orderData);

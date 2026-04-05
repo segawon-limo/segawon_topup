@@ -365,6 +365,7 @@ export default function AdminTerminal() {
           <button className="term-nav-btn" onClick={() => navigate('/admin/orders')}>📋 Orders</button>
           <button className="term-nav-btn" onClick={() => navigate('/admin/catalog')}>🗂️ Catalog</button>
           <button className="term-nav-btn" onClick={() => navigate('/admin/vouchers')}>🎫 Vouchers</button>
+          <button className="term-nav-btn" onClick={() => navigate('/admin/visitors')}>👁️ Visitors</button>
           <button className="term-nav-btn" onClick={() => navigate('/admin/feedback')}>💬 Feedback</button>
           <button className="term-nav-btn term-nav-logout" onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_user'); navigate('/admin/login'); }}>Logout</button>
           <div className="term-status">

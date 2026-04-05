@@ -1066,6 +1066,7 @@ function AdminCatalog() {
         <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
         <button onClick={() => navigate('/admin/vouchers')}  className="btn-secondary">🎫 Vouchers</button>
+        <button onClick={() => navigate('/admin/visitors')} className="btn-secondary">👁️ Visitors</button>
         <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
         <button onClick={() => navigate('/admin/feedback')}   className="btn-secondary">💬 Feedback</button>
         <button onClick={handleLogout} className="btn-danger">Logout</button>
