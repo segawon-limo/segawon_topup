@@ -218,7 +218,7 @@ exports.getUsageLog = async (req, res) => {
           p.name,
           CASE
             WHEN o.provider_response IS NOT NULL
-            THEN o.provider_response->>'provider_name'
+            THEN (o.provider_response::jsonb)->>'provider_name'
             ELSE NULL
           END
         ) AS product_name

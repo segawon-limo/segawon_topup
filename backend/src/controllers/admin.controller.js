@@ -283,9 +283,9 @@ exports.getOrders = async (req, res) => {
           CASE
             WHEN o.provider_response IS NOT NULL
             THEN CONCAT(
-              o.provider_response->>'provider_name',
+              (o.provider_response::jsonb)->>'provider_name',
               ' — ',
-              o.provider_response->>'customer_no'
+              (o.provider_response::jsonb)->>'customer_no'
             )
             ELSE NULL
           END
