@@ -15,6 +15,7 @@ exports.getVouchers = async (req, res) => {
         usage_limit, used_count, per_user_limit,
         valid_from, valid_until,
         is_active, is_admin_only, description,
+        show_in_popup,
         created_at, updated_at
       FROM vouchers
       ORDER BY created_at DESC
@@ -34,7 +35,8 @@ exports.createVoucher = async (req, res) => {
       min_purchase, max_discount,
       usage_limit, per_user_limit,
       valid_from, valid_until,
-      is_active, is_admin_only, description
+      is_active, is_admin_only, description,
+      show_in_popup
     } = req.body;
 
     if (!code || !discount_type || discount_value === undefined) {
@@ -48,8 +50,9 @@ exports.createVoucher = async (req, res) => {
         usage_limit, per_user_limit,
         valid_from, valid_until,
         is_active, is_admin_only, description,
+        show_in_popup,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, NOW(), NOW())
       RETURNING *
     `, [
       code.trim().toUpperCase(),
@@ -64,6 +67,7 @@ exports.createVoucher = async (req, res) => {
       is_active    !== false,
       is_admin_only === true,
       description  || null,
+      show_in_popup === true,
     ]);
 
     res.status(201).json({ success: true, voucher: result.rows[0] });
@@ -85,7 +89,8 @@ exports.updateVoucher = async (req, res) => {
       min_purchase, max_discount,
       usage_limit, per_user_limit,
       valid_from, valid_until,
-      is_active, is_admin_only, description
+      is_active, is_admin_only, description,
+      show_in_popup
     } = req.body;
 
     const result = await pool.query(`
@@ -102,8 +107,9 @@ exports.updateVoucher = async (req, res) => {
         is_active      = $10,
         is_admin_only  = $11,
         description    = $12,
+        show_in_popup  = $13,
         updated_at     = NOW()
-      WHERE id = $13
+      WHERE id = $14
       RETURNING *
     `, [
       code.trim().toUpperCase(),
@@ -118,6 +124,7 @@ exports.updateVoucher = async (req, res) => {
       is_active    !== false,
       is_admin_only === true,
       description  || null,
+      show_in_popup === true,
       id,
     ]);
 
@@ -129,6 +136,28 @@ exports.updateVoucher = async (req, res) => {
     }
     console.error('updateVoucher error:', err);
     res.status(500).json({ success: false, message: 'Gagal update voucher' });
+  }
+};
+
+// ── TOGGLE show_in_popup ─────────────────────────────────────
+exports.togglePopup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Hanya 1 voucher aktif di popup — matikan yang lain dulu
+    await pool.query(
+      `UPDATE vouchers SET show_in_popup = FALSE, updated_at = NOW() WHERE show_in_popup = TRUE AND id != $1`,
+      [id]
+    );
+    const result = await pool.query(
+      `UPDATE vouchers SET show_in_popup = NOT show_in_popup, updated_at = NOW()
+       WHERE id = $1 RETURNING id, code, show_in_popup`,
+      [id]
+    );
+    if (!result.rows.length) return res.status(404).json({ success: false, message: 'Voucher tidak ditemukan' });
+    res.json({ success: true, voucher: result.rows[0] });
+  } catch (err) {
+    console.error('togglePopup error:', err);
+    res.status(500).json({ success: false, message: 'Gagal toggle popup' });
   }
 };
 
@@ -207,5 +236,29 @@ exports.getUsageLog = async (req, res) => {
   } catch (err) {
     console.error('getUsageLog error:', err);
     res.status(500).json({ success: false, message: 'Gagal mengambil usage log' });
+  }
+};
+
+// ── GET promo popup (public endpoint) ────────────────────────
+exports.getPromoPopup = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, code, discount_type, discount_value, min_purchase, max_discount,
+             valid_until, description
+      FROM vouchers
+      WHERE show_in_popup = TRUE
+        AND is_active = TRUE
+        AND (valid_from  IS NULL OR valid_from  <= NOW())
+        AND (valid_until IS NULL OR valid_until >= NOW())
+        AND (usage_limit IS NULL OR used_count < usage_limit)
+      LIMIT 1
+    `);
+    if (result.rows.length === 0) {
+      return res.json({ success: true, voucher: null });
+    }
+    res.json({ success: true, voucher: result.rows[0] });
+  } catch (err) {
+    console.error('getPromoPopup error:', err);
+    res.status(500).json({ success: false, message: 'Gagal mengambil promo popup' });
   }
 };

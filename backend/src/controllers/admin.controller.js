@@ -276,8 +276,22 @@ exports.getOrders = async (req, res) => {
         o.voucher_code, o.voucher_discount,
         o.provider_serial_number, o.payment_url,
         o.created_at, o.updated_at,
-        p.name as product_name, p.sku, p.base_price,
-        g.name as game_name
+        p.sku, p.base_price,
+        -- [UPDATED] Fallback ke provider_response untuk order pascabayar (product_id = NULL)
+        COALESCE(
+          p.name,
+          CASE
+            WHEN o.provider_response IS NOT NULL
+            THEN CONCAT(
+              o.provider_response->>'provider_name',
+              ' — ',
+              o.provider_response->>'customer_no'
+            )
+            ELSE NULL
+          END
+        ) AS product_name,
+        -- [UPDATED] game_name fallback untuk pascabayar
+        COALESCE(g.name, 'Pascabayar') AS game_name
       FROM orders o
       LEFT JOIN products p ON o.product_id = p.id
       LEFT JOIN games g ON p.game_id = g.id
