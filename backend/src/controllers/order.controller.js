@@ -9,6 +9,7 @@ const duitkuService = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
 const emailService   = require('../services/email.service');
 const shortlinkService = require('../services/shortlink.service');
+const telegramController = require('./telegram.controller'); // [ADDED]
 
 /**
  * Get all games
@@ -761,6 +762,22 @@ exports.createOrder = async (req, res) => {
     } catch (emailErr) {
       console.error('Email service error:', emailErr);
     }
+
+    // [ADDED] Kirim notif Telegram (non-blocking)
+    telegramController.notifyNewOrder({
+      orderNumber,
+      productName:    product.description || product.name,
+      customerName:   resolvedName,
+      customerEmail,
+      userId:         userId || null,
+      paymentMethod,
+      amount:         productPrice,
+      paymentFee,
+      total:          totalAmount,
+      voucherDiscount,
+      voucherCode:    validatedVoucherCode || null,
+      orderType:      'topup',
+    }).catch(err => console.error('[Telegram] notify error:', err));
 
     // 7. Return success WITH PAYMENT INFO
     res.json({

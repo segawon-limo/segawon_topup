@@ -19,6 +19,7 @@ const { pool }       = require('../config/database');
 const duitkuService  = require('../services/duitku.service');
 const voucherService = require('../services/voucher.service');
 const emailService   = require('../services/email.service');
+const telegramController = require('./telegram.controller'); // [ADDED]
 
 const DIGIFLAZZ_USERNAME = process.env.DIGIFLAZZ_USERNAME;
 const DIGIFLAZZ_API_KEY  = process.env.NODE_ENV === 'production'
@@ -553,6 +554,22 @@ exports.pay = async (req, res) => {
     } catch (emailErr) {
       console.error('[PASCABAYAR] Email service error:', emailErr);
     }
+
+    // [ADDED] Kirim notif Telegram (non-blocking)
+    telegramController.notifyNewOrder({
+      orderNumber,
+      productName:    `${PROVIDER_NAMES[inquiry.buyer_sku_code] || inquiry.buyer_sku_code} — ${inquiry.customer_no}`,
+      customerName:   customer_name || customer_email,
+      customerEmail:  customer_email,
+      userId:         inquiry.customer_no,
+      paymentMethod:  payment_method,
+      amount:         inquiry.selling_price || 0,
+      paymentFee,
+      total:          totalAmount,
+      voucherDiscount,
+      voucherCode:    validatedVoucherCode || null,
+      orderType:      'pascabayar',
+    }).catch(err => console.error('[Telegram] notify pascabayar error:', err));
 
     return res.json({
       success:        true,
