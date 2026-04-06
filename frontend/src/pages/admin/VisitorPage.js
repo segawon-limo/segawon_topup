@@ -188,12 +188,14 @@ function AdminVisitors() {
           <h3>Device Type</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={stats?.by_device || []} dataKey="total" nameKey="device_type"
+              <Pie data={(stats?.by_device || []).map(d => ({ name: d.device_type, value: parseInt(d.total) }))}
+                   dataKey="value" nameKey="name"
                    cx="50%" cy="45%" outerRadius={75}
-                   label={({ device_type, percent }) => `${device_type} ${(percent*100).toFixed(0)}%`}>
+                   label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}>
                 {(stats?.by_device || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Pie>
               <Tooltip />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         </div>
