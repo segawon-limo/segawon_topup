@@ -65,11 +65,15 @@ function PascabayarPage() {
   const [loadingInquiry, setLoadingInquiry]   = useState(false);
   const [inquiryError, setInquiryError]       = useState('');
 
-  // Form data — identik dengan OrderPage
-  const [formData, setFormData] = useState({
-    customerEmail: '',
-    customerName:  '',
-    customerPhone: '',
+  // Form data — di-persist ke sessionStorage agar tidak hilang saat browser discard tab (mobile)
+  const DRAFT_KEY = 'sgw_pasca_draft';
+  const TOKEN_KEY = 'sgw_pasca_token';
+
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY);
+      return saved ? JSON.parse(saved) : { customerEmail: '', customerName: '', customerPhone: '' };
+    } catch { return { customerEmail: '', customerName: '', customerPhone: '' }; }
   });
   const [errors, setErrors]   = useState({});
   const [touched, setTouched] = useState({
@@ -84,13 +88,25 @@ function PascabayarPage() {
   const [openAccordion, setOpenAccordion]                 = useState(null);
 
   // Voucher
-  const [voucherCode, setVoucherCode]             = useState('');
-  const [voucherDiscount, setVoucherDiscount]     = useState(0);
-  const [voucherApplied, setVoucherApplied]       = useState(false);
+  const [voucherCode, setVoucherCode]             = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY + '_voucher'))?.code || ''; } catch { return ''; }
+  });
+  const [voucherDiscount, setVoucherDiscount]     = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY + '_voucher'))?.discount || 0; } catch { return 0; }
+  });
+  const [voucherApplied, setVoucherApplied]       = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY + '_voucher'))?.applied || false; } catch { return false; }
+  });
   const [voucherValidating, setVoucherValidating] = useState(false);
   const [voucherError, setVoucherError]           = useState('');
-  // [ADDED] UUID unik per tab — dibuat sekali saat mount, dipakai untuk reservation system
-  const [voucherSessionToken] = useState(() => crypto.randomUUID());
+  // [UPDATED] sessionToken di-persist di sessionStorage — tidak berubah saat page discard/restore
+  const [voucherSessionToken] = useState(() => {
+    try {
+      let token = sessionStorage.getItem(TOKEN_KEY);
+      if (!token) { token = crypto.randomUUID(); sessionStorage.setItem(TOKEN_KEY, token); }
+      return token;
+    } catch { return crypto.randomUUID(); }
+  });
 
   // Pay
   const [loadingPay, setLoadingPay] = useState(false);
@@ -125,6 +141,20 @@ function PascabayarPage() {
 
   // VA minimum Rp 10.000 (kebijakan Duitku) — cek harga produk langsung
   const showVA = priceAfterDiscount >= 10000;
+
+  // [ADDED] Auto-save formData ke sessionStorage — restore saat browser discard tab (mobile)
+  useEffect(() => {
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(formData)); } catch {}
+  }, [formData, DRAFT_KEY]);
+
+  // [ADDED] Auto-save voucher state ke sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY + '_voucher', JSON.stringify({
+        code: voucherCode, discount: voucherDiscount, applied: voucherApplied
+      }));
+    } catch {}
+  }, [voucherCode, voucherDiscount, voucherApplied, DRAFT_KEY]);
 
   // ── Form handlers — identik dengan OrderPage ───────────────────────────────
   const handleInputChange = (e) => {
@@ -339,6 +369,12 @@ function PascabayarPage() {
       });
       const json = await res.json();
       if (!json.success) { setPayError(json.message || 'Gagal memproses pembayaran'); return; }
+      // [ADDED] Hapus draft sessionStorage setelah order berhasil
+      try {
+        sessionStorage.removeItem(DRAFT_KEY);
+        sessionStorage.removeItem(DRAFT_KEY + '_voucher');
+        sessionStorage.removeItem(TOKEN_KEY);
+      } catch {}
       navigate(`/payment/${json.orderNumber}`);
     } catch { setPayError('Koneksi gagal. Coba lagi.'); }
     finally  { setLoadingPay(false); }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './OrderPage.css';
 import { Helmet } from 'react-helmet-async';
+import usePageTracking from '../hooks/usePageTracking'; // [ADDED]
 
 
 
@@ -89,6 +90,8 @@ const DEFAULT_GAME_CONFIG = {
 
 function OrderPage() {
   const { gameSlug } = useParams();
+  // [ADDED] Track page view
+  usePageTracking(gameSlug ? gameSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Order');
 
   const [game, setGame] = useState(null);
   const [products, setProducts] = useState([]);

@@ -132,23 +132,37 @@ function OrderPage() {
   const [plnCheckMethod, setPlnCheckMethod] = useState(null); // 'inquiry-pln' | 'plncek-sync' | 'plncek-async'
   const [plnInfo, setPlnInfo] = useState(null); // { idpel, nama, tarif, daya } dari PLNCEK
 
-  // Form data
-  const [formData, setFormData] = useState({
-    userId: '',
-    zoneId: '',
-    customerEmail: '',
-    customerPhone: '',
-    customerName: '',
+  // Form data — di-persist ke sessionStorage agar tidak hilang saat browser discard tab (mobile)
+  const DRAFT_KEY = `sgw_order_draft_${gameSlug || 'unknown'}`;
+  const TOKEN_KEY = `sgw_order_token_${gameSlug || 'unknown'}`;
+
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY);
+      return saved ? JSON.parse(saved) : { userId: '', zoneId: '', customerEmail: '', customerPhone: '', customerName: '' };
+    } catch { return { userId: '', zoneId: '', customerEmail: '', customerPhone: '', customerName: '' }; }
   });
 
   // NEW: Voucher state
-  const [voucherCode, setVoucherCode] = useState('');
-  const [voucherDiscount, setVoucherDiscount] = useState(0);
-  const [voucherApplied, setVoucherApplied] = useState(false);
+  const [voucherCode, setVoucherCode] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY + '_voucher'))?.code || ''; } catch { return ''; }
+  });
+  const [voucherDiscount, setVoucherDiscount] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY + '_voucher'))?.discount || 0; } catch { return 0; }
+  });
+  const [voucherApplied, setVoucherApplied] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY + '_voucher'))?.applied || false; } catch { return false; }
+  });
   const [voucherValidating, setVoucherValidating] = useState(false);
   const [voucherError, setVoucherError] = useState('');
-  // [ADDED] UUID unik per tab — dibuat sekali saat mount, dipakai untuk reservation system
-  const [voucherSessionToken] = useState(() => crypto.randomUUID());
+  // [UPDATED] sessionToken di-persist di sessionStorage — tidak berubah saat page discard/restore
+  const [voucherSessionToken] = useState(() => {
+    try {
+      let token = sessionStorage.getItem(TOKEN_KEY);
+      if (!token) { token = crypto.randomUUID(); sessionStorage.setItem(TOKEN_KEY, token); }
+      return token;
+    } catch { return crypto.randomUUID(); }
+  });
 
   const [errors, setErrors] = useState({});
   const [emailValidating, setEmailValidating] = useState(false);
@@ -513,6 +527,20 @@ function OrderPage() {
     setOpenAccordion(prev => prev === key ? null : key);
   };
 
+  // [ADDED] Auto-save formData ke sessionStorage — restore saat browser discard tab (mobile)
+  useEffect(() => {
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(formData)); } catch {}
+  }, [formData, DRAFT_KEY]);
+
+  // [ADDED] Auto-save voucher state ke sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY + '_voucher', JSON.stringify({
+        code: voucherCode, discount: voucherDiscount, applied: voucherApplied
+      }));
+    } catch {}
+  }, [voucherCode, voucherDiscount, voucherApplied, DRAFT_KEY]);
+
   // NEW: Handle voucher code input
   const handleVoucherChange = (e) => {
     const code = e.target.value.toUpperCase();
@@ -836,8 +864,12 @@ function OrderPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Redirect to Duitku payment URL
-        // window.location.href = data.order.payment.url;
+        // [ADDED] Hapus draft sessionStorage setelah order berhasil
+        try {
+          sessionStorage.removeItem(DRAFT_KEY);
+          sessionStorage.removeItem(DRAFT_KEY + '_voucher');
+          sessionStorage.removeItem(TOKEN_KEY);
+        } catch {}
         // Redirect ke custom payment page
         window.location.href = `/payment/${data.order.orderNumber}`;
       } else {

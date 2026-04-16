@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PascabayarPage.css';
 import { Helmet } from 'react-helmet-async';
+import usePageTracking from '../hooks/usePageTracking'; // [ADDED]
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 
@@ -53,6 +54,7 @@ const getMandiriBankFee = (price) => {
 
 function PascabayarPage() {
   const navigate = useNavigate();
+  usePageTracking('Pascabayar'); // [ADDED]
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [step, setStep]                       = useState('inquiry');
