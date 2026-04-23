@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaCheckCircle, FaSpinner, FaTimesCircle, FaClock } from 'react-icons/fa';
+import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -97,6 +98,12 @@ function StatusPage() {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>Status Order - Segawon Topup</title>
+        <meta name="description" content="Cek status order top up game kamu di Segawon Topup." />
+        <link rel="canonical" href="https://segawontopup.net/status" />
+      </Helmet>
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
@@ -228,6 +235,7 @@ function StatusPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
