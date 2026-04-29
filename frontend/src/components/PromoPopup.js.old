@@ -12,7 +12,6 @@ export default function PromoPopup({ voucher, onClose }) {
   };
 
   const formatDiscount = () => {
-    if (voucher.popup_title) return voucher.popup_title;
     if (voucher.discount_type === 'percentage') return `${voucher.discount_value}% OFF`;
     if (voucher.discount_type === 'fixed') return `Hemat Rp ${Number(voucher.discount_value).toLocaleString('id-ID')}`;
     return 'Diskon Spesial';

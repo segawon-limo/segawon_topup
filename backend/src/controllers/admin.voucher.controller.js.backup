@@ -213,7 +213,15 @@ exports.getUsageLog = async (req, res) => {
         o.total_amount,
         o.voucher_discount,
         o.payment_status,
-        p.name AS product_name
+        -- [UPDATED] Fallback ke provider_response untuk order pascabayar (product_id = NULL)
+        COALESCE(
+          p.name,
+          CASE
+            WHEN o.provider_response IS NOT NULL
+            THEN (o.provider_response::jsonb)->>'provider_name'
+            ELSE NULL
+          END
+        ) AS product_name
       FROM voucher_usages vu
       LEFT JOIN orders o   ON o.order_number = vu.order_id
       LEFT JOIN products p ON p.id = o.product_id

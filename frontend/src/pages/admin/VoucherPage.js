@@ -66,6 +66,7 @@ const EMPTY_FORM = {
   usage_limit: '', per_user_limit: '',
   valid_from: '', valid_until: '',
   is_active: true, is_admin_only: false, description: '', show_in_popup: false,
+  popup_title: '',
 };
 
 function VoucherModal({ voucher, onSave, onClose }) {
@@ -183,6 +184,15 @@ function VoucherModal({ voucher, onSave, onClose }) {
             <textarea className="catalog-input" name="description" value={form.description}
               onChange={handleChange} rows={2} placeholder="Deskripsi voucher..."
               style={{ resize: 'vertical' }} />
+          </div>
+
+          <div className="form-group">
+            <label>Judul Popup <span style={{ color: '#a0aec0', fontWeight: 400 }}>(opsional)</span></label>
+            <input className="catalog-input" name="popup_title" value={form.popup_title || ''}
+              onChange={handleChange} placeholder="cth: Gratis Biaya Admin! (kosongkan = otomatis dari diskon)" />
+            <small style={{ color: '#a0aec0', fontSize: 11 }}>
+              Judul yang tampil di popup homepage. Jika kosong, akan otomatis dari nilai diskon.
+            </small>
           </div>
 
           <div className="checkbox-group">

@@ -36,7 +36,7 @@ exports.createVoucher = async (req, res) => {
       usage_limit, per_user_limit,
       valid_from, valid_until,
       is_active, is_admin_only, description,
-      show_in_popup
+      show_in_popup, popup_title
     } = req.body;
 
     if (!code || !discount_type || discount_value === undefined) {
@@ -50,9 +50,9 @@ exports.createVoucher = async (req, res) => {
         usage_limit, per_user_limit,
         valid_from, valid_until,
         is_active, is_admin_only, description,
-        show_in_popup,
+        show_in_popup, popup_title,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, NOW(), NOW())
       RETURNING *
     `, [
       code.trim().toUpperCase(),
@@ -68,6 +68,7 @@ exports.createVoucher = async (req, res) => {
       is_admin_only === true,
       description  || null,
       show_in_popup === true,
+      popup_title   || null,
     ]);
 
     res.status(201).json({ success: true, voucher: result.rows[0] });
@@ -90,7 +91,7 @@ exports.updateVoucher = async (req, res) => {
       usage_limit, per_user_limit,
       valid_from, valid_until,
       is_active, is_admin_only, description,
-      show_in_popup
+      show_in_popup, popup_title
     } = req.body;
 
     const result = await pool.query(`
@@ -108,8 +109,9 @@ exports.updateVoucher = async (req, res) => {
         is_admin_only  = $11,
         description    = $12,
         show_in_popup  = $13,
+        popup_title    = $14,
         updated_at     = NOW()
-      WHERE id = $14
+      WHERE id = $15
       RETURNING *
     `, [
       code.trim().toUpperCase(),
@@ -125,6 +127,7 @@ exports.updateVoucher = async (req, res) => {
       is_admin_only === true,
       description  || null,
       show_in_popup === true,
+      popup_title   || null,
       id,
     ]);
 
@@ -252,7 +255,7 @@ exports.getPromoPopup = async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, code, discount_type, discount_value, min_purchase, max_discount,
-             valid_until, description
+             valid_until, description, popup_title
       FROM vouchers
       WHERE show_in_popup = TRUE
         AND is_active = TRUE
