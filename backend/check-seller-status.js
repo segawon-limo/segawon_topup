@@ -124,7 +124,33 @@ async function main() {
     const res = await httpsPostWithRetry('api.digiflazz.com', '/v1/price-list', {
       cmd: 'prepaid', username: USERNAME, sign,
     });
-    priceList = res.data || [];
+    // Handle semua kemungkinan struktur response
+    if (Array.isArray(res)) {
+      priceList = res;                  // response langsung array
+    } else if (Array.isArray(res?.data)) {
+      priceList = res.data;             // { data: [...] }
+    } else if (Array.isArray(res?.data?.data)) {
+      priceList = res.data.data;        // { data: { data: [...] } }
+    } else if (res?.data?.rc && res?.data?.message) {
+      // Rate limit atau error spesifik dari Digiflazz
+      const rc      = res.data.rc;
+      const message = res.data.message;
+      console.warn(`⚠️  Digiflazz error rc=${rc}: ${message}`);
+      // Kirim notif tapi JANGAN ubah status produk apapun
+      await safeSendTelegram(
+        `⏳ <b>Segawon Monitor — Digiflazz Rate Limit</b>\n\n` +
+        `Pengecekan seller dibatalkan, tidak ada perubahan status produk.\n\n` +
+        `🔴 RC: ${rc}\n` +
+        `💬 Pesan: ${message}\n\n` +
+        `⏰ Coba lagi beberapa saat lagi.\n` +
+        `🕐 ${now()}`,
+        'rate-limit'
+      );
+      return; // exit tanpa mengubah status apapun
+    } else {
+      console.error('❌ Struktur response tidak dikenali:', JSON.stringify(res).substring(0, 200));
+      throw new Error('Response Digiflazz tidak mengandung array produk');
+    }
     console.log(`✅ Berhasil fetch ${priceList.length} produk dari Digiflazz`);
   } catch (err) {
     console.error('❌ Gagal fetch Digiflazz:', err.message);
