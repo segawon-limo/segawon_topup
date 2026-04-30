@@ -169,13 +169,12 @@ async function main() {
   console.log(`🔴 Seller unavailable: ${unavailable.length}`);
   console.log(`🟢 Seller available  : ${available.length}`);
 
-  // 3b. Cek harga: bandingkan price Digiflazz dengan base_price di DB
-  // FIX: cek SEMUA produk monitored (available + unavailable), karena
-  // seller tipe 'IP' atau yang harganya naik bisa masuk ke unavailable
-  const allMonitoredSkus = monitored.map(p => p.buyer_sku_code);
-  let priceMismatch = [];
-  let priceDropped  = [];
-  if (allMonitoredSkus.length > 0) {
+  // 3b. Cek harga: HANYA untuk seller aktif (available)
+  // Seller mati langsung OOS tanpa cek harga
+  const availableSkus = available.map(p => p.buyer_sku_code);
+  let priceMismatchActiveOnly = []; // seller aktif + harga naik → warning saja
+  let priceDropped            = []; // seller aktif + harga turun → info saja
+  if (availableSkus.length > 0) {
     const client0 = await pool.connect();
     try {
       const result = await client0.query(
@@ -183,28 +182,23 @@ async function main() {
          FROM products p
          LEFT JOIN games g ON p.game_id = g.id
          WHERE p.sku = ANY($1) AND p.base_price IS NOT NULL`,
-        [allMonitoredSkus]
+        [availableSkus]
       );
       result.rows.forEach(dbProd => {
-        // Cari di seluruh monitored (available + unavailable)
-        const dfProd = monitored.find(p => p.buyer_sku_code === dbProd.sku);
+        const dfProd = available.find(p => p.buyer_sku_code === dbProd.sku);
         if (!dfProd) return;
         const dbPrice = parseFloat(dbProd.base_price);
         const dfPrice = parseFloat(dfProd.price);
-        // Harga Digiflazz NAIK — berbahaya, set unavailable
         if (dfPrice > dbPrice) {
-          priceMismatch.push({
-            sku:           dbProd.sku,
-            name:          dbProd.name,
-            game_name:     dbProd.game_name,
-            db_price:      dbPrice,
-            df_price:      dfPrice,
-            diff:          dfPrice - dbPrice,
-            seller_active: dfProd.seller_product_status,
+          priceMismatchActiveOnly.push({
+            sku:       dbProd.sku,
+            name:      dbProd.name,
+            game_name: dbProd.game_name,
+            db_price:  dbPrice,
+            df_price:  dfPrice,
+            diff:      dfPrice - dbPrice,
           });
-        }
-        // Harga Digiflazz TURUN — kita jual lebih mahal, warning saja
-        else if (dfPrice < dbPrice) {
+        } else if (dfPrice < dbPrice) {
           priceDropped.push({
             sku:       dbProd.sku,
             name:      dbProd.name,
@@ -219,21 +213,12 @@ async function main() {
       client0.release();
     }
   }
-  console.log(`⚠️  Harga naik (unavailable): ${priceMismatch.length} produk`);
-  console.log(`💡 Harga turun (warning)   : ${priceDropped.length} produk`);
-
-  // Pisahkan priceMismatch: seller aktif (warning saja) vs seller mati (OOS)
-  const priceMismatchActiveOnly  = priceMismatch.filter(p => p.seller_active);   // warning, tetap bisa dibeli
-  const priceMismatchSellerDead  = priceMismatch.filter(p => !p.seller_active);  // OOS, harga naik + seller mati
-
-  // Pisahkan unavailable yang murni seller mati vs yang harganya naik
-  const priceMismatchSkuSet = new Set(priceMismatch.map(p => p.sku));
-  const unavailableSellerOnly = unavailable.filter(
-    p => !priceMismatchSkuSet.has(p.buyer_sku_code)
-  );
-  console.log(`🔴 Seller mati (bukan harga)  : ${unavailableSellerOnly.length} produk`);
+  // unavailableSellerOnly = semua seller mati (tidak perlu filter lagi)
+  const unavailableSellerOnly    = unavailable;
+  const priceMismatchSellerDead  = []; // tidak dipakai lagi
   console.log(`⚠️  Harga naik + seller aktif : ${priceMismatchActiveOnly.length} produk (warning only)`);
-  console.log(`🔴 Harga naik + seller mati  : ${priceMismatchSellerDead.length} produk (OOS)`);
+  console.log(`💡 Harga turun (info)         : ${priceDropped.length} produk`);
+  console.log(`🔴 Seller mati                : ${unavailableSellerOnly.length} produk (OOS)`);
 
   // 4. Update DB
   const client = await pool.connect();
@@ -248,36 +233,14 @@ async function main() {
       console.log(`📝 Set seller_available=false untuk ${skus.length} SKU`);
     }
 
-    // Set true untuk yang available (pulih)
-    // Exclude hanya yang harga naik + seller mati (mereka di-set false di bawah)
-    // Yang harga naik tapi seller aktif tetap dibiarkan true (warning saja)
+    // Set true untuk semua yang seller aktif (harga naik tapi aktif tetap true)
     if (available.length > 0) {
-      const deadPriceMismatchSkus = new Set(priceMismatchSellerDead.map(p => p.sku));
-      const skus = available
-        .map(p => p.buyer_sku_code)
-        .filter(sku => !deadPriceMismatchSkus.has(sku)); // jangan pulihkan yang harga naik + seller mati
-      if (skus.length > 0) {
-        // Hanya update produk yang memang ada di DB dengan seller=digiflazz
-        // Gunakan WHERE sku = ANY($1) AND seller_type = 'digiflazz' agar
-        // produk VipReseller/non-Digiflazz tidak tersentuh
-        await client.query(
-          `UPDATE products SET seller_available = true, updated_at = NOW()
-           WHERE sku = ANY($1) AND (seller_type = 'digiflazz' OR seller_type IS NULL)`,
-          [skus]
-        );
-        console.log(`📝 Set seller_available=true untuk ${skus.length} SKU (Digiflazz)`);
-      }
-    }
-
-    // Set false HANYA untuk yang harga naik + seller mati
-    // Yang harga naik tapi seller masih aktif: biarkan tetap available (warning saja)
-    if (priceMismatchSellerDead.length > 0) {
-      const skus = priceMismatchSellerDead.map(p => p.sku);
+      const skus = available.map(p => p.buyer_sku_code);
       await client.query(
-        `UPDATE products SET seller_available = false, updated_at = NOW() WHERE sku = ANY($1)`,
+        `UPDATE products SET seller_available = true, updated_at = NOW() WHERE sku = ANY($1)`,
         [skus]
       );
-      console.log(`📝 Set seller_available=false untuk ${skus.length} SKU (harga naik + seller mati)`);
+      console.log(`📝 Set seller_available=true untuk ${skus.length} SKU`);
     }
 
     // Ambil detail produk yang unavailable dari DB (untuk notif lebih informatif)
@@ -298,34 +261,30 @@ async function main() {
     // 5. Kirim notif Telegram
     // Notif harga mismatch (terpisah dari unavailable)
     // Notif harga naik + seller AKTIF — warning saja, produk masih bisa dibeli
+    // Pecah jadi beberapa pesan jika terlalu panjang (Telegram limit 4096 char)
     if (priceMismatchActiveOnly.length > 0) {
-      let warnMsg = `⚠️ <b>Segawon Monitor — Warning Harga Naik</b>\n\n`;
-      warnMsg += `<b>${priceMismatchActiveOnly.length} produk</b> harga Digiflazz naik, tapi seller masih aktif.\n`;
-      warnMsg += `Produk <b>masih bisa dibeli</b>, namun margin kamu berkurang:\n\n`;
-      priceMismatchActiveOnly.forEach(p => {
-        warnMsg += `• <b>${p.name}</b> (${p.sku})\n`;
-        warnMsg += `  Modal DB: ${formatRupiah(p.db_price)} → Digiflazz: ${formatRupiah(p.df_price)} (📈 naik ${formatRupiah(p.diff)})\n\n`;
-      });
-      warnMsg += `💡 Segera update harga modal & harga jual di DB!\n`;
-      warnMsg += `🕐 ${now()}`;
-      await safeSendTelegram(warnMsg, 'harga-naik-warning');
-      console.log('📨 Notif Telegram warning harga naik (seller aktif):', priceMismatchActiveOnly.length, 'produk');
+      const CHUNK = 20; // max produk per pesan
+      const total = priceMismatchActiveOnly.length;
+      const pages = Math.ceil(total / CHUNK);
+      for (let i = 0; i < pages; i++) {
+        const slice = priceMismatchActiveOnly.slice(i * CHUNK, (i + 1) * CHUNK);
+        const pageInfo = pages > 1 ? ` (${i + 1}/${pages})` : '';
+        let warnMsg = `⚠️ <b>Segawon Monitor — Warning Harga Naik${pageInfo}</b>\n\n`;
+        warnMsg += `<b>${total} produk</b> harga Digiflazz naik, seller masih aktif.\n`;
+        warnMsg += `Produk <b>masih bisa dibeli</b>, namun margin berkurang:\n\n`;
+        slice.forEach(p => {
+          warnMsg += `• <b>${p.name}</b> (${p.sku})\n`;
+          warnMsg += `  DB: ${formatRupiah(p.db_price)} → DF: ${formatRupiah(p.df_price)} (📈 +${formatRupiah(p.diff)})\n\n`;
+        });
+        warnMsg += `💡 Segera update harga modal & harga jual di DB!\n`;
+        warnMsg += `🕐 ${now()}`;
+        await safeSendTelegram(warnMsg, `harga-naik-warning-${i+1}`);
+        if (i < pages - 1) await new Promise(r => setTimeout(r, 1000)); // delay 1s antar chunk
+      }
+      console.log('📨 Notif Telegram warning harga naik (seller aktif):', total, 'produk');
     }
 
-    // Notif harga naik + seller MATI — produk sudah di-set OOS
-    if (priceMismatchSellerDead.length > 0) {
-      let priceMsg = `🔴 <b>Segawon Monitor — Harga Naik + Seller Mati!</b>\n\n`;
-      priceMsg += `<b>${priceMismatchSellerDead.length} produk</b> harga naik DAN seller tidak aktif.\n`;
-      priceMsg += `Produk sudah di-set <b>Out of Stock</b> otomatis:\n\n`;
-      priceMismatchSellerDead.forEach(p => {
-        priceMsg += `• <b>${p.name}</b> (${p.sku})\n`;
-        priceMsg += `  Modal DB: ${formatRupiah(p.db_price)} → Digiflazz: ${formatRupiah(p.df_price)} (📈 naik ${formatRupiah(p.diff)})\n\n`;
-      });
-      priceMsg += `⚠️ Segera ganti seller & update harga modal di DB!\n`;
-      priceMsg += `🕐 ${now()}`;
-      await safeSendTelegram(priceMsg, 'harga-naik-OOS');
-      console.log('📨 Notif Telegram harga naik + seller mati:', priceMismatchSellerDead.length, 'produk');
-    }
+    // Seller mati sudah masuk OOS Alert di bawah — tidak perlu notif terpisah
 
     // Warning: harga Digiflazz turun, kita jual lebih mahal
     if (priceDropped.length > 0) {
@@ -342,7 +301,7 @@ async function main() {
       console.log('📨 Notif Telegram harga turun terkirim:', priceDropped.length, 'produk');
     }
 
-    if (unavailableSellerOnly.length === 0 && priceMismatchSellerDead.length === 0) {
+    if (unavailableSellerOnly.length === 0 && priceMismatchActiveOnly.length === 0) {
       if (priceDropped.length === 0) {
         const allOkMsg = `✅ <b>Segawon Monitor</b>\n\nSemua produk Games/Voucher/PLN <b>available</b> dan harga <b>tidak ada kenaikan</b>!\n\n🕐 ${now()}`;
         await safeSendTelegram(allOkMsg, 'all-ok');
