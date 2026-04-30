@@ -334,6 +334,77 @@ exports.handleWebhook = async (req, res) => {
   }
 };
 
+// ── Notifikasi order baru ─────────────────────────────────────
+/**
+ * Kirim notif ke Telegram saat order baru berhasil dibuat.
+ * Dipanggil dari order.controller.js dan pascabayar.controller.js.
+ *
+ * @param {object} params
+ * @param {string} params.orderNumber
+ * @param {string} params.productName   - nama produk / provider pascabayar
+ * @param {string} params.customerName
+ * @param {string} params.customerEmail
+ * @param {string|null} params.userId   - game user ID / nomor pelanggan
+ * @param {string} params.paymentMethod
+ * @param {number} params.amount        - harga produk sebelum diskon
+ * @param {number} params.paymentFee
+ * @param {number} params.total
+ * @param {number} params.voucherDiscount
+ * @param {string|null} params.voucherCode
+ * @param {'topup'|'pascabayar'} params.orderType
+ */
+exports.notifyNewOrder = async (params) => {
+  if (!BOT_TOKEN || !CHAT_ID) return; // Tidak ada konfigurasi Telegram → skip
+
+  try {
+    const {
+      orderNumber, productName, customerName, customerEmail,
+      userId, paymentMethod, amount, paymentFee,
+      total, voucherDiscount = 0, voucherCode = null,
+      orderType = 'topup',
+    } = params;
+
+    const fmt = (n) => `Rp ${Math.round(n || 0).toLocaleString('id-ID')}`;
+
+    const typeIcon = orderType === 'pascabayar' ? '🔌' : '🎮';
+    const typeLabel = orderType === 'pascabayar' ? 'Pascabayar' : 'Top-Up';
+
+    let msg =
+      `${typeIcon} <b>Order Baru — ${typeLabel}</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 <b>Order</b>  : <code>${orderNumber}</code>\n` +
+      `📦 <b>Produk</b>  : ${productName || '—'}\n`;
+
+    if (userId) {
+      const userLabel = orderType === 'pascabayar' ? 'No. Pelanggan' : 'User ID';
+      msg += `👤 <b>${userLabel}</b>: <code>${userId}</code>\n`;
+    }
+
+    msg +=
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤 <b>Customer</b> : ${customerName || '—'}\n` +
+      `📧 <b>Email</b>    : ${customerEmail || '—'}\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `💰 <b>Harga</b>    : ${fmt(amount)}\n`;
+
+    if (voucherDiscount > 0) {
+      msg += `🎫 <b>Voucher</b>   : -${fmt(voucherDiscount)}${voucherCode ? ` (${voucherCode})` : ''}\n`;
+    }
+
+    msg +=
+      `🏦 <b>Biaya</b>    : ${fmt(paymentFee)}\n` +
+      `💳 <b>Total</b>    : <b>${fmt(total)}</b>\n` +
+      `💳 <b>Payment</b>  : ${paymentMethod}\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `🕐 ${now()}`;
+
+    await sendMessage(CHAT_ID, msg);
+  } catch (err) {
+    // Jangan sampai error notif menggangu flow order
+    console.error('[Telegram] notifyNewOrder error:', err.message);
+  }
+};
+
 // ── Register webhook ke Telegram ──────────────────────────────
 exports.registerWebhook = async (req, res) => {
   const domain     = process.env.APP_URL || 'https://segawontopup.net';

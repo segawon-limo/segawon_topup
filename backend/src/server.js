@@ -50,14 +50,29 @@ app.use('/uploads/feedback', express.static(
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
 // 5. Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+// Admin punya kuota sendiri yang longgar — satu aksi edit produk bisa
+// memicu 3–4 request sekaligus (PUT + 2x GET reload). Pisahkan dari
+// kuota publik agar aktivitas admin tidak kena blokir pelanggan & sebaliknya.
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 1000,                 // admin bisa kirim banyak request saat kelola catalog
   message: { success: false, message: 'Too many requests' },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
-app.use('/api', limiter);
+
+const publicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 100,                  // tetap ketat untuk traffic publik/pelanggan
+  message: { success: false, message: 'Too many requests' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Admin routes → kuota longgar, harus didaftarkan SEBELUM publicLimiter
+app.use('/api/admin', adminLimiter);
+// Semua route publik lainnya → kuota ketat
+app.use('/api', publicLimiter);
 
 // ========================================
 // ROUTES

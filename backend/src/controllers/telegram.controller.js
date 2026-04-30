@@ -50,6 +50,28 @@ function now() {
   });
 }
 
+function formatRupiah(num) {
+  return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+}
+
+function httpsPost(hostname, path, payload, timeoutMs = 30000) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(payload);
+    const req = https.request({
+      hostname, path, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve(data); } });
+    });
+    req.setTimeout(timeoutMs, () => req.destroy(new Error(`Timeout ${timeoutMs / 1000}s`)));
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 function genOrderNumber() {
   const rand = Math.random().toString(36).substring(2, 4).toUpperCase();
   const tail = Date.now().toString().slice(-3);
@@ -120,11 +142,163 @@ async function handleStatus(chatId) {
 }
 
 // ── Command: /help ────────────────────────────────────────────
+// ── Command: /warning_prices ──────────────────────────────────
+async function handleWarningPrices(chatId) {
+  try {
+    const result = await pool.query(`
+      SELECT p.name, p.sku, p.base_price, g.name as game_name
+      FROM products p
+      LEFT JOIN games g ON g.id = p.game_id
+      WHERE p.seller_price_warning = true
+      ORDER BY g.name, p.name
+    `);
+
+    if (result.rows.length === 0) {
+      await sendMessage(chatId,
+        `✅ <b>Harga Seller</b>\n\n` +
+        `Tidak ada produk dengan harga Digiflazz lebih tinggi dari harga modal saat ini.\n\n` +
+        `🕐 ${now()}`
+      );
+      return;
+    }
+
+    // Fetch harga aktual Digiflazz untuk tampilkan selisih
+    const crypto = require('crypto');
+    const USERNAME = process.env.DIGIFLAZZ_USERNAME;
+    const API_KEY  = process.env.DIGIFLAZZ_PRODUCTION_KEY;
+    let priceMap = {};
+    try {
+      const sign = crypto.createHash('md5').update(USERNAME + API_KEY + 'pricelist').digest('hex');
+      const dfRes = await httpsPost('api.digiflazz.com', '/v1/price-list', {
+        cmd: 'pricelist', username: USERNAME, sign,
+      }, 20000);
+      const list = Array.isArray(dfRes) ? dfRes : (dfRes?.data?.data || dfRes?.data || []);
+      list.forEach(p => { priceMap[p.buyer_sku_code] = parseFloat(p.price); });
+    } catch (e) {
+      // Lanjut tanpa data DF — tampilkan tanpa selisih
+    }
+
+    const grouped = {};
+    result.rows.forEach(p => {
+      if (!grouped[p.game_name]) grouped[p.game_name] = [];
+      grouped[p.game_name].push(p);
+    });
+
+    const total = result.rows.length;
+    const CHUNK = 20;
+    const entries = Object.entries(grouped);
+    let chunk = [];
+    let chunkIdx = 1;
+
+    const flushChunk = async (rows, isFirst) => {
+      let msg = isFirst
+        ? `🔴 <b>Harga Seller Naik</b> — ${total} produk\n\n`
+        : `🔴 <b>Harga Seller Naik</b> (lanjutan)\n\n`;
+
+      rows.forEach(([game, prods]) => {
+        msg += `<b>📦 ${game}</b>\n`;
+        prods.forEach(p => {
+          const dbPrice = parseFloat(p.base_price);
+          const dfPrice = priceMap[p.sku];
+          if (dfPrice && dfPrice > dbPrice) {
+            const diff = dfPrice - dbPrice;
+            msg += `  • ${p.name} <code>(${p.sku})</code>\n`;
+            msg += `    Modal: ${formatRupiah(dbPrice)} → DF: ${formatRupiah(dfPrice)} <b>(+${formatRupiah(diff)})</b>\n`;
+          } else {
+            msg += `  • ${p.name} <code>(${p.sku})</code> — modal: ${formatRupiah(dbPrice)}\n`;
+          }
+        });
+        msg += '\n';
+      });
+
+      if (isFirst) {
+        msg += `💡 Setelah update harga modal di catalog, ketik /reset_warnings untuk hapus flag.\n`;
+        msg += `🕐 ${now()}`;
+      }
+      await sendMessage(chatId, msg);
+    };
+
+    let rowCount = 0;
+    let isFirst = true;
+    for (const [game, prods] of entries) {
+      chunk.push([game, prods]);
+      rowCount += prods.length;
+      if (rowCount >= CHUNK) {
+        await flushChunk(chunk, isFirst);
+        isFirst = false;
+        chunk = [];
+        rowCount = 0;
+      }
+    }
+    if (chunk.length > 0) await flushChunk(chunk, isFirst);
+
+  } catch (err) {
+    await sendMessage(chatId, `❌ Gagal cek warning harga: ${err.message}`);
+  }
+}
+
+// ── Command: /reset_warnings ──────────────────────────────────
+async function handleResetWarnings(chatId) {
+  try {
+    const check = await pool.query(`
+      SELECT COUNT(*) as count FROM products WHERE seller_price_warning = true
+    `);
+    const count = parseInt(check.rows[0].count);
+
+    if (count === 0) {
+      await sendMessage(chatId,
+        `✅ <b>Reset Warning</b>\n\n` +
+        `Tidak ada produk dengan flag harga naik saat ini.\n\n` +
+        `🕐 ${now()}`
+      );
+      return;
+    }
+
+    // Ambil daftar sebelum reset (untuk laporan)
+    const before = await pool.query(`
+      SELECT p.name, p.sku, g.name as game_name
+      FROM products p
+      LEFT JOIN games g ON g.id = p.game_id
+      WHERE p.seller_price_warning = true
+      ORDER BY g.name, p.name
+    `);
+
+    await pool.query(`
+      UPDATE products
+      SET seller_price_warning = false, updated_at = NOW()
+      WHERE seller_price_warning = true
+    `);
+
+    const grouped = {};
+    before.rows.forEach(p => {
+      if (!grouped[p.game_name]) grouped[p.game_name] = [];
+      grouped[p.game_name].push(p);
+    });
+
+    let msg = `✅ <b>Warning harga berhasil direset!</b>\n\n<b>${count} produk</b> flag-nya dihapus:\n\n`;
+    Object.entries(grouped).forEach(([game, prods]) => {
+      msg += `<b>📦 ${game}</b>\n`;
+      prods.forEach(p => { msg += `  • ${p.name} <code>(${p.sku})</code>\n`; });
+      msg += '\n';
+    });
+    msg += `⚠️ Pastikan kamu sudah update <b>harga modal & harga jual</b> di catalog.\n`;
+    msg += `Flag akan muncul lagi saat cron berikutnya jika harga DF masih lebih tinggi.\n\n`;
+    msg += `🕐 ${now()}`;
+
+    await sendMessage(chatId, msg);
+  } catch (err) {
+    await sendMessage(chatId, `❌ Gagal reset warnings: ${err.message}`);
+  }
+}
+
+// ── Command: /help ────────────────────────────────────────────
 async function handleHelp(chatId) {
   await sendMessage(chatId,
     `🤖 <b>Segawon Monitor Bot</b>\n\n` +
     `Perintah yang tersedia:\n\n` +
     `🔄 /update_stock — Set semua produk OOS → Ready\n` +
+    `🔴 /warning_prices — Lihat produk dengan harga Digiflazz lebih tinggi dari modal\n` +
+    `✅ /reset_warnings — Reset flag harga naik setelah update harga di catalog\n` +
     `📊 /status — Lihat jumlah produk Ready vs OOS\n` +
     `💳 /topup — Manual topup via Digiflazz\n` +
     `🚫 /cancel — Batalkan sesi topup\n` +
@@ -322,11 +496,13 @@ exports.handleWebhook = async (req, res) => {
 
   // Normal command routing
   switch (command) {
-    case '/topup':        await handleTopup(chatId);       break;
-    case '/update_stock': await handleUpdateStock(chatId); break;
-    case '/status':       await handleStatus(chatId);      break;
+    case '/topup':           await handleTopup(chatId);          break;
+    case '/update_stock':    await handleUpdateStock(chatId);    break;
+    case '/warning_prices':  await handleWarningPrices(chatId);  break;
+    case '/reset_warnings':  await handleResetWarnings(chatId);  break;
+    case '/status':          await handleStatus(chatId);         break;
     case '/help':
-    case '/start':        await handleHelp(chatId);        break;
+    case '/start':           await handleHelp(chatId);           break;
     default:
       await sendMessage(chatId,
         `❓ Perintah tidak dikenal: <code>${text}</code>\nKetik /help untuk daftar perintah.`
