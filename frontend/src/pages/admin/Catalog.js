@@ -775,10 +775,11 @@ function AdminCatalog() {
   const [buildLog,   setBuildLog]   = useState([]);
 
   // Filters
-  const [filterGame,    setFilterGame]    = useState('');
-  const [filterSearch,  setFilterSearch]  = useState('');
-  const [filterActive,  setFilterActive]  = useState('all'); // 'all' | 'active' | 'inactive'
-  const [filterStock,   setFilterStock]   = useState('all'); // 'all' | 'oos' | 'ready'
+  const [filterGame,         setFilterGame]         = useState('');
+  const [filterSearch,       setFilterSearch]       = useState('');
+  const [filterActive,       setFilterActive]       = useState('all'); // 'all' | 'active' | 'inactive'
+  const [filterStock,        setFilterStock]        = useState('all'); // 'all' | 'oos' | 'ready'
+  const [filterPriceWarning, setFilterPriceWarning] = useState(false); // true = tampilkan produk harga seller naik
 
   // Modals
   const [gameModal,    setGameModal]    = useState(null);  // null | 'new' | {game}
@@ -978,6 +979,7 @@ function AdminCatalog() {
     if (filterActive === 'inactive' &&  p.is_active) return false;
     if (filterStock === 'oos'   &&  p.seller_available !== false) return false;
     if (filterStock === 'ready' &&  p.seller_available === false) return false;
+    if (filterPriceWarning && !p.seller_price_warning) return false;
     return true;
   });
 
@@ -1118,6 +1120,20 @@ function AdminCatalog() {
             <option value="ready">✓ Ready</option>
           </select>
         )}
+        {tab === 'products' && (
+          <button
+            className={`filter-price-warning-btn${filterPriceWarning ? ' active' : ''}`}
+            onClick={() => setFilterPriceWarning(v => !v)}
+            title="Filter produk yang harga Digiflazz-nya lebih tinggi dari harga modal di DB"
+          >
+            🔴 Harga Seller Naik
+            {products.filter(p => p.seller_price_warning).length > 0 && (
+              <span className="price-warning-badge">
+                {products.filter(p => p.seller_price_warning).length}
+              </span>
+            )}
+          </button>
+        )}
         <button
           className="btn-primary"
           onClick={() => tab === 'games' ? setGameModal('new') : setProductModal('new')}
@@ -1245,6 +1261,9 @@ function AdminCatalog() {
                         ? <span className="badge badge-danger">⚠ OOS</span>
                         : <span className="badge badge-success">✓ Ready</span>
                       }
+                      {p.seller_price_warning && p.seller_available !== false && (
+                        <span className="badge badge-price-warning" title="Harga Digiflazz lebih tinggi dari harga modal. Segera update!">🔴 Harga Naik</span>
+                      )}
                     </td>
                     <td>
                       <div className="action-btns">

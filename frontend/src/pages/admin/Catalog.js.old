@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useIdleTimeout from '../../hooks/useIdleTimeout';
 import './Admin.css';
 import './Catalog.css';
 import AdminPageHeader from '../../components/AdminPageHeader';
@@ -763,6 +764,7 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
 // ══════════════════════════════════════════════════════════════
 function AdminCatalog() {
   const navigate = useNavigate();
+  useIdleTimeout();
   const [tab,      setTab]      = useState('games');   // 'games' | 'products'
   const [games,    setGames]    = useState([]);
   const [products, setProducts] = useState([]);
@@ -1064,6 +1066,7 @@ function AdminCatalog() {
         <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
         <button onClick={() => navigate('/admin/orders')}    className="btn-secondary">📋 Orders</button>
         <button onClick={() => navigate('/admin/vouchers')}  className="btn-secondary">🎫 Vouchers</button>
+        <button onClick={() => navigate('/admin/visitors')} className="btn-secondary">👁️ Visitors</button>
         <button onClick={() => navigate('/admin/terminal')}  className="btn-secondary">⌨️ Server</button>
         <button onClick={() => navigate('/admin/feedback')}   className="btn-secondary">💬 Feedback</button>
         <button onClick={handleLogout} className="btn-danger">Logout</button>

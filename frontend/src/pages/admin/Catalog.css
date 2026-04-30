@@ -446,3 +446,57 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(350%); }
 }
+/* ── Filter: Harga Seller Naik ───────────────────────────────── */
+.filter-price-warning-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #f59e0b;
+  border-radius: 8px;
+  background: transparent;
+  color: #f59e0b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.filter-price-warning-btn:hover {
+  background: #fef3c7;
+  color: #b45309;
+}
+.filter-price-warning-btn.active {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+}
+
+.price-warning-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Badge merah di kolom Stock tabel produk */
+.badge-price-warning {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: default;
+}

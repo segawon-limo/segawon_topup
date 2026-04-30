@@ -437,3 +437,12 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+/* Build overlay animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes progress-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}

@@ -243,6 +243,28 @@ async function main() {
       console.log(`📝 Set seller_available=true untuk ${skus.length} SKU`);
     }
 
+    // Update seller_price_warning:
+    // - TRUE  untuk produk aktif yang harga Digiflazz > base_price (harga modal)
+    // - FALSE untuk semua SKU yang harganya sudah normal / seller mati (OOS sudah cukup)
+    const warnSkus = priceMismatchActiveOnly.map(p => p.sku);
+    if (warnSkus.length > 0) {
+      await client.query(
+        `UPDATE products SET seller_price_warning = true,  updated_at = NOW() WHERE sku = ANY($1)`,
+        [warnSkus]
+      );
+      console.log(`⚠️  Set seller_price_warning=true untuk ${warnSkus.length} SKU`);
+    }
+    // Reset warning untuk SKU yang sudah tidak bermasalah (harga normal kembali)
+    const allCheckedSkus = [...available.map(p => p.buyer_sku_code), ...unavailable.map(p => p.buyer_sku_code)];
+    if (allCheckedSkus.length > 0) {
+      await client.query(
+        `UPDATE products SET seller_price_warning = false, updated_at = NOW()
+         WHERE sku = ANY($1) AND sku != ALL($2)`,
+        [allCheckedSkus, warnSkus.length > 0 ? warnSkus : ['']]
+      );
+      console.log(`✅ Reset seller_price_warning=false untuk SKU yang harganya sudah normal`);
+    }
+
     // Ambil detail produk yang unavailable dari DB (untuk notif lebih informatif)
     let dbUnavailable = [];
     if (unavailable.length > 0) {
