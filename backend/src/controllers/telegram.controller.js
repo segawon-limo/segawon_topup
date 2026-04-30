@@ -585,22 +585,34 @@ exports.notifyNewOrder = async (params) => {
 exports.registerWebhook = async (req, res) => {
   const domain     = process.env.APP_URL || 'https://segawontopup.net';
   const webhookUrl = `${domain}/api/telegram/webhook`;
-  const body       = JSON.stringify({ url: webhookUrl });
 
-  const apiReq = https.request({
-    hostname: 'api.telegram.org',
-    path:     `/bot${BOT_TOKEN}/setWebhook`,
-    method:   'POST',
-    headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-  }, (apiRes) => {
-    let data = '';
-    apiRes.on('data', c => data += c);
-    apiRes.on('end', () => {
-      const result = JSON.parse(data);
-      console.log('[Telegram] setWebhook result:', result);
-      res.json({ success: result.ok, result });
+  try {
+    // 1. Set webhook URL
+    const webhookResult = await httpsPost('api.telegram.org', `/bot${BOT_TOKEN}/setWebhook`, {
+      url: webhookUrl,
     });
-  });
-  apiReq.write(body);
-  apiReq.end();
+    console.log('[Telegram] setWebhook result:', webhookResult);
+
+    // 2. Daftarkan daftar command supaya menu "/" di Telegram ikut update
+    const commandsResult = await httpsPost('api.telegram.org', `/bot${BOT_TOKEN}/setMyCommands`, {
+      commands: [
+        { command: 'update_stock',   description: 'Set semua produk OOS → Ready' },
+        { command: 'warning_prices', description: 'Produk dengan harga Digiflazz lebih tinggi dari modal' },
+        { command: 'reset_warnings', description: 'Reset flag harga naik setelah update harga di catalog' },
+        { command: 'status',         description: 'Lihat jumlah produk Ready vs OOS' },
+        { command: 'topup',          description: 'Manual topup via Digiflazz' },
+        { command: 'help',           description: 'Tampilkan daftar perintah' },
+      ],
+    });
+    console.log('[Telegram] setMyCommands result:', commandsResult);
+
+    res.json({
+      success: webhookResult.ok && commandsResult.ok,
+      webhook: webhookResult,
+      commands: commandsResult,
+    });
+  } catch (err) {
+    console.error('[Telegram] registerWebhook error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
