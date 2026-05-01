@@ -5,7 +5,9 @@ import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
 const CODE_PRODUCT_TYPES = ['voucher_code', 'token_pln'];
-const MAX_POLLS = 40; // 40 × 3s = 2 menit
+const MAX_POLLS    = 40;   // 40 × 3s = 2 menit
+const CS_PER_PAGE  = 3;    // kartu cross-sell per halaman
+const CS_INTERVAL  = 4000; // ms auto-advance
 
 export default function SuccessPage() {
   const [searchParams] = useSearchParams();
@@ -17,7 +19,19 @@ export default function SuccessPage() {
   const [copied,      setCopied]      = useState(false);
   const [polling,     setPolling]     = useState(false);
   const [pollCount,   setPollCount]   = useState(0);
+  const [crossSellGames, setCrossSellGames] = useState([]);
   const intervalRef = useRef(null);
+
+  // ── cross-sell carousel refs (hindari re-render) ──────────
+  const csPages    = useRef([]);
+  const csCurrent  = useRef(0);
+  const csPaused   = useRef(false);
+  const csTimer    = useRef(null);
+  const csStartTs  = useRef(null);
+  const csElapsed  = useRef(0);
+  const csTrackRef = useRef(null);
+  const csDotsRef  = useRef(null);
+  const csBarRef   = useRef(null);
 
   const isCodeProduct = (o) => o && CODE_PRODUCT_TYPES.includes(o.productType);
   const hasCode       = (o) => o && o.serialNumber;
@@ -32,12 +46,30 @@ export default function SuccessPage() {
     return null;
   }, [orderNumber]);
 
+  // ── fetch cross-sell games ────────────────────────────────
+  const fetchCrossSellGames = useCallback(async (currentSlug) => {
+    try {
+      const res  = await fetch(`${API_URL}/api/games`);
+      const data = await res.json();
+      const all  = data.games || [];
+      const others = all
+        .filter(g => g.slug !== currentSlug && g.category === 'games')
+        .sort(() => Math.random() - 0.5)
+        .slice(0, CS_PER_PAGE * 3);
+      setCrossSellGames(others);
+    } catch (e) { /* silent */ }
+  }, []);
+
   // ── initial load ──────────────────────────────────────────
   useEffect(() => {
     if (!orderNumber) return;
     fetchOrder().then(o => {
       setLoading(false);
       if (isCodeProduct(o) && !hasCode(o)) setPolling(true);
+      if (o?.gameSlug) fetchCrossSellGames(o.gameSlug);
+      if (o?.gameUserId) {
+        try { localStorage.setItem('lastUserId', o.gameUserId); } catch (_) {}
+      }
     });
   }, [orderNumber]);
 
@@ -57,6 +89,119 @@ export default function SuccessPage() {
     }, 3000);
     return () => clearInterval(intervalRef.current);
   }, [polling]);
+
+  // ── cross-sell carousel ───────────────────────────────────
+  useEffect(() => {
+    if (!crossSellGames.length) return;
+    const pages = [];
+    for (let i = 0; i + CS_PER_PAGE <= crossSellGames.length; i += CS_PER_PAGE)
+      pages.push(crossSellGames.slice(i, i + CS_PER_PAGE));
+    csPages.current   = pages;
+    csCurrent.current = 0;
+    csBuildTrack();
+    csGoTo(0, false);
+    csRenderDots();
+    csStartBar();
+    csTick();
+    return () => clearTimeout(csTimer.current);
+  }, [crossSellGames]);
+
+  function csBuildTrack() {
+    const track = csTrackRef.current; if (!track) return;
+    track.innerHTML = '';
+    const pages = csPages.current;
+    track.style.width = `${pages.length * 100}%`;
+    pages.forEach(page => {
+      const pageEl = document.createElement('div');
+      pageEl.className = 'sp-cs-page';
+      pageEl.style.flex = `0 0 calc(${100 / pages.length}%)`;
+      page.forEach(g => {
+        const card = document.createElement('a');
+        card.className = 'sp-cs-card';
+        card.href = `/order/${g.slug}`;
+        card.innerHTML = `
+          <span class="sp-cs-arrow">↗</span>
+          <div class="sp-cs-icon">
+            <img src="${g.icon_url || ''}" alt="${g.name}" onerror="this.classList.add('errored')"/>
+            <span class="sp-cs-initials">${g.name.slice(0,3).toUpperCase()}</span>
+          </div>
+          <span class="sp-cs-name">${g.name}</span>`;
+        pageEl.appendChild(card);
+      });
+      track.appendChild(pageEl);
+    });
+  }
+
+  function csRenderDots() {
+    const el = csDotsRef.current; if (!el) return;
+    const pages = csPages.current;
+    el.innerHTML = pages.map((_, i) =>
+      `<button class="sp-cs-dot ${i === csCurrent.current ? 'active' : ''}" data-i="${i}"></button>`
+    ).join('');
+    el.querySelectorAll('.sp-cs-dot').forEach(d =>
+      d.addEventListener('click', () => { csGoTo(+d.dataset.i); csResetTimer(); })
+    );
+  }
+
+  function csGoTo(idx, animate = true) {
+    const pages = csPages.current;
+    csCurrent.current = ((idx % pages.length) + pages.length) % pages.length;
+    const track = csTrackRef.current; if (!track) return;
+    track.style.transition = animate ? 'transform 0.45s cubic-bezier(0.4,0,0.2,1)' : 'none';
+    track.style.transform  = `translateX(-${csCurrent.current * (100 / pages.length)}%)`;
+    csRenderDots();
+  }
+
+  function csStartBar() {
+    const bar = csBarRef.current; if (!bar) return;
+    bar.style.transition = 'none';
+    bar.style.width = `${(csElapsed.current / CS_INTERVAL) * 100}%`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!csBarRef.current) return;
+      csBarRef.current.style.transition = `width ${CS_INTERVAL - csElapsed.current}ms linear`;
+      csBarRef.current.style.width = '100%';
+      csStartTs.current = performance.now();
+    }));
+  }
+
+  function csPauseBar() {
+    if (!csStartTs.current) return;
+    csElapsed.current += performance.now() - csStartTs.current;
+    csStartTs.current = null;
+    const bar = csBarRef.current; if (!bar) return;
+    bar.style.transition = 'none';
+    bar.style.width = `${Math.min((csElapsed.current / CS_INTERVAL) * 100, 100)}%`;
+  }
+
+  function csResetBar() {
+    csElapsed.current = 0; csStartTs.current = null;
+    const bar = csBarRef.current; if (!bar) return;
+    bar.style.transition = 'none'; bar.style.width = '0%';
+  }
+
+  function csTick() {
+    clearTimeout(csTimer.current);
+    csTimer.current = setTimeout(() => {
+      csGoTo(csCurrent.current + 1);
+      csResetBar();
+      if (!csPaused.current) { csStartBar(); csTick(); }
+    }, CS_INTERVAL - csElapsed.current);
+  }
+
+  function csResetTimer() {
+    clearTimeout(csTimer.current); csResetBar(); csElapsed.current = 0;
+    if (!csPaused.current) { csStartBar(); csTick(); }
+  }
+
+  function csPause() {
+    if (csPaused.current) return;
+    csPaused.current = true; clearTimeout(csTimer.current); csPauseBar();
+  }
+
+  function csResume() {
+    if (!csPaused.current) return;
+    csPaused.current = false; csResetBar(); csElapsed.current = 0; csStartBar(); csTick();
+  }
 
   // ── copy ──────────────────────────────────────────────────
   const copy = async () => {
@@ -289,6 +434,29 @@ export default function SuccessPage() {
             <span>Kendala? Hubungi CS kami, kami siap membantu</span>
           </div>
         </div>
+
+        {/* ── CROSS-SELL ────────────────────────────── */}
+        {crossSellGames.length >= CS_PER_PAGE && (
+          <div className="sp-crosssell">
+            <p className="sp-crosssell-label">Rekomendasi untuk kamu</p>
+            <p className="sp-crosssell-title">🎮 Mau topup game lain?</p>
+            <div
+              className="sp-cs-viewport"
+              ref={el => { /* attach pause/resume ke DOM element */ }}
+              onMouseEnter={csPause}
+              onMouseLeave={csResume}
+              onTouchStart={csPause}
+              onTouchEnd={csResume}
+              onTouchCancel={csResume}
+            >
+              <div className="sp-cs-track" ref={csTrackRef}/>
+            </div>
+            <div className="sp-cs-dots" ref={csDotsRef}/>
+            <div className="sp-cs-progress">
+              <div className="sp-cs-bar" ref={csBarRef}/>
+            </div>
+          </div>
+        )}
 
         {/* ── BUTTONS ───────────────────────────────── */}
         <div className="sp-actions">

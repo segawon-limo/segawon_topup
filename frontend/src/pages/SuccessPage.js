@@ -4,6 +4,7 @@ import './SuccessPage.css';
 import { Helmet } from 'react-helmet-async';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://segawontopup.net';
+const WA_NUMBER    = process.env.REACT_APP_WHATSAPP || '6285791464598';
 const CODE_PRODUCT_TYPES = ['voucher_code', 'token_pln'];
 const MAX_POLLS    = 40;   // 40 × 3s = 2 menit
 const CS_PER_PAGE  = 3;    // kartu cross-sell per halaman
@@ -324,6 +325,14 @@ export default function SuccessPage() {
                 <span className="sp-timeout-icon">⚠️</span>
                 <p>Kode sedang diproses lebih lama dari biasanya.</p>
                 <p>Cek inbox email kamu atau hubungi CS kami.</p>
+                <a
+                  className="sp-btn-support"
+                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Halo, saya ingin menanyakan pesanan saya ${orderNumber} yang belum selesai diproses.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  💬 Hubungi Support
+                </a>
               </div>
             )}
 

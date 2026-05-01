@@ -203,6 +203,14 @@
 .sp-code-timeout { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .sp-timeout-icon { font-size: 36px; }
 .sp-code-timeout p { font-size: 14px; color: #ca8a04; margin: 0; }
+.sp-btn-support {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 8px; padding: 10px 20px;
+  background: #25d366; color: #fff;
+  border-radius: 8px; font-size: 14px; font-weight: 600;
+  text-decoration: none; transition: background 0.15s;
+}
+.sp-btn-support:hover { background: #1da851; }
 
 /* ready */
 .sp-code-ready { display: flex; flex-direction: column; align-items: center; gap: 14px; }

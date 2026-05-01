@@ -383,32 +383,52 @@ exports.retryFailedOrders = async (req, res) => {
           orderNumber: retryOrderNumber
         });
 
-        if (digiflazzRes.success && digiflazzRes.data.rc === '00') {
-          // Berhasil — simpan SN, kembalikan order_number ke base (tanpa suffix)
-          await pool.query(
-            `UPDATE orders 
-             SET order_status = $1, 
-                 provider_serial_number = $2, 
-                 order_number = $3,
-                 retry_count = $4,
-                 updated_at = NOW()
-             WHERE id = $5`,
-            ['SUCCESS', digiflazzRes.data.sn, baseOrderNumber, retryCount, orderId]
-          );
+        const rc = digiflazzRes.data?.rc;
+        const isSuccess = rc === '00' || digiflazzRes.data?.status === 'Sukses';
+        const isPending  = rc === '03' || digiflazzRes.data?.status === 'Pending';
 
+        if (isSuccess) {
+          // ✅ Langsung sukses (jarang terjadi, biasanya via webhook)
+          await pool.query(
+            `UPDATE orders
+             SET order_status           = 'completed',
+                 provider_serial_number = $1,
+                 order_number           = $2,
+                 retry_count            = $3,
+                 updated_at             = NOW()
+             WHERE id = $4`,
+            [digiflazzRes.data.sn, baseOrderNumber, retryCount, orderId]
+          );
           results.success.push({ orderId, sn: digiflazzRes.data.sn, orderNumber: baseOrderNumber });
-        } else {
-          // Gagal — update retry_count dan simpan suffix sementara di DB
-          await pool.query(
-            `UPDATE orders 
-             SET retry_count = $1, updated_at = NOW()
-             WHERE id = $2`,
-            [retryCount, orderId]
-          );
 
-          results.failed.push({ 
-            orderId, 
-            reason: digiflazzRes.data?.message || 'Digiflazz error' 
+        } else if (isPending) {
+          // ⏳ Pending — simpan retryOrderNumber supaya webhook bisa cocokkan nanti
+          await pool.query(
+            `UPDATE orders
+             SET order_status = 'pending_retry',
+                 order_number = $1,
+                 retry_count  = $2,
+                 updated_at   = NOW()
+             WHERE id = $3`,
+            [retryOrderNumber, retryCount, orderId]
+          );
+          results.success.push({ orderId, status: 'pending_retry', orderNumber: retryOrderNumber,
+            note: 'Digiflazz pending — menunggu webhook konfirmasi' });
+
+        } else {
+          // ❌ Gagal — tetap simpan retryOrderNumber agar webhook bisa cocokkan jika ternyata berhasil
+          await pool.query(
+            `UPDATE orders
+             SET order_status = 'failed',
+                 order_number = $1,
+                 retry_count  = $2,
+                 updated_at   = NOW()
+             WHERE id = $3`,
+            [retryOrderNumber, retryCount, orderId]
+          );
+          results.failed.push({
+            orderId,
+            reason: digiflazzRes.data?.message || 'Digiflazz error'
           });
         }
 

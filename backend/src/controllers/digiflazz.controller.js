@@ -132,13 +132,34 @@ exports.digiflazzWebhook = async (req, res) => {
 
     // ── 4b. Cari order di database ────────────────────────────
     // LEFT JOIN karena pascabayar punya product_id = NULL
-    const orderResult = await pool.query(`
+    let orderResult = await pool.query(`
       SELECT o.*, p.sku, p.name AS product_name, g.product_type, g.category
       FROM orders o
       LEFT JOIN products p ON p.id = o.product_id
       LEFT JOIN games   g ON g.id  = p.game_id
       WHERE o.order_number = $1
     `, [ref_id]);
+
+    // Fallback: saat retry, order_number di DB menyimpan suffix _r1/_r2 dll.
+    // ref_id dari Digiflazz = retryOrderNumber, cocokkan langsung.
+    // Kalau masih tidak ketemu, coba cari base order number (strip suffix).
+    if (orderResult.rows.length === 0) {
+      const baseRef = ref_id.replace(/_r\d+$/, '');
+      if (baseRef !== ref_id) {
+        orderResult = await pool.query(`
+          SELECT o.*, p.sku, p.name AS product_name, g.product_type, g.category
+          FROM orders o
+          LEFT JOIN products p ON p.id = o.product_id
+          LEFT JOIN games   g ON g.id  = p.game_id
+          WHERE o.order_number LIKE $1
+          ORDER BY o.retry_count DESC NULLS LAST
+          LIMIT 1
+        `, [`${baseRef}%`]);
+        if (orderResult.rows.length > 0) {
+          console.log(`🔄 Webhook: Order ditemukan via base ref fallback (${ref_id} → ${baseRef})`);
+        }
+      }
+    }
 
     if (orderResult.rows.length === 0) {
       console.error(`❌ Webhook: Order tidak ditemukan untuk ref_id: ${ref_id}`);
@@ -227,17 +248,19 @@ exports.digiflazzWebhook = async (req, res) => {
         UPDATE orders
         SET
           order_status            = 'completed',
-          provider_serial_number  = $1,
-          provider_order_id       = $2,
-          provider_response       = $3,
+          order_number            = $1,
+          provider_serial_number  = $2,
+          provider_order_id       = $3,
+          provider_response       = $4,
           processed_at            = NOW(),
           updated_at              = NOW()
-        WHERE order_number = $4
+        WHERE id = $5
       `, [
+        ref_id.replace(/_r\d+$/, ''),  // kembalikan ke base order number (tanpa suffix retry)
         sn    || null,
         ref_id,
         JSON.stringify({ status, rc, sn, message, price, buyer_last_saldo }),
-        ref_id,
+        order.id,
       ]);
 
       // Kirim email ke customer (non-blocking)
