@@ -818,6 +818,78 @@ exports.createOrder = async (req, res) => {
 };
 
 /**
+ * Verify email ownership sebelum tampilkan SN
+ * POST /api/orders/:orderNumber/verify-email
+ * Body: { email }
+ * Maksimal 3x percobaan per orderNumber per session (in-memory, cukup untuk kebutuhan ini)
+ */
+const _verifyAttempts = {}; // { orderNumber: { count, lockedUntil } }
+
+exports.verifyOrderEmail = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ success: false, message: 'Email wajib diisi.' });
+
+    // Cek apakah sudah terkunci
+    const attempt = _verifyAttempts[orderNumber] || { count: 0, locked: false };
+    if (attempt.locked) {
+      return res.status(429).json({
+        success: false,
+        locked: true,
+        message: 'Terlalu banyak percobaan. Silahkan hubungi CS kami.'
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT customer_email, provider_serial_number, order_status, order_number
+       FROM orders WHERE order_number = $1`,
+      [orderNumber]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Order tidak ditemukan.' });
+    }
+
+    const order = result.rows[0];
+    const emailMatch = order.customer_email.toLowerCase().trim() === email.toLowerCase().trim();
+
+    if (!emailMatch) {
+      attempt.count = (attempt.count || 0) + 1;
+      const remaining = 3 - attempt.count;
+      if (attempt.count >= 3) {
+        attempt.locked = true;
+        _verifyAttempts[orderNumber] = attempt;
+        return res.status(429).json({
+          success: false,
+          locked: true,
+          message: 'Terlalu banyak percobaan. Silahkan hubungi CS kami.'
+        });
+      }
+      _verifyAttempts[orderNumber] = attempt;
+      return res.status(401).json({
+        success: false,
+        locked: false,
+        remaining,
+        message: `Email tidak sesuai. Sisa percobaan: ${remaining}x.`
+      });
+    }
+
+    // Email cocok — reset attempts dan return SN
+    delete _verifyAttempts[orderNumber];
+    return res.json({
+      success: true,
+      serialNumber: order.provider_serial_number || null
+    });
+
+  } catch (error) {
+    console.error('verifyOrderEmail error:', error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server.' });
+  }
+};
+
+/**
  * Get order status
  * GET /api/orders/:orderNumber
  */

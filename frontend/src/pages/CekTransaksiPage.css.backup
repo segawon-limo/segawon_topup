@@ -349,3 +349,180 @@
   color: #c0392b;
   background: #fff5f5;
 }
+/* ── Payment Modal ─────────────────────────────────────── */
+.ct-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: ct-fade-in 0.2s ease;
+}
+
+@keyframes ct-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ct-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 24px 24px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: ct-slide-up 0.25s ease;
+}
+
+@keyframes ct-slide-up {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.ct-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.ct-modal-close:hover { background: #e2e8f0; }
+
+.ct-modal-header {
+  margin-bottom: 16px;
+}
+.ct-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+.ct-modal-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.ct-modal-amount {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  color: white;
+}
+.ct-modal-amount-label { font-size: 13px; opacity: 0.85; }
+.ct-modal-amount-value { font-size: 20px; font-weight: 700; }
+
+/* QRIS */
+.ct-modal-qris {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.ct-modal-qr-img {
+  width: 220px;
+  height: 220px;
+  border-radius: 12px;
+  border: 3px solid #e2e8f0;
+  display: block;
+  margin: 10px auto;
+}
+.ct-modal-hint {
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.ct-modal-hint-small {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+.ct-modal-loading {
+  padding: 40px 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* VA */
+.ct-modal-va {
+  margin-bottom: 16px;
+}
+.ct-modal-va-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8faff;
+  border: 2px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 8px 0 12px;
+}
+.ct-modal-va-number {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #1e293b;
+  flex: 1;
+}
+.ct-modal-copy-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.ct-modal-copy-btn:hover { background: #5a67d8; }
+.ct-modal-copy-btn.copied { background: #10b981; }
+
+.ct-modal-va-steps {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.8;
+}
+.ct-modal-va-steps ol {
+  margin: 6px 0 0 16px;
+  padding: 0;
+}
+
+.ct-modal-open-btn {
+  display: block;
+  text-align: center;
+  background: #667eea;
+  color: white;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 8px;
+}
+
+.ct-modal-expiry {
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+}

@@ -159,6 +159,15 @@ function CekTransaksiPage() {
   const [searched,  setSearched]  = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // Verifikasi email untuk lihat SN/token
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyEmail,     setVerifyEmail]     = useState('');
+  const [verifyError,     setVerifyError]     = useState('');
+  const [verifyLoading,   setVerifyLoading]   = useState(false);
+  const [verifyLocked,    setVerifyLocked]    = useState(false);
+  const [verifyRemaining, setVerifyRemaining] = useState(3);
+  const [serialNumber,    setSerialNumber]    = useState(null);
+
   const handleSearch = async () => {
     const trimmed = invoice.trim().toUpperCase();
     if (!trimmed) return;
@@ -166,6 +175,12 @@ function CekTransaksiPage() {
     setError('');
     setOrder(null);
     setSearched(true);
+    // Reset verify state setiap kali cari invoice baru
+    setSerialNumber(null);
+    setVerifyLocked(false);
+    setVerifyRemaining(3);
+    setVerifyError('');
+    setVerifyEmail('');
     try {
       const res  = await fetch(`${API_URL}/api/orders/${trimmed}`);
       const data = await res.json();
@@ -178,6 +193,36 @@ function CekTransaksiPage() {
       setError('Terjadi kesalahan koneksi. Coba lagi.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!verifyEmail.trim()) { setVerifyError('Email wajib diisi.'); return; }
+    setVerifyLoading(true);
+    setVerifyError('');
+    try {
+      const res  = await fetch(`${API_URL}/api/orders/${order.orderNumber}/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyEmail.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSerialNumber(data.serialNumber);
+        setShowVerifyModal(false);
+        setVerifyEmail('');
+      } else if (data.locked) {
+        setVerifyLocked(true);
+        setVerifyRemaining(0);
+        setVerifyError(data.message);
+      } else {
+        setVerifyRemaining(data.remaining ?? 0);
+        setVerifyError(data.message);
+      }
+    } catch {
+      setVerifyError('Terjadi kesalahan koneksi. Coba lagi.');
+    } finally {
+      setVerifyLoading(false);
     }
   };
 
@@ -352,6 +397,34 @@ function CekTransaksiPage() {
                   💳 Bayar Sekarang
                 </button>
               )}
+
+              {/* Tombol Lihat Kode — hanya untuk order completed yang punya SN */}
+              {['completed', 'success'].includes(effectiveStatus) && order.productType && ['voucher_code', 'token_pln'].includes(order.productType) && (
+                serialNumber ? (
+                  <div className="ct-sn-box">
+                    <div className="ct-sn-label">
+                      {order.productType === 'token_pln' ? '⚡ Token PLN' : '🎟️ Kode Voucher'}
+                    </div>
+                    <div className="ct-sn-value">{serialNumber}</div>
+                    <button
+                      className="ct-btn-copy"
+                      onClick={() => { navigator.clipboard.writeText(serialNumber); }}
+                    >
+                      📋 Salin Kode
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="ct-btn-lihat-kode"
+                    onClick={() => !verifyLocked && setShowVerifyModal(true)}
+                    disabled={verifyLocked}
+                    title={verifyLocked ? 'Terlalu banyak percobaan. Hubungi CS.' : ''}
+                  >
+                    🔐 {verifyLocked ? 'Akses Dikunci' : 'Lihat Kode'}
+                  </button>
+                )
+              )}
+
               {effectiveStatus === 'failed' && WA_NUMBER && (
                 <a
                   href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi, aku ingin menanyakan terkait invoice ${order.orderNumber}, kenapa gagal ya?`)}`}
@@ -376,6 +449,59 @@ function CekTransaksiPage() {
       {/* Payment Modal */}
       {showModal && order && (
         <PaymentModal order={order} onClose={() => setShowModal(false)} />
+      )}
+
+      {/* Verify Email Modal */}
+      {showVerifyModal && (
+        <div className="ct-modal-backdrop" onClick={() => { setShowVerifyModal(false); setVerifyError(''); setVerifyEmail(''); }}>
+          <div className="ct-verify-modal" onClick={e => e.stopPropagation()}>
+            <button className="ct-modal-close" onClick={() => { setShowVerifyModal(false); setVerifyError(''); setVerifyEmail(''); }}>✕</button>
+            <div className="ct-verify-icon">🔐</div>
+            <h3 className="ct-verify-title">Verifikasi Identitas</h3>
+            <p className="ct-verify-desc">Masukkan email yang kamu gunakan saat melakukan order ini.</p>
+            <input
+              className={`ct-verify-input${verifyError ? ' error' : ''}`}
+              type="email"
+              placeholder="contoh@email.com"
+              value={verifyEmail}
+              onChange={e => { setVerifyEmail(e.target.value); setVerifyError(''); }}
+              onKeyDown={e => e.key === 'Enter' && !verifyLoading && handleVerifyEmail()}
+              autoFocus
+            />
+            {verifyError && (
+              <div className={`ct-verify-error${verifyLocked ? ' locked' : ''}`}>
+                {verifyError}
+                {verifyLocked && WA_NUMBER && (
+                  <a
+                    href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi, saya tidak bisa mengakses kode order ${order.orderNumber}. Mohon bantuannya.`)}`}
+                    className="ct-verify-wa"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    💬 Hubungi CS
+                  </a>
+                )}
+              </div>
+            )}
+            {!verifyLocked && verifyRemaining < 3 && verifyRemaining > 0 && (
+              <div className="ct-verify-remaining">Sisa percobaan: {verifyRemaining}x</div>
+            )}
+            {!verifyLocked && (
+              <button
+                className="ct-verify-btn"
+                onClick={handleVerifyEmail}
+                disabled={verifyLoading || !verifyEmail.trim()}
+              >
+                {verifyLoading ? '⏳ Memverifikasi...' : '✅ Verifikasi'}
+              </button>
+            )}
+            {verifyLocked && (
+              <button className="ct-verify-btn-close" onClick={() => setShowVerifyModal(false)}>
+                Tutup
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
     </>

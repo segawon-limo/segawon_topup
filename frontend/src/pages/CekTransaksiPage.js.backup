@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import './CekTransaksiPage.css';
 import { Helmet } from 'react-helmet-async';
+import usePageTracking from '../hooks/usePageTracking'; // [ADDED]
 
 const API_URL   = process.env.REACT_APP_API_URL  || '';
 const WA_NUMBER = process.env.REACT_APP_WHATSAPP || '';
@@ -150,6 +151,7 @@ function PaymentModal({ order, onClose }) {
 // ── Main Page ─────────────────────────────────────────────────
 function CekTransaksiPage() {
   const navigate = useNavigate();
+  usePageTracking('Cek Transaksi'); // [ADDED]
   const [invoice,   setInvoice]   = useState('');
   const [order,     setOrder]     = useState(null);
   const [loading,   setLoading]   = useState(false);

@@ -526,3 +526,79 @@
   border-top: 1px solid #f1f5f9;
   margin-top: 4px;
 }
+/* ── Tombol Lihat Kode ───────────────────────────────────────── */
+.ct-btn-lihat-kode {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  width: 100%;
+  justify-content: center;
+}
+.ct-btn-lihat-kode:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.ct-btn-lihat-kode:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; transform: none; }
+
+/* ── SN Box ──────────────────────────────────────────────────── */
+.ct-sn-box {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 16px; border-radius: 12px;
+  background: #f0fdf4; border: 1.5px solid #86efac;
+  width: 100%;
+}
+.ct-sn-label { font-size: 12px; font-weight: 700; color: #16a34a; letter-spacing: 0.08em; text-transform: uppercase; }
+.ct-sn-value {
+  font-size: 18px; font-weight: 700; font-family: monospace;
+  letter-spacing: 0.12em; color: #111827; text-align: center;
+  background: #fff; padding: 10px 16px; border-radius: 8px;
+  border: 1px solid #d1fae5; width: 100%; word-break: break-all;
+}
+.ct-btn-copy {
+  padding: 8px 18px; border: none; border-radius: 8px;
+  background: #16a34a; color: #fff; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.ct-btn-copy:hover { background: #15803d; }
+
+/* ── Verify Email Modal ──────────────────────────────────────── */
+.ct-verify-modal {
+  position: relative; background: #fff; border-radius: 16px;
+  padding: 36px 28px 28px; width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.ct-verify-icon  { font-size: 40px; line-height: 1; }
+.ct-verify-title { font-size: 18px; font-weight: 700; color: #111827; margin: 0; }
+.ct-verify-desc  { font-size: 13px; color: #6b7280; text-align: center; margin: 0; }
+.ct-verify-input {
+  width: 100%; padding: 11px 14px; border-radius: 8px;
+  border: 1.5px solid #d1d5db; font-size: 14px; outline: none;
+  transition: border-color 0.15s; box-sizing: border-box;
+}
+.ct-verify-input:focus { border-color: #6366f1; }
+.ct-verify-input.error { border-color: #ef4444; }
+.ct-verify-error {
+  width: 100%; font-size: 13px; color: #ef4444;
+  background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: 8px; padding: 10px 12px; text-align: center;
+}
+.ct-verify-error.locked { color: #b91c1c; background: #fff1f2; }
+.ct-verify-wa {
+  display: block; margin-top: 8px; color: #16a34a;
+  font-weight: 600; font-size: 13px; text-decoration: none;
+}
+.ct-verify-remaining { font-size: 12px; color: #f59e0b; font-weight: 600; }
+.ct-verify-btn {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.ct-verify-btn:hover:not(:disabled) { opacity: 0.88; }
+.ct-verify-btn:disabled { background: #d1d5db; cursor: not-allowed; }
+.ct-verify-btn-close {
+  width: 100%; padding: 12px; border: 1.5px solid #d1d5db; border-radius: 10px;
+  background: #fff; color: #6b7280; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.ct-verify-btn-close:hover { background: #f9fafb; }

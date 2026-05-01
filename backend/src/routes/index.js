@@ -72,6 +72,7 @@ router.post('/orders/create', orderController.createOrder);
 
 // Get order status
 router.get('/orders/:orderNumber', orderController.getOrderStatus);
+router.post('/orders/:orderNumber/verify-email', orderController.verifyOrderEmail);
 
 // Get order history (optional)
 router.get('/orders/history', orderController.getOrderHistory);
