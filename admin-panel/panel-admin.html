@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f172a">
+<title>Segawon Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg2: #1e293b;
+    --bg3: #334155;
+    --surface: #1e293b;
+    --surface2: #273549;
+    --border: rgba(148,163,184,0.12);
+    --border2: rgba(148,163,184,0.22);
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #10b981;
+    --green-bg: rgba(16,185,129,0.12);
+    --red: #f43f5e;
+    --red-bg: rgba(244,63,94,0.12);
+    --amber: #f59e0b;
+    --amber-bg: rgba(245,158,11,0.12);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --font: 'Plus Jakarta Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; overflow-x: hidden; }
+  body { display: flex; flex-direction: column; }
+
+  /* ── Screens ── */
+  .screen { display: none; flex-direction: column; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── Login Screen ── */
+  #loginScreen {
+    background: var(--bg);
+    align-items: center; justify-content: center;
+    padding: 32px 24px;
+    gap: 0;
+  }
+  .login-logo {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--accent), #a855f7);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.35);
+  }
+  .login-title { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .login-sub { font-size: 14px; color: var(--text2); margin-bottom: 36px; }
+  .login-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 28px 24px; width: 100%; max-width: 400px;
+  }
+  .input-group { margin-bottom: 16px; }
+  .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 7px; letter-spacing: 0.4px; text-transform: uppercase; }
+  .input-group input {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--border2);
+    border-radius: 10px; padding: 13px 16px; color: var(--text); font-family: var(--font);
+    font-size: 15px; outline: none; transition: border-color 0.2s;
+  }
+  .input-group input:focus { border-color: var(--accent); }
+  .btn-primary {
+    width: 100%; background: var(--accent); border: none; border-radius: 10px;
+    padding: 14px; color: #fff; font-family: var(--font); font-size: 15px;
+    font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+    margin-top: 6px;
+  }
+  .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.5; }
+  .error-msg { background: var(--red-bg); border: 1px solid rgba(244,63,94,0.25); border-radius: 8px; padding: 10px 14px; color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* ── App Shell ── */
+  #appScreen { background: var(--bg); }
+  .topbar {
+    display: flex; align-items: center; padding: 12px 16px 10px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    gap: 10px;
+  }
+  .topbar-logo {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #a855f7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
+  .topbar-sub { font-size: 11px; color: var(--text2); }
+  .topbar-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border2);
+    background: var(--bg2); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; transition: background 0.15s;
+  }
+  .icon-btn:active { background: var(--bg3); }
+
+  /* ── Tab Content ── */
+  .tab-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── Bottom Nav ── */
+  .bottom-nav {
+    display: flex; background: var(--surface); border-top: 1px solid var(--border);
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 8px 4px 10px; gap: 3px; cursor: pointer; transition: color 0.15s;
+    color: var(--text3); border: none; background: none; font-family: var(--font);
+  }
+  .nav-item .nav-icon { font-size: 20px; line-height: 1; }
+  .nav-item .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
+  .nav-item.active { color: var(--accent2); }
+
+  /* ── Section Headers ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 17px; font-weight: 700; }
+  .section-action { font-size: 13px; color: var(--accent2); font-weight: 600; cursor: pointer; }
+
+  /* ── Cards / Stat Cards ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 14px 12px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-value { font-size: 18px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .stat-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .stat-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-gray { background: rgba(148,163,184,0.1); color: var(--text2); }
+
+  /* ── Alert Box ── */
+  .alert-card {
+    border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .alert-card.warning { background: var(--amber-bg); border: 1px solid rgba(245,158,11,0.25); }
+  .alert-card.danger { background: var(--red-bg); border: 1px solid rgba(244,63,94,0.25); }
+  .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .alert-text { flex: 1; }
+  .alert-text strong { font-size: 14px; font-weight: 700; display: block; margin-bottom: 2px; }
+  .alert-text p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+  /* ── Order List ── */
+  .order-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .order-card:active { border-color: var(--border2); }
+  .order-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+  .order-num { font-size: 12px; color: var(--text2); font-weight: 600; font-family: monospace; }
+  .status-badge {
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .s-completed, .s-success { background: var(--green-bg); color: var(--green); }
+  .s-pending { background: var(--amber-bg); color: var(--amber); }
+  .s-failed, .s-cancelled { background: var(--red-bg); color: var(--red); }
+  .s-pending_retry { background: rgba(168,85,247,0.12); color: #a855f7; }
+  .s-expired { background: rgba(148,163,184,0.1); color: var(--text2); }
+  .order-product { font-size: 14px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .order-meta { font-size: 12px; color: var(--text2); }
+  .order-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .order-price { font-size: 14px; font-weight: 700; color: var(--accent2); }
+
+  /* ── Filter Bar ── */
+  .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--border2); background: var(--surface); color: var(--text2);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Search Bar ── */
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+  }
+  .search-bar input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-family: var(--font); font-size: 14px;
+  }
+  .search-bar input::placeholder { color: var(--text3); }
+  .search-icon { color: var(--text3); font-size: 16px; }
+
+  /* ── Game / Catalog Cards ── */
+  .game-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .game-icon {
+    width: 48px; height: 48px; border-radius: 10px; background: var(--bg3);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .game-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+  .game-info { flex: 1; min-width: 0; }
+  .game-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .game-meta { font-size: 12px; color: var(--text2); }
+  .game-actions { display: flex; gap: 6px; }
+  .action-btn {
+    padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    border: 1.5px solid var(--border2); background: transparent; color: var(--text2);
+    cursor: pointer; font-family: var(--font); transition: all 0.15s;
+  }
+  .action-btn.edit { color: var(--blue); border-color: rgba(59,130,246,0.3); }
+  .action-btn.del { color: var(--red); border-color: rgba(244,63,94,0.3); }
+
+  /* ── Toggle ── */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+  .toggle {
+    width: 40px; height: 22px; border-radius: 11px; background: var(--bg3);
+    border: 1px solid var(--border); cursor: pointer; position: relative; transition: background 0.2s;
+    flex-shrink: 0; -webkit-appearance: none; appearance: none;
+  }
+  .toggle:checked { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: ''; width: 16px; height: 16px; border-radius: 50%; background: #fff;
+    position: absolute; top: 2px; left: 2px; transition: left 0.2s;
+  }
+  .toggle:checked::after { left: 20px; }
+
+  /* ── Voucher Card ── */
+  .voucher-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+  }
+  .voucher-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .voucher-code { font-family: monospace; font-size: 16px; font-weight: 700; color: var(--accent2); letter-spacing: 1px; }
+  .voucher-meta { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .voucher-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+  /* ── FAB ── */
+  .fab {
+    position: fixed; bottom: 80px; right: 20px; width: 52px; height: 52px;
+    border-radius: 16px; background: var(--accent); border: none;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(99,102,241,0.4); z-index: 99;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(99,102,241,0.3); }
+
+  /* ── Modal / Drawer ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 200; display: flex; flex-direction: column; justify-content: flex-end;
+    opacity: 0; visibility: hidden; transition: opacity 0.25s, visibility 0.25s;
+  }
+  .modal-overlay.show { opacity: 1; visibility: visible; }
+  .modal-drawer {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px 20px 36px; max-height: 90vh; overflow-y: auto;
+    transform: translateY(30px); transition: transform 0.25s;
+  }
+  .modal-overlay.show .modal-drawer { transform: translateY(0); }
+  .drawer-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 0 auto 18px; }
+  .drawer-title { font-size: 18px; font-weight: 700; margin-bottom: 18px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--border2);
+    border-radius: 9px; padding: 11px 14px; color: var(--text); font-family: var(--font);
+    font-size: 14px; outline: none; transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--bg2); color: var(--text); }
+  .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+  .btn-outline {
+    flex: 1; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    border: 1.5px solid var(--border2); background: transparent; color: var(--text2);
+    font-family: var(--font); cursor: pointer;
+  }
+  .btn-primary-sm {
+    flex: 2; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    border: none; background: var(--accent); color: #fff;
+    font-family: var(--font); cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-primary-sm:active { opacity: 0.8; }
+  .btn-danger-sm {
+    flex: 1; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    border: 1.5px solid rgba(244,63,94,0.3); background: var(--red-bg); color: var(--red);
+    font-family: var(--font); cursor: pointer;
+  }
+
+  /* ── Feedback Card ── */
+  .feedback-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+  }
+  .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .feedback-stars { color: #fbbf24; font-size: 14px; letter-spacing: 1px; }
+  .feedback-name { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .feedback-msg { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── Empty State ── */
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Loading ── */
+  .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px; gap: 12px; }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border2);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text2); }
+
+  /* ── Mini Bar Chart ── */
+  .mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 56px; padding-top: 6px; }
+  .mini-bar { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 4px; opacity: 0.7; transition: opacity 0.15s; }
+  .mini-bar:last-child { opacity: 1; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+    padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    z-index: 300; animation: slideDown 0.25s ease;
+    white-space: nowrap;
+  }
+  .toast.success { background: var(--green-bg); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
+  .toast.error { background: var(--red-bg); border: 1px solid rgba(244,63,94,0.3); color: var(--red); }
+  @keyframes slideDown { from { transform: translateX(-50%) translateY(-10px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
+  /* ── Product sub list ── */
+  .product-count { font-size: 11px; font-weight: 600; color: var(--text3); }
+  .expand-row { width: 100%; text-align: left; background: none; border: none; padding: 0; cursor: pointer; }
+  .products-sub {
+    display: none; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .products-sub.open { display: block; }
+  .product-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid var(--border); gap: 10px;
+  }
+  .product-item:last-child { border-bottom: none; }
+  .product-name { font-size: 12px; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .product-price { font-size: 12px; font-weight: 700; color: var(--accent2); flex-shrink: 0; }
+  .product-status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
+
+  /* ── Visitor Stats ── */
+  .visitor-bar-wrap { display: flex; gap: 6px; align-items: flex-end; height: 80px; margin-bottom: 8px; }
+  .v-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .v-bar { width: 100%; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 4px; opacity: 0.75; }
+  .v-bar-label { font-size: 9px; color: var(--text3); font-weight: 600; }
+
+  /* ── Retry Button ── */
+  .retry-btn {
+    background: var(--amber); color: #000; border: none; border-radius: 7px;
+    padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: var(--font); flex-shrink: 0;
+  }
+
+  /* ── Helpers ── */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  .flex { display: flex; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .gap8 { gap: 8px; }
+  .text-sm { font-size: 13px; }
+  .text-xs { font-size: 12px; }
+  .text-muted { color: var(--text2); }
+  .font-bold { font-weight: 700; }
+  .pull-refresh { text-align: center; padding: 10px; font-size: 12px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ LOGIN SCREEN ══ -->
+<div class="screen active" id="loginScreen">
+  <div class="login-logo">⚡</div>
+  <p class="login-title">Segawon Admin</p>
+  <p class="login-sub">segawontopup.net</p>
+  <div class="login-card">
+    <div class="input-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username" autocapitalize="none">
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Masuk</button>
+    <div class="error-msg" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ APP SCREEN ══ -->
+<div class="screen" id="appScreen">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">⚡</div>
+    <div style="flex:1">
+      <div class="topbar-title">Segawon Admin</div>
+      <div class="topbar-sub" id="topbarUser">—</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn" onclick="refreshCurrentTab()" title="Refresh">↻</div>
+      <div class="icon-btn" onclick="doLogout()" title="Logout">⏻</div>
+    </div>
+  </div>
+
+  <!-- Tab Contents -->
+  <div class="tab-content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="tab-pane active" id="tab-dashboard">
+      <div id="dashContent"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat dashboard…</div></div></div>
+    </div>
+
+    <!-- ── ORDERS ── -->
+    <div class="tab-pane" id="tab-orders">
+      <div class="filter-bar" id="orderFilters">
+        <div class="filter-chip active" data-status="" onclick="setOrderFilter(this)">Semua</div>
+        <div class="filter-chip" data-status="completed" onclick="setOrderFilter(this)">✅ Selesai</div>
+        <div class="filter-chip" data-status="pending" onclick="setOrderFilter(this)">⏳ Pending</div>
+        <div class="filter-chip" data-status="pending_retry" onclick="setOrderFilter(this)">🔄 Retry</div>
+        <div class="filter-chip" data-status="failed" onclick="setOrderFilter(this)">❌ Gagal</div>
+      </div>
+      <div id="ordersList"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat orders…</div></div></div>
+    </div>
+
+    <!-- ── CATALOG ── -->
+    <div class="tab-pane" id="tab-catalog">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Cari game…" id="catalogSearch" oninput="filterCatalog(this.value)">
+      </div>
+      <div id="catalogList"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat katalog…</div></div></div>
+    </div>
+
+    <!-- ── VOUCHERS ── -->
+    <div class="tab-pane" id="tab-vouchers">
+      <div id="voucherList"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat voucher…</div></div></div>
+    </div>
+
+    <!-- ── MORE ── -->
+    <div class="tab-pane" id="tab-more">
+      <div class="section-header">
+        <div class="section-title">Lainnya</div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="card" style="cursor:pointer;margin-bottom:12px;" onclick="loadFeedback()">
+        <div class="flex-between">
+          <div>
+            <div style="font-weight:700;margin-bottom:3px;">💬 Feedback</div>
+            <div class="text-sm text-muted">Lihat ulasan dari pelanggan</div>
+          </div>
+          <div style="color:var(--text3);font-size:20px;">›</div>
+        </div>
+      </div>
+
+      <!-- Visitors -->
+      <div class="card" style="cursor:pointer;margin-bottom:12px;" onclick="loadVisitors()">
+        <div class="flex-between">
+          <div>
+            <div style="font-weight:700;margin-bottom:3px;">👁 Pengunjung</div>
+            <div class="text-sm text-muted">Statistik traffic website</div>
+          </div>
+          <div style="color:var(--text3);font-size:20px;">›</div>
+        </div>
+      </div>
+
+      <!-- Digiflazz Saldo -->
+      <div class="card" id="saldoCard">
+        <div class="text-sm text-muted" style="margin-bottom:8px;">💳 Digiflazz Saldo</div>
+        <div id="saldoInfo" class="loading-text">Memuat…</div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:20px 0;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:4px;">Segawon Admin App v1.0</div>
+        <div style="font-size:12px;color:var(--text3);">segawontopup.net</div>
+      </div>
+    </div>
+
+    <!-- ── FEEDBACK SUB ── -->
+    <div class="tab-pane" id="tab-feedback">
+      <div class="section-header">
+        <div class="section-title">💬 Feedback</div>
+        <div class="section-action" onclick="showTab('more')">‹ Kembali</div>
+      </div>
+      <div id="feedbackList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ── VISITORS SUB ── -->
+    <div class="tab-pane" id="tab-visitors">
+      <div class="section-header">
+        <div class="section-title">👁 Pengunjung</div>
+        <div class="section-action" onclick="showTab('more')">‹ Kembali</div>
+      </div>
+      <div id="visitorContent"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Dashboard</div>
+    </button>
+    <button class="nav-item" id="nav-orders" onclick="showTab('orders')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">Orders</div>
+    </button>
+    <button class="nav-item" id="nav-catalog" onclick="showTab('catalog')">
+      <div class="nav-icon">🗂</div>
+      <div class="nav-label">Katalog</div>
+    </button>
+    <button class="nav-item" id="nav-vouchers" onclick="showTab('vouchers')">
+      <div class="nav-icon">🎫</div>
+      <div class="nav-label">Voucher</div>
+    </button>
+    <button class="nav-item" id="nav-more" onclick="showTab('more')">
+      <div class="nav-icon">⋯</div>
+      <div class="nav-label">Lainnya</div>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ MODALS ══ -->
+
+<!-- Game Edit/Add Drawer -->
+<div class="modal-overlay" id="gameModal" onclick="closeModal('gameModal')">
+  <div class="modal-drawer" onclick="event.stopPropagation()">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title" id="gameModalTitle">Edit Game</div>
+    <input type="hidden" id="gameId">
+    <div class="form-group"><label>Nama Game</label><input type="text" id="gameName" placeholder="Mobile Legends"></div>
+    <div class="form-group"><label>Kategori</label>
+      <select id="gameCategory">
+        <option value="games">Games</option>
+        <option value="voucher">Voucher</option>
+        <option value="utilities">Utilities</option>
+        <option value="pulsa_data">Pulsa/Data</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="gameStatus">
+        <option value="active">Aktif</option>
+        <option value="inactive">Nonaktif</option>
+      </select>
+    </div>
+    <div class="form-group"><label>URL Icon</label><input type="text" id="gameIcon" placeholder="https://… atau nama file"></div>
+    <div class="btn-row">
+      <button class="btn-outline" onclick="closeModal('gameModal')">Batal</button>
+      <button class="btn-primary-sm" onclick="saveGame()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Voucher Edit/Add Drawer -->
+<div class="modal-overlay" id="voucherModal" onclick="closeModal('voucherModal')">
+  <div class="modal-drawer" onclick="event.stopPropagation()">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title" id="voucherModalTitle">Tambah Voucher</div>
+    <input type="hidden" id="voucherId">
+    <div class="form-group"><label>Kode Voucher</label><input type="text" id="voucherCode" placeholder="PROMO10" style="text-transform:uppercase"></div>
+    <div class="form-group"><label>Tipe Diskon</label>
+      <select id="voucherType">
+        <option value="fixed">Fixed (Rp)</option>
+        <option value="percentage">Persentase (%)</option>
+        <option value="base_price">Base Price</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Nilai Diskon</label><input type="number" id="voucherValue" placeholder="10000"></div>
+    <div class="form-group"><label>Maks. Penggunaan (0 = unlimited)</label><input type="number" id="voucherMaxUse" placeholder="0"></div>
+    <div class="form-group"><label>Berlaku Mulai</label><input type="datetime-local" id="voucherFrom"></div>
+    <div class="form-group"><label>Berlaku Sampai</label><input type="datetime-local" id="voucherUntil"></div>
+    <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+      <label style="margin:0;text-transform:none;font-size:14px;font-weight:600;color:var(--text);">Tampilkan di Popup</label>
+      <input type="checkbox" class="toggle" id="voucherPopup">
+    </div>
+    <div class="btn-row">
+      <button class="btn-outline" onclick="closeModal('voucherModal')">Batal</button>
+      <button class="btn-primary-sm" onclick="saveVoucher()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail Drawer -->
+<div class="modal-overlay" id="orderModal" onclick="closeModal('orderModal')">
+  <div class="modal-drawer" onclick="event.stopPropagation()">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">Detail Order</div>
+    <div id="orderDetail"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toastEl" style="display:none"></div>
+
+<!-- FAB (context-sensitive) -->
+<button class="fab" id="fabBtn" style="display:none" onclick="handleFab()">＋</button>
+
+<script>
+const API = 'https://segawontopup.net';
+let token = null;
+let allGames = [];
+let allOrders = [];
+let currentOrderStatus = '';
+let currentTab = 'dashboard';
+
+// ─── Auth ─────────────────────────────────────────
+function getToken() { return localStorage.getItem('sgw_token'); }
+function saveToken(t, user) {
+  localStorage.setItem('sgw_token', t);
+  localStorage.setItem('sgw_user', JSON.stringify(user));
+}
+function clearToken() {
+  localStorage.removeItem('sgw_token');
+  localStorage.removeItem('sgw_user');
+}
+function authHeaders() {
+  return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' };
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginErr');
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!user || !pass) { showLoginErr('Isi username dan password'); return; }
+  btn.disabled = true; btn.textContent = 'Masuk…';
+  errEl.classList.remove('show');
+  try {
+    const r = await fetch(`${API}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const d = await r.json();
+    if (d.success) {
+      saveToken(d.token, d.admin);
+      enterApp(d.admin);
+    } else {
+      showLoginErr(d.message || 'Login gagal');
+    }
+  } catch(e) {
+    showLoginErr('Gagal terhubung ke server');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Masuk';
+  }
+}
+
+function showLoginErr(msg) {
+  const el = document.getElementById('loginErr');
+  el.textContent = msg; el.classList.add('show');
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function enterApp(admin) {
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('topbarUser').textContent = admin?.full_name || admin?.username || 'Admin';
+  loadDashboard();
+}
+
+function doLogout() {
+  if (!confirm('Yakin mau logout?')) return;
+  clearToken();
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('loginScreen').classList.add('active');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// Check saved login
+window.addEventListener('DOMContentLoaded', () => {
+  const t = getToken();
+  if (t) {
+    const u = JSON.parse(localStorage.getItem('sgw_user') || '{}');
+    enterApp(u);
+  }
+});
+
+// ─── Navigation ────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  const navEl = document.getElementById(`nav-${tab}`);
+  if (navEl) navEl.classList.add('active');
+  else {
+    // sub pages use parent nav
+    const parentMap = { feedback: 'more', visitors: 'more' };
+    const parent = parentMap[tab];
+    if (parent) document.getElementById(`nav-${parent}`)?.classList.add('active');
+  }
+  currentTab = tab;
+  const fab = document.getElementById('fabBtn');
+  fab.style.display = (tab === 'catalog' || tab === 'vouchers') ? 'flex' : 'none';
+  if (tab === 'orders' && allOrders.length === 0) loadOrders();
+  if (tab === 'catalog' && allGames.length === 0) loadCatalog();
+  if (tab === 'vouchers') loadVouchers();
+  if (tab === 'more') loadMoreTab();
+}
+
+function handleFab() {
+  if (currentTab === 'catalog') openGameModal(null);
+  if (currentTab === 'vouchers') openVoucherModal(null);
+}
+
+function refreshCurrentTab() {
+  if (currentTab === 'dashboard') loadDashboard();
+  else if (currentTab === 'orders') { allOrders = []; loadOrders(); }
+  else if (currentTab === 'catalog') { allGames = []; loadCatalog(); }
+  else if (currentTab === 'vouchers') loadVouchers();
+  else if (currentTab === 'feedback') loadFeedback();
+  else if (currentTab === 'visitors') loadVisitors();
+}
+
+// ─── Helpers ───────────────────────────────────────
+function formatRp(n) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0);
+}
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg; el.className = `toast ${type}`; el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function statusBadge(s) {
+  const cls = { completed:'s-completed', success:'s-success', pending:'s-pending', failed:'s-failed', pending_retry:'s-pending_retry', expired:'s-expired', cancelled:'s-cancelled' };
+  const label = { completed:'Selesai', success:'Sukses', pending:'Pending', failed:'Gagal', pending_retry:'Perlu Retry', expired:'Expired', cancelled:'Batal' };
+  const k = (s||'').toLowerCase();
+  return `<span class="status-badge ${cls[k]||'s-expired'}">${label[k]||s}</span>`;
+}
+
+// ─── DASHBOARD ─────────────────────────────────────
+async function loadDashboard() {
+  document.getElementById('dashContent').innerHTML = `<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat dashboard…</div></div>`;
+  try {
+    const h = authHeaders();
+    const [ovR, dailyR, topR, visR] = await Promise.all([
+      fetch(`${API}/api/admin/dashboard`, {headers:h}),
+      fetch(`${API}/api/admin/stats/daily?days=7`, {headers:h}),
+      fetch(`${API}/api/admin/stats/top-products`, {headers:h}),
+      fetch(`${API}/api/admin/visitors/stats?days=7`, {headers:h}),
+    ]);
+    const [ov, daily, top, vis] = await Promise.all([ovR.json(), dailyR.json(), topR.json(), visR.json()]);
+
+    const o = ov.data?.overview || {};
+    const df = ov.data?.digiflazz || {};
+    const dailyData = (daily.data || []).slice(-7);
+    const topProds = (top.data || []).slice(0, 5);
+    const vs = vis.data?.summary || {};
+
+    const maxRev = Math.max(...dailyData.map(d => +d.total_revenue || 0), 1);
+
+    const saldoClass = df.status === 'CRITICAL' ? 'badge-red' : df.status === 'WARNING' ? 'badge-amber' : 'badge-green';
+
+    let retryAlert = '';
+    if (ov.data?.pending_retry_count > 0) {
+      retryAlert = `<div class="alert-card warning">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-text">
+          <strong>${ov.data.pending_retry_count} order perlu retry</strong>
+          <p>Saldo Digiflazz habis. Topup dulu lalu retry.</p>
+        </div>
+        <button class="retry-btn" onclick="retryOrders()">Retry</button>
+      </div>`;
+    }
+
+    document.getElementById('dashContent').innerHTML = `
+      ${retryAlert}
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Hari Ini</div>
+          <div class="stat-value">${formatRp(o.today?.total_revenue)}</div>
+          <div class="stat-sub">${o.today?.total_orders || 0} orders</div>
+          <div class="stat-badge badge-green">Profit ${formatRp(o.today?.total_profit)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Kemarin</div>
+          <div class="stat-value">${formatRp(o.yesterday?.total_revenue)}</div>
+          <div class="stat-sub">${o.yesterday?.total_orders || 0} orders</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Bulan Ini</div>
+          <div class="stat-value">${formatRp(o.this_month?.total_revenue)}</div>
+          <div class="stat-sub">${o.this_month?.total_orders || 0} orders</div>
+          <div class="stat-badge badge-green">Profit ${formatRp(o.this_month?.total_profit)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Saldo Digiflazz</div>
+          <div class="stat-value" style="font-size:15px">${formatRp(df.deposit)}</div>
+          <div class="stat-badge ${saldoClass}">${df.status || 'OK'}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header" style="margin-bottom:10px">
+          <div class="text-sm font-bold">Revenue 7 Hari</div>
+          <div class="text-xs text-muted">${formatRp(dailyData.reduce((a,d)=>a+(+d.total_revenue||0),0))}</div>
+        </div>
+        <div class="mini-chart" id="miniChart">
+          ${dailyData.map(d => {
+            const h = Math.max(4, Math.round((+d.total_revenue||0)/maxRev*50));
+            const dateLabel = new Date(d.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
+            return `<div class="mini-bar" style="height:${h}px" title="${dateLabel}: ${formatRp(d.total_revenue)}"></div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <div class="text-xs text-muted">${dailyData[0] ? new Date(dailyData[0].date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}) : ''}</div>
+          <div class="text-xs text-muted">Hari ini</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="text-sm font-bold">👁 Visitor (7 Hari)</div>
+        </div>
+        <div class="stat-row" style="margin-bottom:0">
+          <div class="stat-card">
+            <div class="stat-label">Total Views</div>
+            <div class="stat-value">${parseInt(vs.views_7days||0).toLocaleString('id-ID')}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Hari Ini</div>
+            <div class="stat-value">${parseInt(vs.views_today||0).toLocaleString('id-ID')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="text-sm font-bold" style="margin-bottom:12px">🏆 Top 5 Produk</div>
+        ${topProds.map((p,i)=>`
+          <div class="flex-between" style="padding:7px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0">
+              <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${i+1}</div>
+              <div class="text-sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.product_name||'—'}</div>
+            </div>
+            <div class="text-xs text-muted" style="flex-shrink:0;margin-left:8px">${p.total_orders} order</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('dashContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data.<br>Cek koneksi internet.</p></div>`;
+  }
+}
+
+async function retryOrders() {
+  if (!confirm('Retry semua pending order?')) return;
+  try {
+    const r = await fetch(`${API}/api/admin/orders/retry`, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ retryAll: true })
+    });
+    const d = await r.json();
+    showToast(d.success ? `Retry berhasil: ${d.results?.success?.length||0} order` : (d.message||'Gagal'), d.success?'success':'error');
+    if (d.success) loadDashboard();
+  } catch(e) { showToast('Gagal retry', 'error'); }
+}
+
+// ─── ORDERS ────────────────────────────────────────
+async function loadOrders() {
+  const el = document.getElementById('ordersList');
+  el.innerHTML = `<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat orders…</div></div>`;
+  try {
+    let url = `${API}/api/admin/orders?limit=50`;
+    if (currentOrderStatus) url += `&status=${currentOrderStatus}`;
+    const r = await fetch(url, { headers: authHeaders() });
+    const d = await r.json();
+    allOrders = d.data || [];
+    renderOrders();
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat orders</p></div>`;
+  }
+}
+
+function renderOrders() {
+  const el = document.getElementById('ordersList');
+  if (!allOrders.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Tidak ada order</p></div>`;
+    return;
+  }
+  el.innerHTML = allOrders.map(o => `
+    <div class="order-card" onclick="openOrderDetail(${JSON.stringify(o).replace(/"/g,'&quot;')})">
+      <div class="order-header">
+        <div class="order-num">${o.order_number || o.id}</div>
+        ${statusBadge(o.status)}
+      </div>
+      <div class="order-product">${o.product_name || '—'}</div>
+      <div class="order-meta">${o.customer_name || '—'} · ${o.game_user_id ? `ID: ${o.game_user_id}` : 'No ID'}</div>
+      <div class="order-footer">
+        <div class="order-price">${formatRp(o.sell_price || o.total_price)}</div>
+        <div class="text-xs text-muted">${formatDate(o.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setOrderFilter(el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentOrderStatus = el.dataset.status;
+  allOrders = [];
+  loadOrders();
+}
+
+function openOrderDetail(o) {
+  const payBadge = (s) => {
+    const map = { success:'badge-green', paid:'badge-green', pending:'badge-amber', expired:'badge-gray' };
+    return `<span class="status-badge ${map[(s||'').toLowerCase()]||'badge-gray'}">${s||'—'}</span>`;
+  };
+  document.getElementById('orderDetail').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="flex-between"><span class="text-muted text-sm">Order #</span><span style="font-family:monospace;font-size:13px">${o.order_number||o.id}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Status</span>${statusBadge(o.status)}</div>
+      <div class="flex-between"><span class="text-muted text-sm">Pembayaran</span>${payBadge(o.payment_status)}</div>
+      <div class="divider"></div>
+      <div class="flex-between"><span class="text-muted text-sm">Produk</span><span style="font-size:13px;font-weight:600;text-align:right;max-width:60%">${o.product_name||'—'}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Customer</span><span style="font-size:13px">${o.customer_name||'—'}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Game User ID</span><span style="font-family:monospace;font-size:13px">${o.game_user_id||'—'}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Email</span><span style="font-size:13px">${o.customer_email||'—'}</span></div>
+      <div class="divider"></div>
+      <div class="flex-between"><span class="text-muted text-sm">Harga</span><span style="font-size:15px;font-weight:700;color:var(--accent2)">${formatRp(o.sell_price||o.total_price)}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Profit</span><span style="color:var(--green);font-weight:700">${formatRp(o.profit)}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Metode Bayar</span><span style="font-size:13px">${o.payment_method||'—'}</span></div>
+      <div class="flex-between"><span class="text-muted text-sm">Tanggal</span><span style="font-size:13px">${formatDate(o.created_at)}</span></div>
+      ${o.sn ? `<div class="flex-between"><span class="text-muted text-sm">SN</span><span style="font-family:monospace;font-size:12px">${o.sn}</span></div>` : ''}
+    </div>
+    ${(o.status||'').toLowerCase() === 'pending_retry' ? `
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn-primary-sm" onclick="retrySingleOrder(${o.id})">🔄 Retry Order Ini</button>
+      </div>` : ''}
+  `;
+  openModal('orderModal');
+}
+
+async function retrySingleOrder(id) {
+  try {
+    const r = await fetch(`${API}/api/admin/orders/retry`, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ orderIds: [id] })
+    });
+    const d = await r.json();
+    showToast(d.success ? 'Retry berhasil!' : (d.message||'Gagal'), d.success?'success':'error');
+    closeModal('orderModal');
+    allOrders = []; loadOrders();
+  } catch(e) { showToast('Gagal retry', 'error'); }
+}
+
+// ─── CATALOG ───────────────────────────────────────
+async function loadCatalog() {
+  document.getElementById('catalogList').innerHTML = `<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat katalog…</div></div>`;
+  try {
+    const r = await fetch(`${API}/api/admin/catalog/games`, { headers: authHeaders() });
+    const d = await r.json();
+    allGames = d.data || d.games || [];
+    renderCatalog(allGames);
+  } catch(e) {
+    document.getElementById('catalogList').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat katalog</p></div>`;
+  }
+}
+
+function renderCatalog(games) {
+  const el = document.getElementById('catalogList');
+  if (!games.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">🗂</div><p>Tidak ada game</p></div>`; return; }
+  el.innerHTML = games.map(g => `
+    <div class="game-card">
+      <div class="game-icon">
+        ${g.icon_url || g.icon ? `<img src="${g.icon_url||g.icon}" onerror="this.parentElement.textContent='🎮'">` : '🎮'}
+      </div>
+      <button class="expand-row" onclick="toggleProducts(${g.id})">
+        <div class="game-info">
+          <div class="game-name">${g.name}</div>
+          <div class="game-meta">
+            <span class="status-badge ${g.status==='active'?'s-success':'s-expired'}" style="font-size:10px;padding:2px 7px">${g.status==='active'?'Aktif':'Nonaktif'}</span>
+            <span class="product-count" style="margin-left:6px">${g.products_count||g.product_count||0} produk</span>
+          </div>
+        </div>
+      </button>
+      <div class="game-actions">
+        <button class="action-btn edit" onclick="openGameModal(${JSON.stringify(g).replace(/"/g,'&quot;')})">Edit</button>
+      </div>
+    </div>
+    <div class="products-sub" id="products-${g.id}">
+      <div class="loading-wrap" style="padding:16px"><div class="spinner"></div></div>
+    </div>
+  `).join('');
+}
+
+function filterCatalog(q) {
+  const filtered = allGames.filter(g => g.name.toLowerCase().includes(q.toLowerCase()));
+  renderCatalog(filtered);
+}
+
+async function toggleProducts(gameId) {
+  const el = document.getElementById(`products-${gameId}`);
+  if (el.classList.contains('open')) { el.classList.remove('open'); return; }
+  el.classList.add('open');
+  if (el.dataset.loaded) return;
+  try {
+    const r = await fetch(`${API}/api/admin/catalog/products?game_id=${gameId}`, { headers: authHeaders() });
+    const d = await r.json();
+    const products = d.data || d.products || [];
+    el.dataset.loaded = '1';
+    if (!products.length) { el.innerHTML = '<div class="text-sm text-muted" style="padding:8px 0">Belum ada produk</div>'; return; }
+    el.innerHTML = products.map(p => `
+      <div class="product-item">
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">${formatRp(p.sell_price||p.price)}</div>
+        <span class="product-status ${p.status==='active'?'badge-green':'badge-gray'}" style="font-size:10px;padding:2px 7px;border-radius:20px">${p.status==='active'?'Aktif':'Nonaktif'}</span>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="text-sm text-muted">Gagal load produk</div>';
+  }
+}
+
+function openGameModal(game) {
+  document.getElementById('gameModalTitle').textContent = game ? 'Edit Game' : 'Tambah Game';
+  document.getElementById('gameId').value = game?.id || '';
+  document.getElementById('gameName').value = game?.name || '';
+  document.getElementById('gameCategory').value = game?.category || 'games';
+  document.getElementById('gameStatus').value = game?.status || 'active';
+  document.getElementById('gameIcon').value = game?.icon_url || game?.icon || '';
+  openModal('gameModal');
+}
+
+async function saveGame() {
+  const id = document.getElementById('gameId').value;
+  const body = {
+    name: document.getElementById('gameName').value,
+    category: document.getElementById('gameCategory').value,
+    status: document.getElementById('gameStatus').value,
+    icon_url: document.getElementById('gameIcon').value,
+  };
+  try {
+    const url = id ? `${API}/api/admin/catalog/games/${id}` : `${API}/api/admin/catalog/games`;
+    const r = await fetch(url, { method: id?'PUT':'POST', headers: authHeaders(), body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.success) {
+      showToast(id ? 'Game diperbarui!' : 'Game ditambahkan!');
+      closeModal('gameModal');
+      allGames = []; loadCatalog();
+    } else { showToast(d.message||'Gagal simpan', 'error'); }
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+// ─── VOUCHERS ──────────────────────────────────────
+async function loadVouchers() {
+  const el = document.getElementById('voucherList');
+  el.innerHTML = `<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat voucher…</div></div>`;
+  try {
+    const r = await fetch(`${API}/api/admin/vouchers`, { headers: authHeaders() });
+    const d = await r.json();
+    const vouchers = d.data || d.vouchers || [];
+    if (!vouchers.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">🎫</div><p>Belum ada voucher</p></div>`; return; }
+    el.innerHTML = vouchers.map(v => {
+      const expired = v.valid_until && new Date(v.valid_until) < new Date();
+      const notStarted = v.valid_from && new Date(v.valid_from) > new Date();
+      const statusBadgeV = expired ? 'badge-red' : notStarted ? 'badge-amber' : (v.is_active ? 'badge-green' : 'badge-gray');
+      const statusLabelV = expired ? 'Expired' : notStarted ? 'Belum Mulai' : (v.is_active ? 'Aktif' : 'Nonaktif');
+      const discLabel = v.discount_type === 'fixed' ? formatRp(v.discount_value) : v.discount_type === 'percentage' ? `${v.discount_value}%` : 'Base Price';
+      return `
+        <div class="voucher-card">
+          <div class="voucher-header">
+            <div class="voucher-code">${v.code}</div>
+            <span class="status-badge ${statusBadgeV}" style="font-size:11px">${statusLabelV}</span>
+          </div>
+          <div class="voucher-meta">
+            Diskon: <strong>${discLabel}</strong><br>
+            Dipakai: ${v.used_count||0}${v.max_usage ? ` / ${v.max_usage}` : ' (unlimited)'}<br>
+            ${v.valid_from ? `Mulai: ${new Date(v.valid_from).toLocaleDateString('id-ID')}<br>` : ''}
+            ${v.valid_until ? `Sampai: ${new Date(v.valid_until).toLocaleDateString('id-ID')}` : 'Tanpa batas waktu'}
+          </div>
+          <div class="voucher-footer">
+            <div class="toggle-wrap">
+              <input type="checkbox" class="toggle" ${v.is_active ? 'checked' : ''} onchange="toggleVoucher(${v.id}, this.checked)">
+              <span class="text-sm">${v.is_active ? 'Aktif' : 'Nonaktif'}</span>
+            </div>
+            <div class="game-actions">
+              <button class="action-btn edit" onclick='openVoucherModal(${JSON.stringify(v)})'>Edit</button>
+              <button class="action-btn del" onclick="deleteVoucher(${v.id})">Hapus</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat voucher</p></div>`;
+  }
+}
+
+function openVoucherModal(v) {
+  document.getElementById('voucherModalTitle').textContent = v ? 'Edit Voucher' : 'Tambah Voucher';
+  document.getElementById('voucherId').value = v?.id || '';
+  document.getElementById('voucherCode').value = v?.code || '';
+  document.getElementById('voucherType').value = v?.discount_type || 'fixed';
+  document.getElementById('voucherValue').value = v?.discount_value || '';
+  document.getElementById('voucherMaxUse').value = v?.max_usage || 0;
+  document.getElementById('voucherFrom').value = v?.valid_from ? new Date(v.valid_from).toISOString().slice(0,16) : '';
+  document.getElementById('voucherUntil').value = v?.valid_until ? new Date(v.valid_until).toISOString().slice(0,16) : '';
+  document.getElementById('voucherPopup').checked = !!v?.show_in_popup;
+  openModal('voucherModal');
+}
+
+async function saveVoucher() {
+  const id = document.getElementById('voucherId').value;
+  const body = {
+    code: document.getElementById('voucherCode').value.toUpperCase(),
+    discount_type: document.getElementById('voucherType').value,
+    discount_value: +document.getElementById('voucherValue').value,
+    max_usage: +document.getElementById('voucherMaxUse').value || null,
+    valid_from: document.getElementById('voucherFrom').value || null,
+    valid_until: document.getElementById('voucherUntil').value || null,
+    show_in_popup: document.getElementById('voucherPopup').checked,
+  };
+  try {
+    const url = id ? `${API}/api/admin/vouchers/${id}` : `${API}/api/admin/vouchers`;
+    const r = await fetch(url, { method: id?'PUT':'POST', headers: authHeaders(), body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.success) {
+      showToast(id ? 'Voucher diperbarui!' : 'Voucher ditambahkan!');
+      closeModal('voucherModal');
+      loadVouchers();
+    } else { showToast(d.message||'Gagal simpan', 'error'); }
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+async function toggleVoucher(id, active) {
+  try {
+    const r = await fetch(`${API}/api/admin/vouchers/${id}/toggle`, {
+      method: 'PATCH', headers: authHeaders(),
+      body: JSON.stringify({ is_active: active })
+    });
+    const d = await r.json();
+    if (!d.success) showToast(d.message||'Gagal', 'error');
+    else showToast(active ? 'Voucher diaktifkan' : 'Voucher dinonaktifkan');
+  } catch(e) { showToast('Error', 'error'); }
+}
+
+async function deleteVoucher(id) {
+  if (!confirm('Hapus voucher ini?')) return;
+  try {
+    const r = await fetch(`${API}/api/admin/vouchers/${id}`, { method: 'DELETE', headers: authHeaders() });
+    const d = await r.json();
+    if (d.success) { showToast('Voucher dihapus'); loadVouchers(); }
+    else showToast(d.message||'Gagal hapus', 'error');
+  } catch(e) { showToast('Error', 'error'); }
+}
+
+// ─── MORE / FEEDBACK / VISITORS ────────────────────
+async function loadMoreTab() {
+  try {
+    const r = await fetch(`${API}/api/admin/dashboard`, { headers: authHeaders() });
+    const d = await r.json();
+    const df = d.data?.digiflazz || {};
+    document.getElementById('saldoInfo').innerHTML = `
+      <div style="font-size:20px;font-weight:700;color:var(--text)">${formatRp(df.deposit)}</div>
+      <span class="status-badge ${df.status==='CRITICAL'?'badge-red':df.status==='WARNING'?'badge-amber':'badge-green'}" style="margin-top:6px">${df.status||'OK'}</span>
+    `;
+  } catch(e) {
+    document.getElementById('saldoInfo').textContent = 'Gagal memuat';
+  }
+}
+
+async function loadFeedback() {
+  showTab('feedback');
+  document.getElementById('feedbackList').innerHTML = `<div class="loading-wrap"><div class="spinner"></div></div>`;
+  try {
+    const r = await fetch(`${API}/api/admin/feedbacks`, { headers: authHeaders() });
+    const d = await r.json();
+    const feedbacks = d.data || d.feedbacks || [];
+    if (!feedbacks.length) {
+      document.getElementById('feedbackList').innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><p>Belum ada feedback</p></div>`;
+      return;
+    }
+    document.getElementById('feedbackList').innerHTML = feedbacks.map(f => `
+      <div class="feedback-card">
+        <div class="feedback-header">
+          <div class="feedback-stars">${'★'.repeat(f.rating||5)}${'☆'.repeat(5-(f.rating||5))}</div>
+          <div class="text-xs text-muted">${formatDate(f.created_at)}</div>
+        </div>
+        <div class="feedback-name">${f.name || f.customer_name || 'Anonim'}</div>
+        <div class="feedback-msg">${f.message || f.comment || '—'}</div>
+        <div style="margin-top:10px;text-align:right">
+          <button class="action-btn del" onclick="deleteFeedback(${f.id})">Hapus</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('feedbackList').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat feedback</p></div>`;
+  }
+}
+
+async function deleteFeedback(id) {
+  if (!confirm('Hapus feedback ini?')) return;
+  try {
+    const r = await fetch(`${API}/api/admin/feedbacks/${id}`, { method:'DELETE', headers: authHeaders() });
+    const d = await r.json();
+    if (d.success) { showToast('Feedback dihapus'); loadFeedback(); }
+    else showToast(d.message||'Gagal', 'error');
+  } catch(e) { showToast('Error', 'error'); }
+}
+
+async function loadVisitors() {
+  showTab('visitors');
+  document.getElementById('visitorContent').innerHTML = `<div class="loading-wrap"><div class="spinner"></div></div>`;
+  try {
+    const [statsR, logR] = await Promise.all([
+      fetch(`${API}/api/admin/visitors/stats?days=7`, { headers: authHeaders() }),
+      fetch(`${API}/api/admin/visitors/log?limit=20`, { headers: authHeaders() }),
+    ]);
+    const [stats, log] = await Promise.all([statsR.json(), logR.json()]);
+    const s = stats.data?.summary || {};
+    const daily = stats.data?.daily || [];
+    const maxV = Math.max(...daily.map(d=>+d.views||0), 1);
+    document.getElementById('visitorContent').innerHTML = `
+      <div class="stat-row" style="margin-bottom:14px">
+        <div class="stat-card"><div class="stat-label">7 Hari</div><div class="stat-value">${parseInt(s.views_7days||0).toLocaleString('id-ID')}</div><div class="stat-sub">views</div></div>
+        <div class="stat-card"><div class="stat-label">Hari Ini</div><div class="stat-value">${parseInt(s.views_today||0).toLocaleString('id-ID')}</div><div class="stat-sub">views</div></div>
+      </div>
+      <div class="stat-row" style="margin-bottom:14px">
+        <div class="stat-card"><div class="stat-label">Sesi Unik</div><div class="stat-value">${parseInt(s.unique_sessions||0).toLocaleString('id-ID')}</div></div>
+        <div class="stat-card"><div class="stat-label">Avg/Hari</div><div class="stat-value">${parseInt((s.views_7days||0)/7).toLocaleString('id-ID')}</div></div>
+      </div>
+      <div class="card">
+        <div class="text-sm font-bold" style="margin-bottom:12px">Traffic 7 Hari</div>
+        <div class="visitor-bar-wrap">
+          ${daily.slice(-7).map(d => {
+            const h = Math.max(4, Math.round((+d.views||0)/maxV*70));
+            return `<div class="v-bar-col"><div class="v-bar" style="height:${h}px"></div><div class="v-bar-label">${new Date(d.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'})}</div></div>`;
+          }).join('')}
+        </div>
+      </div>
+      ${log.data?.length ? `
+        <div class="section-title" style="margin:14px 0 10px">Log Terbaru</div>
+        ${(log.data||[]).slice(0,10).map(l => `
+          <div class="card" style="padding:10px 14px;margin-bottom:8px">
+            <div class="flex-between">
+              <div class="text-sm">${l.page||l.path||'/'}</div>
+              <div class="text-xs text-muted">${formatDate(l.created_at||l.visited_at)}</div>
+            </div>
+            <div class="text-xs text-muted" style="margin-top:3px">${l.ip||''} ${l.device||l.user_agent?.substring(0,30)||''}</div>
+          </div>
+        `).join('')}
+      ` : ''}
+    `;
+  } catch(e) {
+    document.getElementById('visitorContent').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data visitor</p></div>`;
+  }
+}
+</script>
+</body>
+</html>
