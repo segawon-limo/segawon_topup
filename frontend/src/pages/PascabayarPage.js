@@ -287,7 +287,7 @@ function PascabayarPage() {
 
   // ── Inquiry ────────────────────────────────────────────────────────────────
   const handleInquiry = async () => {
-    if (!selectedProduct)   { setInquiryError('Pilih provider internet terlebih dahulu'); return; }
+    if (!selectedProduct)   { setInquiryError('Pilih produk pascabayar terlebih dahulu'); return; }
     if (!customerNo.trim()) { setInquiryError('Nomor pelanggan wajib diisi'); return; }
     setLoadingInquiry(true); setInquiryError('');
     try {
@@ -403,8 +403,8 @@ function PascabayarPage() {
   return (
     <>
       <Helmet>
-        <title>Internet Pascabayar - Segawon Topup</title>
-        <meta name="description" content="Bayar tagihan internet pascabayar dengan mudah di Segawon Topup. Proses cepat, aman, dan terpercaya." />
+        <title>Tagihan Pascabayar - Segawon Topup</title>
+        <meta name="description" content="Bayar tagihan listrik PLN dan internet pascabayar dengan mudah di Segawon Topup. Proses cepat, aman, dan terpercaya." />
         <link rel="canonical" href="https://segawontopup.net/pascabayar" />
       </Helmet>
     <div className="pb-page">
@@ -415,11 +415,11 @@ function PascabayarPage() {
           <button className="pb-back" onClick={() => navigate(-1)}>← Kembali</button>
           <div className="pb-banner-content">
             <span className="pb-banner-icon">🌐</span>
-            <h1 className="pb-banner-title">Tagihan Internet</h1>
+            <h1 className="pb-banner-title">Tagihan Pascabayar</h1>
             <p className="pb-banner-sub">
               {selectedProduct
                 ? `${selectedProduct.name} — ${selectedProduct.description}`
-                : 'Pilih provider dan bayar tagihan internet bulanan'}
+                : 'Pilih provider dan bayar tagihan bulanan'}
             </p>
           </div>
         </div>
@@ -440,7 +440,7 @@ function PascabayarPage() {
               </div>
 
               <div className="form-section">
-                <h2>1. Pilih Provider Internet</h2>
+                <h2>1. Pilih Produk Pascabayar</h2>
                 <div className="pb-provider-grid">
                   {products.map(p => (
                     <button
@@ -526,10 +526,25 @@ function PascabayarPage() {
                       <span>{inquiryData.lembar_tagihan} lembar</span>
                     </div>
                   )}
+                  {/* PLN: tarif dan daya */}
+                  {inquiryData.tarif && (
+                    <div className="pb-info-row">
+                      <span>Tarif / Golongan</span>
+                      <span>{inquiryData.tarif}{inquiryData.daya ? ` / ${inquiryData.daya.toLocaleString('id-ID')} VA` : ''}</span>
+                    </div>
+                  )}
                   {inquiryData.detail?.map((d, i) => (
                     <div key={i} className="pb-info-row pb-info-detail">
-                      <span>↳ {d.periode}</span>
-                      <span>{formatRupiah(d.nilai_tagihan)}</span>
+                      <span>↳ {d.periode || `Tagihan ${i + 1}`}</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <div>{formatRupiah(d.nilai_tagihan || 0)}</div>
+                        {d.denda && parseInt(d.denda) > 0 && (
+                          <div style={{ fontSize: '12px', color: '#ef4444' }}>Denda: {formatRupiah(d.denda)}</div>
+                        )}
+                        {d.admin && parseInt(d.admin) > 0 && (
+                          <div style={{ fontSize: '12px', color: '#6b7280' }}>Admin: {formatRupiah(d.admin)}</div>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {inquiryData.admin_fee > 0 && (

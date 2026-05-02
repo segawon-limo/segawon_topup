@@ -317,7 +317,11 @@ function PaymentPage() {
                     <span className="detail-label">Produk</span>
                     <span className="detail-value">
                       {paymentData.isPascabayar
-                        ? (paymentData.notes?.split('|')?.[1]?.trim() || 'Tagihan Internet')
+                        ? (() => {
+                          const skuMap = { 'MYRPB': 'MyRepublic', 'SIHPB': 'IndiHome', 'XLHPB': 'XL Home', 'CBNPB': 'CBN', 'PLNPB': 'PLN Pascabayar' };
+                          const sku = paymentData.notes?.split('|')?.[1]?.trim() || '';
+                          return skuMap[sku] || sku || 'Tagihan Pascabayar';
+                        })()
                         : paymentData.productName}
                     </span>
                   </div>

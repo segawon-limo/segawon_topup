@@ -85,6 +85,7 @@ const PROVIDER_NAMES = {
   'SIHPB': 'IndiHome',
   'XLHPB': 'XL Home',
   'CBNPB': 'CBN',
+  'PLNPB': 'PLN Pascabayar',
 };
 
 /**
@@ -187,6 +188,8 @@ exports.inquiry = async (req, res) => {
         periode:        data.periode,
         lembar_tagihan: data.desc?.lembar_tagihan || 1,
         detail:         data.desc?.detail || [],
+        tarif:          data.desc?.tarif  || null,   // PLN: tarif golongan
+        daya:           data.desc?.daya   || null,   // PLN: daya (watt)
         expires_at:     expiresAt
       }
     });
@@ -444,6 +447,9 @@ exports.pay = async (req, res) => {
         // Untuk breakdown tampilan di PaymentPage
         admin_fee:      parseInt(inquiry.admin_fee) || 0,
         detail_tagihan: (inquiry.selling_price || 0) - (parseInt(inquiry.admin_fee) || 0),
+        // PLN spesifik (null untuk produk lain)
+        tarif:          inquiry.inquiry_data ? (typeof inquiry.inquiry_data === 'string' ? JSON.parse(inquiry.inquiry_data) : inquiry.inquiry_data)?.desc?.tarif || null : null,
+        daya:           inquiry.inquiry_data ? (typeof inquiry.inquiry_data === 'string' ? JSON.parse(inquiry.inquiry_data) : inquiry.inquiry_data)?.desc?.daya  || null : null,
         // digiflazz_status & sn akan diisi setelah webhook Duitku sukses
       })
     ]);
@@ -643,6 +649,15 @@ exports.getProducts = async (req, res) => {
       description:       'Internet Fiber CBN',
       customer_no_label: 'Nomor Pelanggan CBN',
       customer_no_hint:  'Contoh: 1122334455',
+    },
+    {
+      buyer_sku_code:    'PLNPB',
+      name:              'PLN Pascabayar',
+      logo:              '/images/games_icon/pln.webp',
+      color:             '#1a73e8',
+      description:       'Tagihan Listrik PLN',
+      customer_no_label: 'ID Pelanggan PLN',
+      customer_no_hint:  'Contoh: 530000000001',
     },
   ];
 
