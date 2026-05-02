@@ -199,20 +199,33 @@ exports.digiflazzWebhook = async (req, res) => {
           [providerData?.ref_id || ref_id]
         ).catch(() => {});
 
-        // Kirim email sukses pascabayar
+        // Kirim email struk PLN pascabayar
         try {
-          const providerName = providerData?.provider_name || providerData?.buyer_sku_code || 'Pascabayar';
-          emailService.sendOrderCompleteEmail({
-            orderNumber:   order.order_number,
-            customerName:  order.customer_name,
-            customerEmail: order.customer_email,
-            productName:   providerName,
-            userId:        providerData?.customer_no || null,
-            zoneId:        null,
-            voucherCode:   sn || '-',
-            isVoucher:     false,
-            productType:   'pascabayar',
-            totalAmount:   order.total_amount,
+          const inqDetail = providerData?.detail
+            ? (typeof providerData.detail === 'string' ? JSON.parse(providerData.detail) : providerData.detail)
+            : [];
+          // Webhook Digiflazz mungkin membawa desc.detail yang lebih lengkap (ada meter_awal/akhir)
+          const webhookDetail = webhookData?.data?.desc?.detail || webhookData?.desc?.detail || inqDetail;
+
+          emailService.sendPascabayarCompleteEmail({
+            orderNumber:       order.order_number,
+            customerName:      order.customer_name  || null,
+            customerEmail:     order.customer_email,
+            customerNo:        providerData?.customer_no || null,
+            pln_customer_name: providerData?.customer_name || webhookData?.data?.customer_name || null,
+            tarif:             providerData?.tarif || webhookData?.data?.desc?.tarif || null,
+            daya:              providerData?.daya  || webhookData?.data?.desc?.daya  || null,
+            periode:           providerData?.periode || webhookData?.data?.periode   || null,
+            detail:            webhookDetail,
+            selling_price:     providerData?.selling_price || null,
+            admin_fee:         providerData?.admin_fee     || null,
+            payment_fee:       order.payment_fee       || 0,
+            voucher_code:      order.voucher_code      || null,
+            voucher_discount:  order.voucher_discount  || 0,
+            totalAmount:       order.total_amount,
+            paymentMethod:     order.payment_method || null,
+            noRef:             sn || null,
+            paidAt:            new Date().toISOString(),
           }).catch(err => console.error('❌ Pascabayar email error:', err.message));
         } catch (emailErr) {
           console.error('❌ Pascabayar email service error:', emailErr);

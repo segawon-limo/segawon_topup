@@ -500,10 +500,12 @@ const generateInvoiceHTML = async (orderData) => {
         <span class="info-label">Produk</span>
         <span class="info-value">${productName}</span>
       </div>
+      ${userId && userId !== 'null' ? `
       <div class="info-row">
         <span class="info-label">${productType === 'token_pln' ? 'No. Meter' : 'User ID'}</span>
         <span class="info-value">${userId}${zoneId ? ' (' + zoneId + ')' : ''}</span>
       </div>
+      ` : ''}
     </div>
 
     <!-- Price Breakdown -->
@@ -582,6 +584,19 @@ const generateInvoiceHTML = async (orderData) => {
         <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
           Klik tombol di atas atau buka link berikut:<br>
           <a href="${paymentUrl}" style="color: #4c3494; word-break: break-all;">${paymentUrl}</a>
+        </p>
+      </div>
+      ` : ''}
+
+      ${paymentMethod === 'DA' && paymentUrl ? `
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${paymentUrl}"
+           style="display: inline-block; background: #118EEA; color: #fff; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(17,142,234,0.35);">
+          💙 Bayar dengan DANA
+        </a>
+        <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+          Klik tombol di atas atau buka link berikut:<br>
+          <a href="${paymentUrl}" style="color: #118EEA; word-break: break-all;">${paymentUrl}</a>
         </p>
       </div>
       ` : ''}

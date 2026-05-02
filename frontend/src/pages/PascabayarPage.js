@@ -45,6 +45,19 @@ const QRIS_METHODS = [
 const formatRupiah = (amount) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
 
+// Format periode: "202605" → "Mei 2025", "MEI 2019" → tetap, dll
+const formatPeriode = (periode) => {
+  if (!periode) return periode;
+  // Format YYYYMM (dari PLN)
+  if (/^\d{6}$/.test(periode)) {
+    const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+    const tahun = periode.slice(0, 4);
+    const bln   = parseInt(periode.slice(4, 6), 10) - 1;
+    return `${bulan[bln] || periode.slice(4)} ${tahun}`;
+  }
+  return periode;
+};
+
 const getMandiriBankFee = (price) => {
   const amount = parseFloat(price || 0);
   if (amount >= 1000000) return 'Rp 5.000';
@@ -419,7 +432,7 @@ function PascabayarPage() {
             <p className="pb-banner-sub">
               {selectedProduct
                 ? `${selectedProduct.name} — ${selectedProduct.description}`
-                : 'Pilih provider dan bayar tagihan bulanan'}
+                : 'Pilih produk pascabayar dan bayar tagihan bulanan'}
             </p>
           </div>
         </div>
@@ -440,7 +453,7 @@ function PascabayarPage() {
               </div>
 
               <div className="form-section">
-                <h2>1. Pilih Produk Pascabayar</h2>
+                <h2>1. Pilih Produk</h2>
                 <div className="pb-provider-grid">
                   {products.map(p => (
                     <button
@@ -517,7 +530,7 @@ function PascabayarPage() {
                   {inquiryData.periode && (
                     <div className="pb-info-row">
                       <span>Periode</span>
-                      <span>{inquiryData.periode}</span>
+                      <span>{formatPeriode(inquiryData.periode)}</span>
                     </div>
                   )}
                   {inquiryData.lembar_tagihan > 0 && (
@@ -535,7 +548,7 @@ function PascabayarPage() {
                   )}
                   {inquiryData.detail?.map((d, i) => (
                     <div key={i} className="pb-info-row pb-info-detail">
-                      <span>↳ {d.periode || `Tagihan ${i + 1}`}</span>
+                      <span>↳ {formatPeriode(d.periode) || `Tagihan ${i + 1}`}</span>
                       <div style={{ textAlign: 'right' }}>
                         <div>{formatRupiah(d.nilai_tagihan || 0)}</div>
                         {d.denda && parseInt(d.denda) > 0 && (
@@ -543,6 +556,11 @@ function PascabayarPage() {
                         )}
                         {d.admin && parseInt(d.admin) > 0 && (
                           <div style={{ fontSize: '12px', color: '#6b7280' }}>Admin: {formatRupiah(d.admin)}</div>
+                        )}
+                        {(d.meter_awal || d.meter_akhir) && (
+                          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                            Meter: {d.meter_awal} → {d.meter_akhir}
+                          </div>
                         )}
                       </div>
                     </div>

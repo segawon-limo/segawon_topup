@@ -906,8 +906,323 @@ const sendOrderCompleteEmail = async (orderData) => {
   }
 };
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASCABAYAR PLN — Struk PDF + Email
+// ─────────────────────────────────────────────────────────────────────────────
+
+const generatePascabayarStrukHTML = (data) => {
+  const {
+    orderNumber, customerName, customerEmail, customerNo,
+    pln_customer_name, tarif, daya, detail = [],
+    selling_price, admin_fee,
+    payment_fee = 0, voucher_code = null, voucher_discount = 0,
+    totalAmount, paymentMethod, noRef, paidAt,
+  } = data;
+
+  const rp = (n) => n != null
+    ? 'Rp ' + Number(n).toLocaleString('id-ID')
+    : '-';
+
+  const formatPeriode = (p) => {
+    if (!p) return p;
+    if (/^\d{6}$/.test(p)) {
+      const bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+      return bln[parseInt(p.slice(4,6),10)-1] + ' ' + p.slice(0,4);
+    }
+    return p;
+  };
+
+  const payMethodNames = {
+    'BR':'BRI Virtual Account','M2':'Mandiri Virtual Account',
+    'NC':'BNC Virtual Account','I1':'BNI Virtual Account',
+    'BV':'BSI Virtual Account','B1':'CIMB Niaga Virtual Account',
+    'DM':'Danamon Virtual Account','BT':'Permata Bank Virtual Account',
+    'SA':'ShopeePay','OV':'OVO','DA':'DANA','SQ':'QRIS',
+  };
+
+  const nilaiTagihan = (Number(selling_price)||0) - (Number(admin_fee)||0);
+  const tglBayar = paidAt
+    ? new Date(paidAt).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' })
+    : '-';
+
+  const meterRow = (d) => (d.meter_awal || d.meter_akhir)
+    ? `<div class="row"><span class="k">Stand Meter</span><span class="v mono">${d.meter_awal||'?'} &rarr; ${d.meter_akhir||'?'}</span></div>`
+    : '';
+
+  const dendaRow = (d) => parseInt(d.denda||0) > 0
+    ? `<div class="row"><span class="k">Denda</span><span class="v" style="color:#ef4444">${rp(d.denda)}</span></div>`
+    : '';
+
+  const detailRows = detail.map((d, i) => {
+    const label = detail.length > 1 ? `Tagihan ${i+1} \u2014 ${formatPeriode(d.periode)||'-'}` : `Tagihan \u2014 ${formatPeriode(d.periode)||'-'}`;
+    return `
+      <div class="card-section">
+        <div class="section-title">${label}</div>
+        <div class="row"><span class="k">RP Tag PLN</span><span class="v">${rp(d.nilai_tagihan||nilaiTagihan)}</span></div>
+        ${dendaRow(d)}
+        <div class="row"><span class="k">Admin Bank</span><span class="v">${rp(d.admin||admin_fee)}</span></div>
+        ${meterRow(d)}
+      </div>`;
+  }).join('');
+
+  const norefSection = noRef
+    ? `<div class="noref-box"><div class="k">No. Referensi</div><div class="v mono">${noRef}</div></div>`
+    : '';
+
+  const plnNameRow = pln_customer_name
+    ? `<div class="row"><span class="k">Nama</span><span class="v">${pln_customer_name}</span></div>`
+    : '';
+
+  const tarifRow = (tarif || daya)
+    ? `<div class="row"><span class="k">Tarif / Daya</span><span class="v">${[tarif, daya ? daya+' VA' : null].filter(Boolean).join(' / ')}</span></div>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'IBM Plex Sans',Arial,sans-serif;background:#f5f5f5;padding:24px;color:#1f2937;font-size:14px}
+    .card{background:#fff;border-radius:12px;max-width:480px;margin:0 auto;overflow:hidden;border:1px solid #e5e7eb}
+    .card-header{background:#1a2332;padding:24px;text-align:center}
+    .brand{font-size:11px;font-weight:600;color:#FF6B35;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
+    .title{font-size:15px;font-weight:500;color:#fff;margin-bottom:4px}
+    .ordnum{font-size:11px;color:rgba(255,255,255,0.45);font-family:'IBM Plex Mono',monospace}
+    .card-body{padding:20px}
+    .card-section{margin-bottom:16px}
+    .section-title{font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #f3f4f6}
+    .row{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 0;gap:12px}
+    .k{font-size:12px;color:#6b7280;flex-shrink:0}
+    .v{font-size:12px;color:#111827;font-weight:500;text-align:right}
+    .mono{font-family:'IBM Plex Mono',monospace;font-size:11px}
+    .total-box{background:#f9fafb;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;border:1px solid #e5e7eb}
+    .total-box .k{font-size:14px;font-weight:500;color:#111827}
+    .total-box .v{font-size:20px;font-weight:600;color:#FF6B35}
+    .noref-box{background:#fafafa;border-radius:8px;padding:10px 14px;border:1px solid #f3f4f6;margin-bottom:16px}
+    .noref-box .k{font-size:10px;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+    .noref-box .v{font-size:11px;font-family:'IBM Plex Mono',monospace;color:#374151;word-break:break-all}
+    .card-footer{padding:12px 20px;border-top:1px solid #f3f4f6;text-align:center;font-size:11px;color:#9ca3af;line-height:1.6}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <div class="brand">SEGAWON TOPUP</div>
+      <div class="title">Struk Pembayaran Tagihan Listrik PLN</div>
+      <div class="ordnum">${orderNumber}</div>
+    </div>
+    <div class="card-body">
+      <div class="card-section">
+        <div class="section-title">Pelanggan</div>
+        <div class="row"><span class="k">ID Pelanggan</span><span class="v mono">${customerNo||'-'}</span></div>
+        ${plnNameRow}
+        ${tarifRow}
+      </div>
+      ${detailRows}
+      <div class="card-section">
+        <div class="section-title">Pembayaran</div>
+        <div class="row"><span class="k">Metode</span><span class="v">${payMethodNames[paymentMethod]||paymentMethod||'-'}</span></div>
+        <div class="row"><span class="k">Tanggal Bayar</span><span class="v">${tglBayar}</span></div>
+        <div class="row"><span class="k">Email</span><span class="v">${customerEmail||'-'}</span></div>
+      </div>
+      <div class="card-section">
+        <div class="section-title">Rincian Biaya</div>
+        <div class="row"><span class="k">Tagihan PLN</span><span class="v">${rp((Number(selling_price)||0)-(Number(admin_fee)||0))}</span></div>
+        <div class="row"><span class="k">Admin Bank PLN</span><span class="v">${rp(admin_fee)}</span></div>
+        ${Number(payment_fee)>0 ? `<div class="row"><span class="k">Biaya Layanan</span><span class="v">${rp(payment_fee)}</span></div>` : ''}
+        ${Number(voucher_discount)>0 ? `<div class="row"><span class="k">Diskon${voucher_code?' ('+voucher_code+')':''}</span><span class="v" style="color:#10b981">- ${rp(voucher_discount)}</span></div>` : ''}
+      </div>
+      <div class="total-box">
+        <span class="k">Total Bayar</span>
+        <span class="v">${rp(totalAmount)}</span>
+      </div>
+      ${norefSection}
+    </div>
+    <div class="card-footer">
+      Struk ini merupakan bukti pembayaran yang sah<br>
+      Terima kasih telah menggunakan Segawon Topup
+    </div>
+  </div>
+</body>
+</html>`;
+};
+
+const generatePascabayarPdfBuffer = async (strukcData) => {
+  try {
+    const htmlPdf = require('html-pdf-node');
+    const html    = generatePascabayarStrukHTML(strukcData);
+    const options = {
+      format: 'A5',
+      printBackground: true,
+      margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
+    };
+    return await htmlPdf.generatePdf({ content: html }, options);
+  } catch (err) {
+    console.error('⚠️  PDF generation failed (non-blocking):', err.message);
+    return null;
+  }
+};
+
+const sendPascabayarCompleteEmail = async (orderData) => {
+  try {
+    const apiInstance   = getBrevoClient();
+    const {
+      orderNumber, customerName: rawName, customerEmail,
+      customerNo, pln_customer_name, tarif, daya, detail = [],
+      selling_price, admin_fee,
+      payment_fee = 0, voucher_code = null, voucher_discount = 0,
+      totalAmount, paymentMethod, noRef, paidAt,
+    } = orderData;
+
+    const customerName = (rawName && rawName.trim()) ? rawName.trim() : customerEmail.split('@')[0];
+
+    const rp = (n) => n != null ? 'Rp ' + Number(n).toLocaleString('id-ID') : '-';
+
+    const formatPeriode = (p) => {
+      if (!p) return p;
+      if (/^\d{6}$/.test(p)) {
+        const bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return bln[parseInt(p.slice(4,6),10)-1] + ' ' + p.slice(0,4);
+      }
+      return p;
+    };
+
+    const payMethodNames = {
+      'BR':'BRI Virtual Account','M2':'Mandiri Virtual Account',
+      'NC':'BNC Virtual Account','I1':'BNI Virtual Account',
+      'BV':'BSI Virtual Account','B1':'CIMB Niaga Virtual Account',
+      'DM':'Danamon Virtual Account','BT':'Permata Bank Virtual Account',
+      'SA':'ShopeePay','OV':'OVO','DA':'DANA','SQ':'QRIS',
+    };
+
+    const nilaiTagihan = (Number(selling_price)||0) - (Number(admin_fee)||0);
+    const tglBayar = paidAt
+      ? new Date(paidAt).toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' })
+      : '-';
+
+    const detailRowsHtml = detail.map((d, i) => {
+      const label = detail.length > 1
+        ? `Tagihan ${i+1} &mdash; ${formatPeriode(d.periode)||'-'}`
+        : `Tagihan &mdash; ${formatPeriode(d.periode)||'-'}`;
+      return `
+        <div class="card-section">
+          <div class="section-title">${label}</div>
+          <div class="info-row"><span class="info-label">RP Tag PLN</span><span class="info-value">${rp(d.nilai_tagihan||nilaiTagihan)}</span></div>
+          ${parseInt(d.denda||0) > 0 ? `<div class="info-row"><span class="info-label">Denda</span><span class="info-value" style="color:#ef4444">${rp(d.denda)}</span></div>` : ''}
+          <div class="info-row"><span class="info-label">Admin Bank</span><span class="info-value">${rp(d.admin||admin_fee)}</span></div>
+          ${(d.meter_awal||d.meter_akhir) ? `<div class="info-row"><span class="info-label">Stand Meter</span><span class="info-value" style="font-family:monospace;font-size:12px">${d.meter_awal||'?'} &rarr; ${d.meter_akhir||'?'}</span></div>` : ''}
+        </div>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body{font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:20px;background:#f5f5f5;color:#1f2937}
+    .card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+    .card-header{background:#1a2332;padding:28px 24px;text-align:center}
+    .brand{font-size:11px;font-weight:bold;color:#FF6B35;letter-spacing:2px;text-transform:uppercase}
+    .title{font-size:16px;color:#fff;margin:6px 0 4px}
+    .ordnum{font-size:11px;color:rgba(255,255,255,0.4)}
+    .greeting{padding:20px 24px 0;font-size:14px;color:#374151}
+    .card-body{padding:16px 24px}
+    .card-section{margin-bottom:16px}
+    .section-title{font-size:10px;font-weight:bold;color:#9ca3af;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f3f4f6}
+    .info-row{display:table;width:100%;padding:4px 0}
+    .info-label{display:table-cell;color:#6b7280;font-size:13px;width:45%}
+    .info-value{display:table-cell;color:#111827;font-size:13px;font-weight:500;text-align:right}
+    .total-box{background:#f9fafb;border-radius:8px;padding:16px;display:table;width:100%;margin:8px 0 16px;border:1px solid #e5e7eb}
+    .total-label{display:table-cell;font-size:15px;font-weight:500;color:#111827}
+    .total-value{display:table-cell;font-size:22px;font-weight:bold;color:#FF6B35;text-align:right}
+    .noref-box{background:#fafafa;border-radius:8px;padding:10px 14px;border:1px solid #f3f4f6;margin-bottom:16px}
+    .noref-label{font-size:10px;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+    .noref-value{font-size:12px;font-family:monospace;color:#374151;word-break:break-all}
+    .pdf-note{background:#eff6ff;border-left:3px solid #3b82f6;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1d4ed8}
+    .card-footer{padding:14px 24px;border-top:1px solid #f3f4f6;text-align:center;font-size:12px;color:#9ca3af;line-height:1.7}
+    .card-footer a{color:#FF6B35;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <div class="brand">SEGAWON TOPUP</div>
+      <div class="title">Struk Pembayaran Tagihan Listrik PLN</div>
+      <div class="ordnum">${orderNumber}</div>
+    </div>
+    <div class="greeting">Hai <strong>${customerName}</strong>, tagihan listrik PLN kamu sudah berhasil dibayar.</div>
+    <div class="card-body">
+      <div class="card-section">
+        <div class="section-title">Pelanggan</div>
+        <div class="info-row"><span class="info-label">ID Pelanggan</span><span class="info-value" style="font-family:monospace;font-size:12px">${customerNo||'-'}</span></div>
+        ${pln_customer_name ? `<div class="info-row"><span class="info-label">Nama</span><span class="info-value">${pln_customer_name}</span></div>` : ''}
+        ${(tarif||daya) ? `<div class="info-row"><span class="info-label">Tarif / Daya</span><span class="info-value">${[tarif, daya ? daya+' VA' : null].filter(Boolean).join(' / ')}</span></div>` : ''}
+      </div>
+      ${detailRowsHtml}
+      <div class="card-section">
+        <div class="section-title">Pembayaran</div>
+        <div class="info-row"><span class="info-label">Metode</span><span class="info-value">${payMethodNames[paymentMethod]||paymentMethod||'-'}</span></div>
+        <div class="info-row"><span class="info-label">Tanggal Bayar</span><span class="info-value">${tglBayar}</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value">${customerEmail}</span></div>
+      </div>
+      <div class="card-section">
+        <div class="section-title">Rincian Biaya</div>
+        <div class="info-row"><span class="info-label">Tagihan PLN</span><span class="info-value">${rp((Number(selling_price)||0) - (Number(admin_fee)||0))}</span></div>
+        <div class="info-row"><span class="info-label">Admin Bank PLN</span><span class="info-value">${rp(admin_fee)}</span></div>
+        ${Number(payment_fee) > 0 ? `<div class="info-row"><span class="info-label">Biaya Layanan</span><span class="info-value">${rp(payment_fee)}</span></div>` : ''}
+        ${Number(voucher_discount) > 0 ? `<div class="info-row"><span class="info-label">Diskon${voucher_code ? ' (' + voucher_code + ')' : ''}</span><span class="info-value" style="color:#10b981">- ${rp(voucher_discount)}</span></div>` : ''}
+      </div>
+      <div class="total-box">
+        <span class="total-label">Total Bayar</span>
+        <span class="total-value">${rp(totalAmount)}</span>
+      </div>
+      ${noRef ? `<div class="noref-box"><div class="noref-label">No. Referensi</div><div class="noref-value">${noRef}</div></div>` : ''}
+      <div class="pdf-note">Struk PDF terlampir pada email ini &mdash; simpan sebagai bukti pembayaran.</div>
+    </div>
+    <div class="card-footer">
+      Struk ini merupakan bukti pembayaran yang sah<br>
+      Butuh bantuan? <a href="https://segawontopup.net">segawontopup.net</a>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const pdfBuffer = await generatePascabayarPdfBuffer(orderData);
+
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = {
+      name:  'SEGAWON TOPUP',
+      email: process.env.BREVO_FROM_EMAIL || 'noreply@segawontopup.net',
+    };
+    sendSmtpEmail.to           = [{ email: customerEmail, name: customerName }];
+    sendSmtpEmail.subject      = `\u2705 Tagihan Listrik Lunas - ${orderNumber}`;
+    sendSmtpEmail.htmlContent  = html;
+    sendSmtpEmail.tags         = ['pascabayar-complete', 'pln'];
+
+    if (pdfBuffer) {
+      sendSmtpEmail.attachment = [{
+        content: pdfBuffer.toString('base64'),
+        name:    `struk-pln-${orderNumber}.pdf`,
+      }];
+    }
+
+    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('✅ Pascabayar complete email sent to', customerEmail, pdfBuffer ? '(+PDF)' : '(no PDF)');
+    return { success: true, messageId: response.messageId };
+
+  } catch (error) {
+    console.error('❌ Pascabayar complete email failed:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+
 module.exports = {
   sendInvoiceEmail,
   sendPaymentSuccessEmail,
-  sendOrderCompleteEmail
+  sendOrderCompleteEmail,
+  sendPascabayarCompleteEmail,
 };
