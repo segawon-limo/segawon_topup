@@ -211,6 +211,7 @@ exports.digiflazzWebhook = async (req, res) => {
             orderNumber:       order.order_number,
             customerName:      order.customer_name  || null,
             customerEmail:     order.customer_email,
+            buyer_sku_code:    providerData?.buyer_sku_code || null,
             customerNo:        providerData?.customer_no || null,
             pln_customer_name: providerData?.customer_name || webhookData?.data?.customer_name || null,
             tarif:             providerData?.tarif || webhookData?.data?.desc?.tarif || null,
