@@ -11,18 +11,25 @@
  *   node test/test_pln_inquiry.js
  */
 
-require('dotenv').config({ path: '../.env' });
+const path   = require('path');
+// Cari .env dari lokasi manapun script dijalankan
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
+
 const https  = require('https');
 const crypto = require('crypto');
 
 // ── Konfigurasi ───────────────────────────────────────────────────────────────
 const USERNAME   = process.env.DIGIFLAZZ_USERNAME;
-const API_KEY    = process.env.NODE_ENV === 'production'
+// Ikuti konvensi project: pakai DIGIFLAZZ_MODE, bukan NODE_ENV
+const API_KEY    = process.env.DIGIFLAZZ_MODE === 'production'
   ? process.env.DIGIFLAZZ_PRODUCTION_KEY
   : process.env.DIGIFLAZZ_DEVELOPMENT_KEY;
 
 // Nomor ID Pelanggan PLN yang ingin dicek (ganti sesuai kebutuhan)
-const CUSTOMER_NO   = '515430346045';  // ← Ganti dengan ID Pelanggan PLN
+//const CUSTOMER_NO   = '530000000001';  // ← Ganti dengan ID Pelanggan PLN
+const CUSTOMER_NO   = '515430346045';
 const BUYER_SKU_CODE = 'PLNPB';
 
 // ── Warna console ─────────────────────────────────────────────────────────────
@@ -109,6 +116,8 @@ const digiflazzPost = (body) =>
   console.log(C.dim('─────────────────────────────────────────────'));
   console.log('  Endpoint    :', C.bold('POST https://api.digiflazz.com/v1/transaction'));
   console.log('  Username    :', C.bold(USERNAME));
+  console.log('  Mode        :', C.bold(process.env.DIGIFLAZZ_MODE || 'development (default)'));
+  console.log('  API Key     :', C.dim(API_KEY?.slice(0, 6) + '...' + API_KEY?.slice(-4)));
   console.log('  SKU Code    :', C.bold(BUYER_SKU_CODE));
   console.log('  Customer No :', C.bold(CUSTOMER_NO));
   console.log('  Ref ID      :', C.bold(refId));
