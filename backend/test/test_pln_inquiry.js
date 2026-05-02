@@ -100,6 +100,20 @@ const digiflazzPost = (body) =>
   }
 
   const refId = makeRefId();
+
+  // DEBUG: print semua nilai yang dipakai untuk sign
+  console.log(C.yellow('\n🔍 DEBUG SIGN'));
+  console.log(C.dim('─────────────────────────────────────────────'));
+  console.log('  USERNAME raw  :', JSON.stringify(USERNAME));
+  console.log('  API_KEY raw   :', JSON.stringify(API_KEY));
+  console.log('  refId raw     :', JSON.stringify(refId));
+  const signInput = USERNAME + API_KEY + refId;
+  console.log('  concat string :', JSON.stringify(signInput));
+  console.log('  concat length :', signInput.length);
+  const crypto2 = require('crypto');
+  const signCheck = crypto2.createHash('md5').update(signInput).digest('hex');
+  console.log('  md5 result    :', signCheck);
+
   const sign  = makeSign(refId);
 
   const requestBody = {
