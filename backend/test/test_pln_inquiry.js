@@ -30,7 +30,7 @@ const API_KEY       = isDevelopment
   : process.env.DIGIFLAZZ_PRODUCTION_KEY;
 
 // Nomor ID Pelanggan PLN yang ingin dicek (ganti sesuai kebutuhan)
-const CUSTOMER_NO   = '530000000001';  // ← Ganti dengan ID Pelanggan PLN
+const CUSTOMER_NO    = '515430346045';  // ← Ganti dengan ID Pelanggan PLN
 const BUYER_SKU_CODE = 'PLNPB';
 
 // ── Warna console ─────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ const digiflazzPost = (body) =>
     customer_no:    CUSTOMER_NO,
     ref_id:         refId,
     sign,
-    testing:        true, // ← hapus atau set false untuk mode production
+    // production: tidak perlu field testing
   };
 
   // Print info request
