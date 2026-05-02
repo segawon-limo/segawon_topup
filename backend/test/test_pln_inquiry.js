@@ -23,13 +23,14 @@ const crypto = require('crypto');
 
 // ── Konfigurasi ───────────────────────────────────────────────────────────────
 const USERNAME   = process.env.DIGIFLAZZ_USERNAME;
-// Ikuti konvensi controller yang sudah berjalan: pakai NODE_ENV
-const API_KEY    = process.env.NODE_ENV === 'production'
-  ? process.env.DIGIFLAZZ_PRODUCTION_KEY
-  : process.env.DIGIFLAZZ_DEVELOPMENT_KEY;
+// Ikuti DigiflazzService (prabayar): pakai DIGIFLAZZ_MODE
+const isDevelopment = process.env.DIGIFLAZZ_MODE === 'development';
+const API_KEY       = isDevelopment
+  ? process.env.DIGIFLAZZ_DEVELOPMENT_KEY
+  : process.env.DIGIFLAZZ_PRODUCTION_KEY;
 
 // Nomor ID Pelanggan PLN yang ingin dicek (ganti sesuai kebutuhan)
-const CUSTOMER_NO   = '515430346045';
+const CUSTOMER_NO   = '530000000001';  // ← Ganti dengan ID Pelanggan PLN
 const BUYER_SKU_CODE = 'PLNPB';
 
 // ── Warna console ─────────────────────────────────────────────────────────────
@@ -116,7 +117,7 @@ const digiflazzPost = (body) =>
   console.log(C.dim('─────────────────────────────────────────────'));
   console.log('  Endpoint    :', C.bold('POST https://api.digiflazz.com/v1/transaction'));
   console.log('  Username    :', C.bold(USERNAME));
-  console.log('  Mode        :', C.bold(`NODE_ENV=${process.env.NODE_ENV || '(not set)'} → pakai ${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'} key`));
+  console.log('  Mode        :', C.bold(`DIGIFLAZZ_MODE=${process.env.DIGIFLAZZ_MODE || '(not set)'} → pakai ${isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION'} key`));
   console.log('  API Key     :', C.dim(API_KEY?.slice(0, 6) + '...' + API_KEY?.slice(-4)));
   console.log('  SKU Code    :', C.bold(BUYER_SKU_CODE));
   console.log('  Customer No :', C.bold(CUSTOMER_NO));
