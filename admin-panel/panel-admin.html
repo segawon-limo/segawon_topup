@@ -9,217 +9,236 @@
 <title>Segawon Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-:root {
-  --bg:#1a202c; --bg2:#2d3748; --bg3:#4a5568; --surface:#2d3748; --border:#4a5568; --border2:#718096;
-  --text:#f7fafc; --text2:#cbd5e0; --text3:#a0aec0;
-  --accent:#667eea; --accent2:#764ba2;
-  --green:#48bb78; --green-bg:rgba(72,187,120,0.15); --green-bdr:rgba(72,187,120,0.3);
-  --red:#f56565; --red-bg:rgba(245,101,101,0.15); --red-bdr:rgba(245,101,101,0.3);
-  --amber:#ed8936; --amber-bg:rgba(237,137,54,0.15); --amber-bdr:rgba(237,137,54,0.3);
-  --purple:#9f7aea; --font:'Inter',sans-serif; --radius:12px; --radius-sm:8px;
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#1a202c;--bg2:#2d3748;--bg3:#4a5568;--surface:#2d3748;--border:#4a5568;--border2:#718096;
+  --text:#f7fafc;--text2:#cbd5e0;--text3:#a0aec0;
+  --accent:#667eea;--accent2:#764ba2;
+  --green:#48bb78;--green-bg:rgba(72,187,120,.15);--green-bdr:rgba(72,187,120,.3);
+  --red:#f56565;--red-bg:rgba(245,101,101,.15);--red-bdr:rgba(245,101,101,.3);
+  --amber:#ed8936;--amber-bg:rgba(237,137,54,.15);--amber-bdr:rgba(237,137,54,.3);
+  --purple:#9f7aea;--font:'Inter',sans-serif;--r:12px;--rsm:8px;
 }
-html { font-size: 16px; }
-body { font-family:var(--font); background:var(--bg); color:var(--text); height:100%; overflow-x:hidden; }
-.screen { display:none; flex-direction:column; min-height:100vh; }
-.screen.active { display:flex; }
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100%;overflow-x:hidden}
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
 
 /* LOGIN */
-#loginScreen { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); align-items:center; justify-content:center; padding:24px; }
-.login-card { background:#1a202c; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.5); padding:36px 28px; width:100%; max-width:420px; }
-.login-header { text-align:center; margin-bottom:28px; }
-.login-logo-img { width:120px; height:auto; margin:0 auto 14px; display:block; }
-.login-logo-fallback { width:80px; height:80px; border-radius:18px; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 14px; }
-.login-header h1 { font-size:22px; font-weight:700; color:var(--text); margin-bottom:4px; }
-.login-header p { font-size:14px; color:var(--text3); }
-.form-label { display:block; font-size:13px; font-weight:600; color:var(--text2); margin-bottom:7px; }
-.form-input { width:100%; padding:13px 16px; background:var(--bg2); border:2px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--font); font-size:15px; outline:none; transition:border-color 0.2s; margin-bottom:16px; }
-.form-input:focus { border-color:var(--accent); }
-.btn-login { width:100%; padding:14px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; border-radius:var(--radius-sm); font-family:var(--font); font-size:16px; font-weight:600; cursor:pointer; transition:opacity 0.2s; margin-top:4px; }
-.btn-login:active { opacity:0.85; }
-.btn-login:disabled { opacity:0.5; }
-.login-error { background:var(--red-bg); border:1px solid var(--red-bdr); border-radius:var(--radius-sm); padding:11px 14px; color:var(--red); font-size:14px; margin-top:12px; display:none; }
-.login-error.show { display:block; }
+#loginScreen{background:linear-gradient(135deg,#667eea,#764ba2);align-items:center;justify-content:center;padding:24px}
+.login-card{background:#1a202c;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:36px 28px;width:100%;max-width:420px}
+.login-header{text-align:center;margin-bottom:28px}
+.login-logo{width:120px;height:auto;margin:0 auto 14px;display:block}
+.login-logo-fb{width:80px;height:80px;border-radius:18px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 14px}
+.login-header h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-header p{font-size:14px;color:var(--text3)}
+.flbl{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:7px}
+.finp{width:100%;padding:13px 16px;background:var(--bg2);border:2px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font);font-size:16px;outline:none;transition:border-color .2s;margin-bottom:16px}
+.finp:focus{border-color:var(--accent)}
+.btn-login{width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:var(--rsm);font-family:var(--font);font-size:16px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-login:active{opacity:.85}
+.btn-login:disabled{opacity:.5}
+.lerr{background:var(--red-bg);border:1px solid var(--red-bdr);border-radius:var(--rsm);padding:11px 14px;color:var(--red);font-size:14px;margin-top:12px;display:none}
+.lerr.show{display:block}
 
-/* APP */
-.topbar { display:flex; align-items:center; padding:13px 16px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; gap:12px; }
-.topbar-logo { height:32px; width:auto; object-fit:contain; }
-.topbar-logo-fallback { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; font-size:16px; }
-.topbar-info { flex:1; }
-.topbar-title { font-size:15px; font-weight:700; color:var(--text); }
-.topbar-sub { font-size:12px; color:var(--text3); }
-.topbar-btn { width:36px; height:36px; border-radius:var(--radius-sm); background:var(--bg3); border:1px solid var(--border); color:var(--text2); display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer; }
-.topbar-btn:active { background:var(--border); }
+/* TOPBAR */
+.topbar{display:flex;align-items:center;padding:13px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:12px}
+.tb-logo{height:32px;width:auto;object-fit:contain}
+.tb-logo-fb{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.tb-info{flex:1}
+.tb-title{font-size:15px;font-weight:700;color:var(--text)}
+.tb-sub{font-size:12px;color:var(--text3)}
+.tb-btn{width:36px;height:36px;border-radius:var(--rsm);background:var(--bg3);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer}
+.tb-btn:active{background:var(--border)}
 
-.tab-content { flex:1; overflow-y:auto; padding:16px; padding-bottom:76px; }
-.tab-pane { display:none; }
-.tab-pane.active { display:block; }
-
-.bottom-nav { display:flex; background:var(--bg2); border-top:1px solid var(--border); position:fixed; bottom:0; left:0; right:0; z-index:100; }
-.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; padding:9px 4px 11px; gap:3px; cursor:pointer; color:var(--text3); border:none; background:none; font-family:var(--font); }
-.nav-icon { font-size:20px; line-height:1; }
-.nav-label { font-size:11px; font-weight:600; }
-.nav-item.active { color:var(--accent); }
+/* TABS */
+.tab-content{flex:1;overflow-y:auto;padding:16px;padding-bottom:76px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:100}
+.nvi{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 11px;gap:3px;cursor:pointer;color:var(--text3);border:none;background:none;font-family:var(--font)}
+.nvi-icon{font-size:20px;line-height:1}
+.nvi-lbl{font-size:11px;font-weight:600}
+.nvi.active{color:var(--accent)}
 
 /* STAT */
-.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
-.stat-card { background:var(--surface); border-radius:var(--radius); padding:16px; border:1px solid var(--border); }
-.stat-card.warn { background:var(--amber-bg); border-color:var(--amber-bdr); }
-.stat-card.crit { background:var(--red-bg); border-color:var(--red-bdr); }
-.stat-card h3 { font-size:12px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
-.stat-value { font-size:19px; font-weight:700; color:var(--text); line-height:1.15; }
-.stat-sub { font-size:13px; color:var(--text2); margin-top:4px; }
-.stat-profit { font-size:12px; color:var(--green); margin-top:4px; font-weight:600; }
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.stat-card{background:var(--surface);border-radius:var(--r);padding:16px;border:1px solid var(--border)}
+.stat-card.warn{background:var(--amber-bg);border-color:var(--amber-bdr)}
+.stat-card.crit{background:var(--red-bg);border-color:var(--red-bdr)}
+.stat-card h3{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.sv{font-size:19px;font-weight:700;color:var(--text);line-height:1.15}
+.ss{font-size:13px;color:var(--text2);margin-top:4px}
+.sp{font-size:12px;color:var(--green);margin-top:4px;font-weight:600}
 
 /* ALERT */
-.alert-box { background:var(--amber-bg); border:2px solid var(--amber-bdr); border-radius:var(--radius); padding:14px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px; }
-.alert-box.danger { background:var(--red-bg); border-color:var(--red-bdr); }
-.alert-box-text { flex:1; }
-.alert-box-text strong { font-size:14px; font-weight:700; color:var(--text); display:block; margin-bottom:3px; }
-.alert-box-text p { font-size:13px; color:var(--text2); line-height:1.5; }
+.alert-box{background:var(--amber-bg);border:2px solid var(--amber-bdr);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px}
+.alert-box.danger{background:var(--red-bg);border-color:var(--red-bdr)}
+.abt{flex:1}
+.abt strong{font-size:14px;font-weight:700;color:var(--text);display:block;margin-bottom:3px}
+.abt p{font-size:13px;color:var(--text2);line-height:1.5}
 
 /* CARD */
-.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
-.card-title { font-size:15px; font-weight:700; margin-bottom:14px; color:var(--text); }
-
-.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-.section-title { font-size:17px; font-weight:700; }
-.section-back { font-size:14px; color:var(--accent); font-weight:600; cursor:pointer; }
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title{font-size:17px;font-weight:700}
+.sec-back{font-size:14px;color:var(--accent);font-weight:600;cursor:pointer}
 
 /* BADGE */
-.badge { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:0.3px; }
-.badge-success { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bdr); }
-.badge-pending { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bdr); }
-.badge-failed,.badge-cancelled { background:var(--red-bg); color:var(--red); border:1px solid var(--red-bdr); }
-.badge-retry { background:rgba(159,122,234,0.15); color:var(--purple); border:1px solid rgba(159,122,234,0.3); }
-.badge-expired,.badge-inactive { background:rgba(160,174,192,0.12); color:var(--text3); border:1px solid var(--border); }
-.badge-warning { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bdr); }
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
+.bs{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bdr)}
+.bp{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bdr)}
+.bf{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bdr)}
+.br{background:rgba(159,122,234,.15);color:var(--purple);border:1px solid rgba(159,122,234,.3)}
+.be{background:rgba(160,174,192,.12);color:var(--text3);border:1px solid var(--border)}
+.bw{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bdr)}
 
 /* BTN */
-.btn { padding:10px 18px; border-radius:var(--radius-sm); font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; border:none; transition:opacity 0.15s; }
-.btn:active { opacity:0.8; }
-.btn-primary { background:var(--accent); color:#fff; }
-.btn-secondary { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
-.btn-danger { background:var(--red-bg); color:var(--red); border:1px solid var(--red-bdr); }
-.btn-sm { padding:6px 12px; font-size:12px; border-radius:6px; }
-.btn-amber { background:var(--amber); color:#1a202c; font-weight:700; border:none; padding:7px 14px; border-radius:7px; font-size:13px; cursor:pointer; font-family:var(--font); }
+.btn{padding:10px 18px;border-radius:var(--rsm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
+.btn:active{opacity:.8}
+.btn-p{background:var(--accent);color:#fff}
+.btn-s{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.btn-d{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bdr)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px}
+.btn-amber{background:var(--amber);color:#1a202c;font-weight:700;border:none;padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-family:var(--font);flex-shrink:0}
 
 /* CHART */
-.mini-chart { display:flex; align-items:flex-end; gap:4px; height:60px; }
-.mini-bar { flex:1; background:linear-gradient(180deg,#667eea,#764ba2); border-radius:3px 3px 0 0; min-height:4px; opacity:0.6; }
-.mini-bar:last-child { opacity:1; }
-.chart-labels { display:flex; justify-content:space-between; margin-top:6px; }
-.chart-label { font-size:11px; color:var(--text3); }
+.mini-chart{display:flex;align-items:flex-end;gap:4px;height:60px}
+.mini-bar{flex:1;background:linear-gradient(180deg,#667eea,#764ba2);border-radius:3px 3px 0 0;min-height:4px;opacity:.6}
+.mini-bar:last-child{opacity:1}
+.chart-lbls{display:flex;justify-content:space-between;margin-top:6px}
+.chart-lbl{font-size:11px;color:var(--text3)}
 
 /* FILTER */
-.filter-bar { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; margin-bottom:14px; scrollbar-width:none; }
-.filter-bar::-webkit-scrollbar { display:none; }
-.filter-chip { flex-shrink:0; padding:7px 15px; border-radius:20px; font-size:13px; font-weight:600; border:1.5px solid var(--border); background:var(--surface); color:var(--text2); cursor:pointer; }
-.filter-chip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.fchip{flex-shrink:0;padding:7px 15px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer}
+.fchip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* SEARCH */
-.search-wrap { display:flex; align-items:center; gap:10px; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; }
-.search-wrap input { flex:1; background:none; border:none; outline:none; color:var(--text); font-family:var(--font); font-size:14px; }
-.search-wrap input::placeholder { color:var(--text3); }
+.search-wrap{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rsm);padding:10px 14px;margin-bottom:14px}
+.search-wrap input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:14px}
+.search-wrap input::placeholder{color:var(--text3)}
 
 /* ORDER */
-.order-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; cursor:pointer; }
-.order-card:active { border-color:var(--border2); }
-.order-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
-.order-num { font-size:12px; color:var(--text3); font-family:monospace; }
-.order-product { font-size:14px; font-weight:600; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.order-meta { font-size:12px; color:var(--text2); }
-.order-footer { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
-.order-price { font-size:15px; font-weight:700; color:var(--accent); }
+.order-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;cursor:pointer}
+.order-card:active{border-color:var(--border2)}
+.order-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.order-num{font-size:12px;color:var(--text3);font-family:monospace}
+.order-product{font-size:14px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.order-meta{font-size:12px;color:var(--text2)}
+.order-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.order-price{font-size:15px;font-weight:700;color:var(--accent)}
 
 /* GAME */
-.game-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
-.game-row { display:flex; align-items:center; gap:12px; }
-.game-icon { width:48px; height:48px; border-radius:10px; background:var(--bg3); flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:22px; }
-.game-icon img { width:100%; height:100%; object-fit:cover; }
-.game-info { flex:1; min-width:0; }
-.game-name { font-size:14px; font-weight:700; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.game-meta { font-size:12px; color:var(--text2); display:flex; align-items:center; gap:8px; }
-.products-sub { display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
-.products-sub.open { display:block; }
-.product-item { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:8px; }
-.product-item:last-child { border-bottom:none; }
-.product-name { font-size:13px; color:var(--text); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.product-price { font-size:13px; font-weight:700; color:var(--accent); flex-shrink:0; }
+.game-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.game-row{display:flex;align-items:center;gap:12px}
+.game-icon{width:48px;height:48px;border-radius:10px;background:var(--bg3);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px}
+.game-icon img{width:100%;height:100%;object-fit:cover}
+.game-info{flex:1;min-width:0}
+.game-name{font-size:14px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-meta{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px}
+.products-sub{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.products-sub.open{display:block}
+.product-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);gap:8px}
+.product-item:last-child{border-bottom:none}
+.product-name{font-size:13px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.product-price{font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0}
 
 /* VOUCHER */
-.voucher-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
-.voucher-code { font-family:monospace; font-size:18px; font-weight:700; color:var(--accent); letter-spacing:2px; }
-.voucher-meta { font-size:13px; color:var(--text2); line-height:1.7; margin:8px 0; }
-.voucher-footer { display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--border); }
+.voucher-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.vcode{font-family:monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px}
+.vmeta{font-size:13px;color:var(--text2);line-height:1.7;margin:8px 0}
+.vfooter{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border)}
 
 /* TOGGLE */
-.toggle { width:42px; height:24px; border-radius:12px; background:var(--bg3); border:1px solid var(--border); cursor:pointer; position:relative; transition:background 0.2s; -webkit-appearance:none; appearance:none; flex-shrink:0; }
-.toggle:checked { background:var(--accent); border-color:var(--accent); }
-.toggle::after { content:''; width:18px; height:18px; border-radius:50%; background:#fff; position:absolute; top:2px; left:2px; transition:left 0.2s; }
-.toggle:checked::after { left:20px; }
+.toggle{width:42px;height:24px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative;transition:background .2s;-webkit-appearance:none;appearance:none;flex-shrink:0}
+.toggle:checked{background:var(--accent);border-color:var(--accent)}
+.toggle::after{content:'';width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s}
+.toggle:checked::after{left:20px}
 
 /* FEEDBACK */
-.feedback-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
-.feedback-stars { color:#f6c90e; font-size:15px; letter-spacing:2px; }
-.feedback-name { font-size:13px; font-weight:700; margin:6px 0 4px; }
-.feedback-msg { font-size:13px; color:var(--text2); line-height:1.6; }
+.fb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.fb-stars{color:#f6c90e;font-size:15px;letter-spacing:2px}
+.fb-name{font-size:13px;font-weight:700;margin:6px 0 4px}
+.fb-msg{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* TERMINAL */
+.term-wrap{background:#0d1117;border-radius:var(--r);border:1px solid var(--border);overflow:hidden;margin-bottom:14px}
+.term-header{background:#161b22;padding:10px 14px;display:flex;align-items:center;gap:8px}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-output{padding:12px 14px;height:240px;overflow-y:auto;font-family:monospace;font-size:13px;line-height:1.6;color:#c9d1d9}
+.term-output .sys{color:#58a6ff}
+.term-output .err{color:#f85149}
+.term-output .ok{color:#56d364}
+.term-conn{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+.term-conn.on{background:var(--green-bg);color:var(--green)}
+.term-conn.off{background:var(--red-bg);color:var(--red)}
+.cmd-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.cmd-group-hdr{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:700;font-size:14px}
+.cmd-group-hdr:active{background:var(--bg3)}
+.cmd-group-body{padding:10px 14px;border-top:1px solid var(--border);display:none}
+.cmd-group-body.open{display:block}
+.cmd-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;margin-bottom:8px;cursor:pointer;font-family:var(--font);color:var(--text);text-align:left}
+.cmd-btn:last-child{margin-bottom:0}
+.cmd-btn:active{background:var(--bg3)}
+.cmd-btn-label{font-size:13px;font-weight:600}
+.cmd-btn-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.cmd-run{font-size:18px;flex-shrink:0;margin-left:10px}
 
 /* MODAL */
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; display:flex; flex-direction:column; justify-content:flex-end; opacity:0; visibility:hidden; transition:opacity 0.25s,visibility 0.25s; }
-.modal-overlay.show { opacity:1; visibility:visible; }
-.modal-drawer { background:var(--bg2); border-radius:20px 20px 0 0; padding:20px 20px 40px; max-height:92vh; overflow-y:auto; transform:translateY(30px); transition:transform 0.25s; border-top:1px solid var(--border); }
-.modal-overlay.show .modal-drawer { transform:translateY(0); }
-.drawer-handle { width:38px; height:4px; background:var(--bg3); border-radius:2px; margin:0 auto 18px; }
-.drawer-title { font-size:18px; font-weight:700; margin-bottom:18px; }
-.form-group { margin-bottom:14px; }
-.form-group label { display:block; font-size:12px; font-weight:600; color:var(--text3); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.4px; }
-.form-group input,.form-group select,.form-group textarea { width:100%; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text); font-family:var(--font); font-size:14px; outline:none; transition:border-color 0.2s; }
-.form-group input:focus,.form-group select:focus { border-color:var(--accent); }
-.form-group select option { background:var(--bg2); }
-.btn-row { display:flex; gap:10px; margin-top:20px; }
-.btn-row .btn { flex:1; padding:13px; text-align:center; }
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.modal-overlay.show{opacity:1;visibility:visible}
+.modal-drawer{background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 20px 40px;max-height:92vh;overflow-y:auto;transform:translateY(30px);transition:transform .25s;border-top:1px solid var(--border)}
+.modal-overlay.show .modal-drawer{transform:translateY(0)}
+.drw-handle{width:38px;height:4px;background:var(--bg3);border-radius:2px;margin:0 auto 18px}
+.drw-title{font-size:18px;font-weight:700;margin-bottom:18px}
+.fgrp{margin-bottom:14px}
+.fgrp label{display:block;font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.fgrp input,.fgrp select,.fgrp textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rsm);padding:12px 14px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s}
+.fgrp input:focus,.fgrp select:focus{border-color:var(--accent)}
+.fgrp select option{background:var(--bg2)}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.btn-row .btn{flex:1;padding:13px;text-align:center}
 
 /* DETAIL */
-.detail-row { display:flex; align-items:flex-start; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); gap:12px; }
-.detail-row:last-child { border-bottom:none; }
-.detail-key { font-size:13px; color:var(--text3); flex-shrink:0; }
-.detail-val { font-size:13px; font-weight:600; color:var(--text); text-align:right; max-width:65%; word-break:break-all; }
+.drow{display:flex;align-items:flex-start;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:12px}
+.drow:last-child{border-bottom:none}
+.dkey{font-size:13px;color:var(--text3);flex-shrink:0}
+.dval{font-size:13px;font-weight:600;color:var(--text);text-align:right;max-width:65%;word-break:break-all}
 
 /* TOP LIST */
-.top-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
-.top-item:last-child { border-bottom:none; }
-.top-rank { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
-.top-name { flex:1; font-size:13px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.top-count { font-size:12px; color:var(--text3); flex-shrink:0; }
+.top-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.top-item:last-child{border-bottom:none}
+.top-rank{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.top-name{flex:1;font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-count{font-size:12px;color:var(--text3);flex-shrink:0}
 
 /* FAB */
-.fab { position:fixed; bottom:76px; right:18px; width:54px; height:54px; border-radius:16px; background:linear-gradient(135deg,#667eea,#764ba2); border:none; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 4px 20px rgba(102,126,234,0.45); z-index:99; transition:transform 0.15s; }
-.fab:active { transform:scale(0.92); }
+.fab{position:fixed;bottom:76px;right:18px;width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(102,126,234,.45);z-index:99;transition:transform .15s}
+.fab:active{transform:scale(.92)}
 
 /* TOAST */
-.toast { position:fixed; top:68px; left:50%; transform:translateX(-50%); padding:10px 22px; border-radius:10px; font-size:14px; font-weight:600; z-index:300; white-space:nowrap; display:none; animation:popIn 0.2s ease; }
-.toast.success { background:var(--green-bg); border:1px solid var(--green-bdr); color:var(--green); }
-.toast.error { background:var(--red-bg); border:1px solid var(--red-bdr); color:var(--red); }
-@keyframes popIn { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:300;white-space:nowrap;display:none;animation:popIn .2s ease}
+.toast.success{background:var(--green-bg);border:1px solid var(--green-bdr);color:var(--green)}
+.toast.error{background:var(--red-bg);border:1px solid var(--red-bdr);color:var(--red)}
+@keyframes popIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-/* LOADING */
-.loading-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px; gap:12px; }
-.spinner { width:30px; height:30px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg)} }
-.loading-text { font-size:13px; color:var(--text3); }
-.empty-state { text-align:center; padding:48px 20px; color:var(--text3); }
-.empty-icon { font-size:48px; margin-bottom:12px; }
-.empty-state p { font-size:14px; }
-
-/* VISITOR BARS */
-.v-bars { display:flex; align-items:flex-end; gap:5px; height:80px; }
-.v-bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
-.v-bar { width:100%; background:linear-gradient(180deg,#667eea,#764ba2); border-radius:3px 3px 0 0; min-height:4px; }
-.v-bar-lbl { font-size:10px; color:var(--text3); font-weight:600; }
-
-.flex-between { display:flex; align-items:center; justify-content:space-between; }
-.divider { height:1px; background:var(--border); margin:12px 0; }
+/* MISC */
+.loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:12px}
+.spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--text3)}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+.v-bars{display:flex;align-items:flex-end;gap:5px;height:80px}
+.v-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.v-bar{width:100%;background:linear-gradient(180deg,#667eea,#764ba2);border-radius:3px 3px 0 0;min-height:4px}
+.v-bar-lbl{font-size:10px;color:var(--text3);font-weight:600}
+.fb{display:flex;align-items:center;justify-content:space-between}
+.divider{height:1px;background:var(--border);margin:12px 0}
 </style>
 </head>
 <body>
@@ -228,104 +247,124 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); height:
 <div class="screen active" id="loginScreen">
   <div class="login-card">
     <div class="login-header">
-      <img src="/images/logo/logo-navbar.png" class="login-logo-img" alt="Segawon"
-           onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
-      <div class="login-logo-fallback" id="logoFallback" style="display:none">⚡</div>
+      <img src="/images/logo/logo-navbar.png" class="login-logo" alt="Segawon"
+           onerror="this.style.display='none';document.getElementById('lgFb').style.display='flex'">
+      <div class="login-logo-fb" id="lgFb" style="display:none">⚡</div>
       <h1>Admin Dashboard</h1>
       <p>Segawon Top Up</p>
     </div>
-    <label class="form-label">Username</label>
-    <input class="form-input" type="text" id="loginUser" placeholder="admin" autocomplete="username" autocapitalize="none">
-    <label class="form-label">Password</label>
-    <input class="form-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
-    <button class="btn-login" id="loginBtn" onclick="doLogin()">Masuk</button>
-    <div class="login-error" id="loginErr"></div>
+    <label class="flbl">Username</label>
+    <input class="finp" type="text" id="lu" placeholder="admin" autocomplete="username" autocapitalize="none">
+    <label class="flbl">Password</label>
+    <input class="finp" type="password" id="lp" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-login" id="lBtn" onclick="doLogin()">Masuk</button>
+    <div class="lerr" id="lErr"></div>
   </div>
 </div>
 
 <!-- APP -->
 <div class="screen" id="appScreen">
   <div class="topbar">
-    <img src="/images/logo/logo-navbar.png" class="topbar-logo" alt="Segawon"
-         onerror="this.style.display='none';document.getElementById('tbFallback').style.display='flex'">
-    <div class="topbar-logo-fallback" id="tbFallback" style="display:none">⚡</div>
-    <div class="topbar-info">
-      <div class="topbar-title">Admin Dashboard</div>
-      <div class="topbar-sub" id="topbarUser">Segawon Top Up</div>
+    <img src="/images/logo/logo-navbar.png" class="tb-logo" alt="Segawon"
+         onerror="this.style.display='none';document.getElementById('tbFb').style.display='flex'">
+    <div class="tb-logo-fb" id="tbFb" style="display:none">⚡</div>
+    <div class="tb-info">
+      <div class="tb-title">Admin Dashboard</div>
+      <div class="tb-sub" id="tbUser">Segawon Top Up</div>
     </div>
-    <div class="topbar-btn" onclick="refreshCurrentTab()">↻</div>
-    <div class="topbar-btn" onclick="doLogout()">⏻</div>
+    <div class="tb-btn" onclick="refreshTab()">↻</div>
+    <div class="tb-btn" onclick="doLogout()">⏻</div>
   </div>
 
   <div class="tab-content">
+    <!-- DASHBOARD -->
     <div class="tab-pane active" id="tab-dashboard">
-      <div id="dashContent"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat…</div></div></div>
+      <div id="dashC"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat…</div></div></div>
     </div>
+
+    <!-- ORDERS -->
     <div class="tab-pane" id="tab-orders">
       <div class="filter-bar">
-        <div class="filter-chip active" data-status="" onclick="setOrderFilter(this)">Semua</div>
-        <div class="filter-chip" data-status="completed" onclick="setOrderFilter(this)">✅ Selesai</div>
-        <div class="filter-chip" data-status="pending" onclick="setOrderFilter(this)">⏳ Pending</div>
-        <div class="filter-chip" data-status="pending_retry" onclick="setOrderFilter(this)">🔄 Retry</div>
-        <div class="filter-chip" data-status="failed" onclick="setOrderFilter(this)">❌ Gagal</div>
+        <div class="fchip active" data-s="" onclick="setOF(this)">Semua</div>
+        <div class="fchip" data-s="completed" onclick="setOF(this)">✅ Selesai</div>
+        <div class="fchip" data-s="pending" onclick="setOF(this)">⏳ Pending</div>
+        <div class="fchip" data-s="pending_retry" onclick="setOF(this)">🔄 Retry</div>
+        <div class="fchip" data-s="failed" onclick="setOF(this)">❌ Gagal</div>
       </div>
-      <div id="ordersList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      <div id="ordersC"><div class="loading-wrap"><div class="spinner"></div></div></div>
     </div>
+
+    <!-- CATALOG -->
     <div class="tab-pane" id="tab-catalog">
       <div class="search-wrap">
         <span style="color:var(--text3)">🔍</span>
-        <input type="text" placeholder="Cari game…" id="catalogSearch" oninput="filterCatalog(this.value)">
+        <input type="text" placeholder="Cari game…" id="catSearch" oninput="filterCat(this.value)">
       </div>
-      <div id="catalogList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      <div id="catC"><div class="loading-wrap"><div class="spinner"></div></div></div>
     </div>
+
+    <!-- VOUCHER -->
     <div class="tab-pane" id="tab-vouchers">
-      <div id="voucherList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      <div id="voucC"><div class="loading-wrap"><div class="spinner"></div></div></div>
     </div>
-    <div class="tab-pane" id="tab-more">
-      <div class="section-title" style="margin-bottom:14px">Lainnya</div>
-      <div class="card" style="cursor:pointer" onclick="loadFeedback()">
-        <div class="flex-between">
-          <div><div style="font-weight:700;margin-bottom:3px">💬 Feedback Pelanggan</div><div style="font-size:13px;color:var(--text2)">Lihat & kelola ulasan</div></div>
-          <div style="color:var(--text3);font-size:22px">›</div>
+
+    <!-- SERVER / TERMINAL -->
+    <div class="tab-pane" id="tab-server">
+      <div class="term-wrap">
+        <div class="term-header">
+          <div class="term-dot" style="background:#ff5f57"></div>
+          <div class="term-dot" style="background:#febc2e"></div>
+          <div class="term-dot" style="background:#28c840"></div>
+          <span style="font-size:12px;color:var(--text3);margin-left:8px;flex:1">Terminal Server</span>
+          <div class="term-conn off" id="termConn">● Offline</div>
         </div>
+        <div class="term-output" id="termOut">
+          <div class="sys">Hubungkan ke server untuk menjalankan perintah.</div>
+        </div>
+      </div>
+      <button class="btn btn-p" style="width:100%;padding:13px;margin-bottom:16px" id="termConnBtn" onclick="toggleTerminal()">🔌 Hubungkan Terminal</button>
+      <div id="cmdGroups"><div class="loading-wrap"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- MORE -->
+    <div class="tab-pane" id="tab-more">
+      <div class="sec-title" style="margin-bottom:14px">Lainnya</div>
+      <div class="card" style="cursor:pointer" onclick="loadFeedback()">
+        <div class="fb"><div><div style="font-weight:700;margin-bottom:3px">💬 Feedback Pelanggan</div><div style="font-size:13px;color:var(--text2)">Lihat & kelola ulasan</div></div><div style="color:var(--text3);font-size:22px">›</div></div>
       </div>
       <div class="card" style="cursor:pointer;margin-top:2px" onclick="loadVisitors()">
-        <div class="flex-between">
-          <div><div style="font-weight:700;margin-bottom:3px">👁 Statistik Pengunjung</div><div style="font-size:13px;color:var(--text2)">Traffic & visitor log</div></div>
-          <div style="color:var(--text3);font-size:22px">›</div>
-        </div>
+        <div class="fb"><div><div style="font-weight:700;margin-bottom:3px">👁 Statistik Pengunjung</div><div style="font-size:13px;color:var(--text2)">Traffic & visitor log</div></div><div style="color:var(--text3);font-size:22px">›</div></div>
       </div>
       <div class="card" style="margin-top:2px">
-        <div style="font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">💳 Saldo Digiflazz</div>
-        <div id="saldoInfo"><div class="spinner" style="width:20px;height:20px;border-width:2px"></div></div>
+        <div style="font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">💳 Saldo Digiflazz</div>
+        <div id="saldoC"><div class="spinner" style="width:20px;height:20px;border-width:2px"></div></div>
       </div>
       <div style="text-align:center;padding:24px 0">
-        <div style="font-size:13px;color:var(--text3)">Segawon Admin App v1.0</div>
+        <div style="font-size:13px;color:var(--text3)">Segawon Admin App v1.1</div>
         <div style="font-size:12px;color:var(--text3);margin-top:2px">segawontopup.net</div>
       </div>
     </div>
+
+    <!-- FEEDBACK sub -->
     <div class="tab-pane" id="tab-feedback">
-      <div class="section-header">
-        <div class="section-title">💬 Feedback</div>
-        <div class="section-back" onclick="showTab('more')">‹ Kembali</div>
-      </div>
-      <div id="feedbackList"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      <div class="sec-hdr"><div class="sec-title">💬 Feedback</div><div class="sec-back" onclick="showTab('more')">‹ Kembali</div></div>
+      <div id="fbC"><div class="loading-wrap"><div class="spinner"></div></div></div>
     </div>
+
+    <!-- VISITORS sub -->
     <div class="tab-pane" id="tab-visitors">
-      <div class="section-header">
-        <div class="section-title">👁 Pengunjung</div>
-        <div class="section-back" onclick="showTab('more')">‹ Kembali</div>
-      </div>
-      <div id="visitorContent"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      <div class="sec-hdr"><div class="sec-title">👁 Pengunjung</div><div class="sec-back" onclick="showTab('more')">‹ Kembali</div></div>
+      <div id="visC"><div class="loading-wrap"><div class="spinner"></div></div></div>
     </div>
   </div>
 
   <div class="bottom-nav">
-    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')"><div class="nav-icon">📊</div><div class="nav-label">Dashboard</div></button>
-    <button class="nav-item" id="nav-orders" onclick="showTab('orders')"><div class="nav-icon">📋</div><div class="nav-label">Orders</div></button>
-    <button class="nav-item" id="nav-catalog" onclick="showTab('catalog')"><div class="nav-icon">🗂</div><div class="nav-label">Katalog</div></button>
-    <button class="nav-item" id="nav-vouchers" onclick="showTab('vouchers')"><div class="nav-icon">🎫</div><div class="nav-label">Voucher</div></button>
-    <button class="nav-item" id="nav-more" onclick="showTab('more')"><div class="nav-icon">⋯</div><div class="nav-label">Lainnya</div></button>
+    <button class="nvi active" id="nav-dashboard" onclick="showTab('dashboard')"><div class="nvi-icon">📊</div><div class="nvi-lbl">Dashboard</div></button>
+    <button class="nvi" id="nav-orders" onclick="showTab('orders')"><div class="nvi-icon">📋</div><div class="nvi-lbl">Orders</div></button>
+    <button class="nvi" id="nav-catalog" onclick="showTab('catalog')"><div class="nvi-icon">🗂</div><div class="nvi-lbl">Katalog</div></button>
+    <button class="nvi" id="nav-vouchers" onclick="showTab('vouchers')"><div class="nvi-icon">🎫</div><div class="nvi-lbl">Voucher</div></button>
+    <button class="nvi" id="nav-server" onclick="showTab('server')"><div class="nvi-icon">🖥</div><div class="nvi-lbl">Server</div></button>
+    <button class="nvi" id="nav-more" onclick="showTab('more')"><div class="nvi-icon">⋯</div><div class="nvi-lbl">Lainnya</div></button>
   </div>
 </div>
 
@@ -335,281 +374,448 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); height:
 <!-- MODALS -->
 <div class="modal-overlay" id="gameModal" onclick="closeModal('gameModal')">
   <div class="modal-drawer" onclick="event.stopPropagation()">
-    <div class="drawer-handle"></div>
-    <div class="drawer-title" id="gameModalTitle">Edit Game</div>
+    <div class="drw-handle"></div>
+    <div class="drw-title" id="gameMT">Edit Game</div>
     <input type="hidden" id="gameId">
-    <div class="form-group"><label>Nama Game</label><input type="text" id="gameName" placeholder="Mobile Legends"></div>
-    <div class="form-group"><label>Kategori</label>
-      <select id="gameCategory"><option value="games">Games</option><option value="voucher">Voucher</option><option value="utilities">Utilities</option><option value="pulsa_data">Pulsa/Data</option></select>
-    </div>
-    <div class="form-group"><label>Status</label>
-      <select id="gameStatus"><option value="active">Aktif</option><option value="inactive">Nonaktif</option></select>
-    </div>
-    <div class="form-group"><label>URL Icon</label><input type="text" id="gameIcon" placeholder="https://…"></div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeModal('gameModal')">Batal</button>
-      <button class="btn btn-primary" onclick="saveGame()">Simpan</button>
-    </div>
+    <div class="fgrp"><label>Nama Game</label><input type="text" id="gameName" placeholder="Mobile Legends"></div>
+    <div class="fgrp"><label>Kategori</label><select id="gameCat"><option value="games">Games</option><option value="voucher">Voucher</option><option value="utilities">Utilities</option><option value="pulsa_data">Pulsa/Data</option></select></div>
+    <div class="fgrp"><label>Status</label><select id="gameSt"><option value="active">Aktif</option><option value="inactive">Nonaktif</option></select></div>
+    <div class="fgrp"><label>URL Icon</label><input type="text" id="gameIcon" placeholder="https://…"></div>
+    <div class="btn-row"><button class="btn btn-s" onclick="closeModal('gameModal')">Batal</button><button class="btn btn-p" onclick="saveGame()">Simpan</button></div>
   </div>
 </div>
 
 <div class="modal-overlay" id="voucherModal" onclick="closeModal('voucherModal')">
   <div class="modal-drawer" onclick="event.stopPropagation()">
-    <div class="drawer-handle"></div>
-    <div class="drawer-title" id="voucherModalTitle">Tambah Voucher</div>
-    <input type="hidden" id="voucherId">
-    <div class="form-group"><label>Kode Voucher</label><input type="text" id="voucherCode" placeholder="PROMO10" style="text-transform:uppercase"></div>
-    <div class="form-group"><label>Tipe Diskon</label>
-      <select id="voucherType"><option value="fixed">Fixed (Rp)</option><option value="percentage">Persentase (%)</option><option value="base_price">Base Price</option></select>
-    </div>
-    <div class="form-group"><label>Nilai Diskon</label><input type="number" id="voucherValue" placeholder="10000"></div>
-    <div class="form-group"><label>Maks. Penggunaan (0 = unlimited)</label><input type="number" id="voucherMaxUse" placeholder="0"></div>
-    <div class="form-group"><label>Berlaku Mulai</label><input type="datetime-local" id="voucherFrom"></div>
-    <div class="form-group"><label>Berlaku Sampai</label><input type="datetime-local" id="voucherUntil"></div>
-    <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+    <div class="drw-handle"></div>
+    <div class="drw-title" id="voucMT">Tambah Voucher</div>
+    <input type="hidden" id="voucId">
+    <div class="fgrp"><label>Kode Voucher</label><input type="text" id="voucCode" placeholder="PROMO10" style="text-transform:uppercase"></div>
+    <div class="fgrp"><label>Tipe Diskon</label><select id="voucType"><option value="fixed">Fixed (Rp)</option><option value="percentage">Persentase (%)</option><option value="base_price">Base Price</option></select></div>
+    <div class="fgrp"><label>Nilai Diskon</label><input type="number" id="voucVal" placeholder="10000"></div>
+    <div class="fgrp"><label>Maks. Penggunaan (0=unlimited)</label><input type="number" id="voucMax" placeholder="0"></div>
+    <div class="fgrp"><label>Berlaku Mulai</label><input type="datetime-local" id="voucFrom"></div>
+    <div class="fgrp"><label>Berlaku Sampai</label><input type="datetime-local" id="voucUntil"></div>
+    <div class="fgrp" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
       <label style="margin:0;text-transform:none;font-size:14px;font-weight:600;color:var(--text)">Tampilkan di Popup</label>
-      <input type="checkbox" class="toggle" id="voucherPopup">
+      <input type="checkbox" class="toggle" id="voucPopup">
     </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeModal('voucherModal')">Batal</button>
-      <button class="btn btn-primary" onclick="saveVoucher()">Simpan</button>
-    </div>
+    <div class="btn-row"><button class="btn btn-s" onclick="closeModal('voucherModal')">Batal</button><button class="btn btn-p" onclick="saveVoucher()">Simpan</button></div>
   </div>
 </div>
 
 <div class="modal-overlay" id="orderModal" onclick="closeModal('orderModal')">
   <div class="modal-drawer" onclick="event.stopPropagation()">
-    <div class="drawer-handle"></div>
-    <div class="drawer-title">Detail Order</div>
-    <div id="orderDetail"></div>
+    <div class="drw-handle"></div>
+    <div class="drw-title">Detail Order</div>
+    <div id="orderDet"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="cmdModal" onclick="closeModal('cmdModal')">
+  <div class="modal-drawer" onclick="event.stopPropagation()">
+    <div class="drw-handle"></div>
+    <div class="drw-title" id="cmdMT">Konfirmasi</div>
+    <p id="cmdMDesc" style="color:var(--text2);font-size:14px;margin-bottom:18px;line-height:1.6"></p>
+    <div class="btn-row">
+      <button class="btn btn-s" onclick="closeModal('cmdModal')">Batal</button>
+      <button class="btn btn-p" id="cmdMConfirm">Jalankan</button>
+    </div>
   </div>
 </div>
 
 <script>
 const API='https://segawontopup.net';
-let allGames=[],allOrders=[],currentOrderStatus='',currentTab='dashboard';
+let allGames=[],allOrders=[],curOF='',curTab='dashboard';
+let wsConn=null,wsAuthed=false;
+
 const getToken=()=>localStorage.getItem('sgw_token');
 const getUser=()=>JSON.parse(localStorage.getItem('sgw_user')||'{}');
-const saveAuth=(t,u)=>{localStorage.setItem('sgw_token',t);localStorage.setItem('sgw_user',JSON.stringify(u));};
-const clearAuth=()=>{localStorage.removeItem('sgw_token');localStorage.removeItem('sgw_user');};
+const saveAuth=(t,u)=>{localStorage.setItem('sgw_token',t);localStorage.setItem('sgw_user',JSON.stringify(u))};
+const clearAuth=()=>{localStorage.removeItem('sgw_token');localStorage.removeItem('sgw_user')};
 const authH=()=>({'Authorization':`Bearer ${getToken()}`,'Content-Type':'application/json'});
-const formatRp=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n||0);
-const formatDate=d=>new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-function showToast(msg,type='success'){const el=document.getElementById('toastEl');el.textContent=msg;el.className=`toast ${type}`;el.style.display='block';setTimeout(()=>el.style.display='none',3000);}
+const Rp=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n||0);
+const fDate=d=>new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+function toast(msg,type='success'){const e=document.getElementById('toastEl');e.textContent=msg;e.className=`toast ${type}`;e.style.display='block';setTimeout(()=>e.style.display='none',3000)}
 const openModal=id=>document.getElementById(id).classList.add('show');
 const closeModal=id=>document.getElementById(id).classList.remove('show');
-function statusBadge(s){const map={completed:'badge-success',success:'badge-success',pending:'badge-pending',failed:'badge-failed',cancelled:'badge-failed',pending_retry:'badge-retry',expired:'badge-expired'};const label={completed:'Selesai',success:'Sukses',pending:'Pending',failed:'Gagal',pending_retry:'Perlu Retry',expired:'Expired',cancelled:'Batal'};const k=(s||'').toLowerCase();return`<span class="badge ${map[k]||'badge-expired'}">${label[k]||s}</span>`;}
 
+// Status badge — pakai order_status dari DB
+function sBadge(s){
+  const m={completed:'bs',success:'bs',pending:'bp',failed:'bf',cancelled:'bf',pending_retry:'br',expired:'be'};
+  const l={completed:'Selesai',success:'Sukses',pending:'Pending',failed:'Gagal',cancelled:'Batal',pending_retry:'Perlu Retry',expired:'Expired'};
+  const k=(s||'').toLowerCase();
+  return`<span class="badge ${m[k]||'be'}">${l[k]||s}</span>`;
+}
+
+// ── AUTH ──────────────────────────────────────────
 async function doLogin(){
-  const btn=document.getElementById('loginBtn'),errEl=document.getElementById('loginErr');
-  const user=document.getElementById('loginUser').value.trim(),pass=document.getElementById('loginPass').value;
-  if(!user||!pass){showErr('Isi username dan password');return;}
+  const btn=document.getElementById('lBtn'),errEl=document.getElementById('lErr');
+  const user=document.getElementById('lu').value.trim(),pass=document.getElementById('lp').value;
+  if(!user||!pass){showErr('Isi username dan password');return}
   btn.disabled=true;btn.textContent='Masuk…';errEl.classList.remove('show');
   try{
     const r=await fetch(`${API}/api/admin/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
     const d=await r.json();
-    if(d.success){saveAuth(d.token,d.admin);enterApp(d.admin);}else showErr(d.message||'Login gagal');
-  }catch{showErr('Gagal terhubung ke server');}
-  finally{btn.disabled=false;btn.textContent='Masuk';}
+    if(d.success){saveAuth(d.token,d.admin);enterApp(d.admin)}else showErr(d.message||'Login gagal');
+  }catch{showErr('Gagal terhubung ke server')}
+  finally{btn.disabled=false;btn.textContent='Masuk'}
 }
-function showErr(msg){const e=document.getElementById('loginErr');e.textContent=msg;e.classList.add('show');}
-document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function showErr(msg){const e=document.getElementById('lErr');e.textContent=msg;e.classList.add('show')}
+document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
 function enterApp(admin){
   document.getElementById('loginScreen').classList.remove('active');
   document.getElementById('appScreen').classList.add('active');
-  document.getElementById('topbarUser').textContent=admin?.full_name||admin?.username||'Admin';
+  document.getElementById('tbUser').textContent=admin?.full_name||admin?.username||'Admin';
   loadDashboard();
 }
 function doLogout(){
   if(!confirm('Yakin mau logout?'))return;
+  if(wsConn){wsConn.close();wsConn=null}
   clearAuth();
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').classList.add('active');
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
 }
-window.addEventListener('DOMContentLoaded',()=>{const t=getToken();if(t)enterApp(getUser());});
 
+// Validasi token ke server saat app dibuka
+async function validateToken(token){
+  try{
+    const r=await fetch(`${API}/api/admin/dashboard`,{headers:{'Authorization':`Bearer ${token}`}});
+    return r.ok;
+  }catch{return false}
+}
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  const t=getToken();
+  if(!t){return} // tetap di login screen
+  // Validasi token ke server dulu
+  const valid=await validateToken(t);
+  if(valid){enterApp(getUser())}
+  else{clearAuth()} // token expired/invalid, tetap di login
+});
+
+// ── NAVIGATION ────────────────────────────────────
 function showTab(tab){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nvi').forEach(n=>n.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
-  const parentNav={feedback:'more',visitors:'more'}[tab]||tab;
-  document.getElementById(`nav-${parentNav}`)?.classList.add('active');
-  currentTab=tab;
+  const pNav={feedback:'more',visitors:'more'}[tab]||tab;
+  document.getElementById(`nav-${pNav}`)?.classList.add('active');
+  curTab=tab;
   document.getElementById('fabBtn').style.display=(tab==='catalog'||tab==='vouchers')?'flex':'none';
   if(tab==='orders'&&allOrders.length===0)loadOrders();
   if(tab==='catalog'&&allGames.length===0)loadCatalog();
   if(tab==='vouchers')loadVouchers();
-  if(tab==='more')loadMoreTab();
+  if(tab==='more')loadMore();
+  if(tab==='server')loadServerTab();
 }
-function handleFab(){currentTab==='catalog'?openGameModal(null):openVoucherModal(null);}
-function refreshCurrentTab(){const fns={dashboard:loadDashboard,orders:()=>{allOrders=[];loadOrders();},catalog:()=>{allGames=[];loadCatalog();},vouchers:loadVouchers,feedback:loadFeedback,visitors:loadVisitors};fns[currentTab]?.();}
+function handleFab(){curTab==='catalog'?openGameModal(null):openVoucherModal(null)}
+function refreshTab(){const fns={dashboard:loadDashboard,orders:()=>{allOrders=[];loadOrders()},catalog:()=>{allGames=[];loadCatalog()},vouchers:loadVouchers,feedback:loadFeedback,visitors:loadVisitors,server:loadServerTab};fns[curTab]?.()}
 
+// ── DASHBOARD ─────────────────────────────────────
 async function loadDashboard(){
-  document.getElementById('dashContent').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat dashboard…</div></div>`;
+  document.getElementById('dashC').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat dashboard…</div></div>`;
   try{
     const h=authH();
-    const [ovR,dailyR,topR,visR]=await Promise.all([fetch(`${API}/api/admin/dashboard`,{headers:h}),fetch(`${API}/api/admin/stats/daily?days=7`,{headers:h}),fetch(`${API}/api/admin/stats/top-products`,{headers:h}),fetch(`${API}/api/admin/visitors/stats?days=7`,{headers:h})]);
+    const [ovR,dailyR,topR,visR]=await Promise.all([
+      fetch(`${API}/api/admin/dashboard`,{headers:h}),
+      fetch(`${API}/api/admin/stats/daily?days=7`,{headers:h}),
+      fetch(`${API}/api/admin/stats/top-products`,{headers:h}),
+      fetch(`${API}/api/admin/visitors/stats?days=7`,{headers:h})
+    ]);
     const [ov,daily,top,vis]=await Promise.all([ovR.json(),dailyR.json(),topR.json(),visR.json()]);
     const o=ov.data?.overview||{},df=ov.data?.digiflazz||{};
-    const dailyData=(daily.data||[]).slice(-7),topProds=(top.data||[]).slice(0,5),vs=vis.data?.summary||{};
+    const dailyData=(daily.data||[]).slice(-7),topProds=(top.data||[]).slice(0,5);
+    const vs=vis.data?.summary||{};
     const maxRev=Math.max(...dailyData.map(d=>+d.total_revenue||0),1);
     const dfClass=df.status==='CRITICAL'?'crit':df.status==='WARNING'?'warn':'';
-    const retryCount=ov.data?.pending_retry_count||0;
-    document.getElementById('dashContent').innerHTML=`
-      ${retryCount>0?`<div class="alert-box"><span style="font-size:20px">⚠️</span><div class="alert-box-text"><strong>${retryCount} order perlu di-retry!</strong><p>Saldo Digiflazz habis. Topup saldo lalu klik Retry.</p></div><button class="btn-amber" onclick="retryOrders()">Retry</button></div>`:''}
+    const rc=ov.data?.pending_retry_count||0;
+    document.getElementById('dashC').innerHTML=`
+      ${rc>0?`<div class="alert-box"><span style="font-size:20px">⚠️</span><div class="abt"><strong>${rc} order perlu di-retry!</strong><p>Saldo Digiflazz habis. Topup saldo lalu klik Retry.</p></div><button class="btn-amber" onclick="retryOrders()">Retry</button></div>`:''}
       <div class="stat-grid">
-        <div class="stat-card"><h3>Hari Ini</h3><div class="stat-value">${formatRp(o.today?.total_revenue)}</div><div class="stat-sub">${o.today?.total_orders||0} orders</div><div class="stat-profit">Profit: ${formatRp(o.today?.total_profit)}</div></div>
-        <div class="stat-card"><h3>Kemarin</h3><div class="stat-value">${formatRp(o.yesterday?.total_revenue)}</div><div class="stat-sub">${o.yesterday?.total_orders||0} orders</div></div>
+        <div class="stat-card"><h3>Hari Ini</h3><div class="sv">${Rp(o.today?.total_revenue)}</div><div class="ss">${o.today?.total_orders||0} orders</div><div class="sp">Profit: ${Rp(o.today?.total_profit)}</div></div>
+        <div class="stat-card"><h3>Kemarin</h3><div class="sv">${Rp(o.yesterday?.total_revenue)}</div><div class="ss">${o.yesterday?.total_orders||0} orders</div></div>
       </div>
       <div class="stat-grid">
-        <div class="stat-card"><h3>Bulan Ini</h3><div class="stat-value">${formatRp(o.this_month?.total_revenue)}</div><div class="stat-sub">${o.this_month?.total_orders||0} orders</div><div class="stat-profit">Profit: ${formatRp(o.this_month?.total_profit)}</div></div>
-        <div class="stat-card ${dfClass}"><h3>Saldo Digiflazz</h3><div class="stat-value" style="font-size:16px">${formatRp(df.deposit)}</div><div class="stat-sub"><span class="badge ${dfClass==='crit'?'badge-failed':dfClass==='warn'?'badge-warning':'badge-success'}">${df.status||'OK'}</span></div></div>
+        <div class="stat-card"><h3>Bulan Ini</h3><div class="sv">${Rp(o.this_month?.total_revenue)}</div><div class="ss">${o.this_month?.total_orders||0} orders</div><div class="sp">Profit: ${Rp(o.this_month?.total_profit)}</div></div>
+        <div class="stat-card ${dfClass}"><h3>Saldo Digiflazz</h3><div class="sv" style="font-size:16px">${Rp(df.deposit)}</div><div class="ss"><span class="badge ${dfClass==='crit'?'bf':dfClass==='warn'?'bw':'bs'}">${df.status||'OK'}</span></div></div>
       </div>
       <div class="card">
-        <div class="flex-between" style="margin-bottom:12px"><div class="card-title" style="margin:0">📈 Revenue 7 Hari</div><div style="font-size:13px;color:var(--text3)">${formatRp(dailyData.reduce((a,d)=>a+(+d.total_revenue||0),0))}</div></div>
-        <div class="mini-chart">${dailyData.map(d=>{const h=Math.max(4,Math.round((+d.total_revenue||0)/maxRev*56));return`<div class="mini-bar" style="height:${h}px" title="${formatRp(d.total_revenue)}"></div>`;}).join('')}</div>
-        <div class="chart-labels"><span class="chart-label">${dailyData[0]?new Date(dailyData[0].date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}):''}</span><span class="chart-label">Hari ini</span></div>
+        <div class="fb" style="margin-bottom:12px"><div class="card-title" style="margin:0">📈 Revenue 7 Hari</div><div style="font-size:13px;color:var(--text3)">${Rp(dailyData.reduce((a,d)=>a+(+d.total_revenue||0),0))}</div></div>
+        <div class="mini-chart">${dailyData.map(d=>{const h=Math.max(4,Math.round((+d.total_revenue||0)/maxRev*56));return`<div class="mini-bar" style="height:${h}px" title="${Rp(d.total_revenue)}"></div>`}).join('')}</div>
+        <div class="chart-lbls"><span class="chart-lbl">${dailyData[0]?new Date(dailyData[0].date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}):''}</span><span class="chart-lbl">Hari ini</span></div>
       </div>
       <div class="stat-grid">
-        <div class="stat-card"><h3>👁 Visitor 7 Hari</h3><div class="stat-value">${parseInt(vs.views_7days||0).toLocaleString('id-ID')}</div><div class="stat-sub">views</div></div>
-        <div class="stat-card"><h3>👁 Hari Ini</h3><div class="stat-value">${parseInt(vs.views_today||0).toLocaleString('id-ID')}</div><div class="stat-sub">views</div></div>
+        <div class="stat-card"><h3>👁 Visitor 7 Hari</h3><div class="sv">${parseInt(vs.views_7days||0).toLocaleString('id-ID')}</div><div class="ss">views</div></div>
+        <div class="stat-card"><h3>👁 Hari Ini</h3><div class="sv">${parseInt(vs.views_today||0).toLocaleString('id-ID')}</div><div class="ss">views</div></div>
       </div>
       <div class="card"><div class="card-title">🏆 Top 5 Produk</div>${topProds.map((p,i)=>`<div class="top-item"><div class="top-rank">${i+1}</div><div class="top-name">${p.product_name||'—'}</div><div class="top-count">${p.total_orders} order</div></div>`).join('')}</div>`;
-  }catch{document.getElementById('dashContent').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data.<br>Cek koneksi internet.</p></div>`;}
+  }catch{document.getElementById('dashC').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data.<br>Cek koneksi internet.</p></div>`}
 }
-
 async function retryOrders(){
   if(!confirm('Retry semua pending order?'))return;
-  try{const r=await fetch(`${API}/api/admin/orders/retry`,{method:'POST',headers:authH(),body:JSON.stringify({retryAll:true})});const d=await r.json();showToast(d.success?`Retry: ${d.results?.success?.length||0} berhasil`:(d.message||'Gagal'),d.success?'success':'error');if(d.success)loadDashboard();}catch{showToast('Gagal retry','error');}
+  try{const r=await fetch(`${API}/api/admin/orders/retry`,{method:'POST',headers:authH(),body:JSON.stringify({retryAll:true})});const d=await r.json();toast(d.success?`Retry: ${d.results?.success?.length||0} berhasil`:(d.message||'Gagal'),d.success?'success':'error');if(d.success)loadDashboard()}catch{toast('Gagal retry','error')}
 }
 
+// ── ORDERS ────────────────────────────────────────
 async function loadOrders(){
-  document.getElementById('ordersList').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat orders…</div></div>`;
-  try{let url=`${API}/api/admin/orders?limit=50`;if(currentOrderStatus)url+=`&status=${currentOrderStatus}`;const r=await fetch(url,{headers:authH()});const d=await r.json();allOrders=d.data||[];renderOrders();}
-  catch{document.getElementById('ordersList').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat orders</p></div>`;}
+  document.getElementById('ordersC').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat orders…</div></div>`;
+  try{
+    let url=`${API}/api/admin/orders?limit=50`;
+    if(curOF)url+=`&status=${curOF}`;
+    const r=await fetch(url,{headers:authH()});
+    const d=await r.json();
+    allOrders=d.data||[];
+    renderOrders();
+  }catch{document.getElementById('ordersC').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat orders</p></div>`}
 }
 function renderOrders(){
-  const el=document.getElementById('ordersList');
-  if(!allOrders.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>Tidak ada order</p></div>`;return;}
-  el.innerHTML=allOrders.map(o=>`<div class="order-card" onclick='openOrderDetail(${JSON.stringify(o)})'><div class="order-top"><div class="order-num">${o.order_number||o.id}</div>${statusBadge(o.status)}</div><div class="order-product">${o.product_name||'—'}</div><div class="order-meta">${o.customer_name||'—'} · ${o.game_user_id?`ID: ${o.game_user_id}`:'Tanpa ID'}</div><div class="order-footer"><div class="order-price">${formatRp(o.sell_price||o.total_price)}</div><div style="font-size:12px;color:var(--text3)">${formatDate(o.created_at)}</div></div></div>`).join('');
+  const el=document.getElementById('ordersC');
+  if(!allOrders.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>Tidak ada order</p></div>`;return}
+  // Gunakan field yang benar: order_status, total_amount, product_name, game_name
+  el.innerHTML=allOrders.map(o=>`
+    <div class="order-card" onclick='openOD(${JSON.stringify(o)})'>
+      <div class="order-top"><div class="order-num">${o.order_number||o.id}</div>${sBadge(o.order_status)}</div>
+      <div class="order-product">${o.product_name||o.game_name||'—'}</div>
+      <div class="order-meta">${o.customer_name||'—'} · ${o.game_user_id?`ID: ${o.game_user_id}`:'Tanpa ID'}</div>
+      <div class="order-footer">
+        <div class="order-price">${Rp(o.total_amount||o.subtotal)}</div>
+        <div style="font-size:12px;color:var(--text3)">${fDate(o.created_at)}</div>
+      </div>
+    </div>`).join('');
 }
-function setOrderFilter(el){document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');currentOrderStatus=el.dataset.status;allOrders=[];loadOrders();}
-function openOrderDetail(o){
-  const payMap={success:'badge-success',paid:'badge-success',pending:'badge-pending',expired:'badge-expired'};
-  document.getElementById('orderDetail').innerHTML=`
-    <div class="detail-row"><div class="detail-key">Order #</div><div class="detail-val" style="font-family:monospace">${o.order_number||o.id}</div></div>
-    <div class="detail-row"><div class="detail-key">Status</div><div class="detail-val">${statusBadge(o.status)}</div></div>
-    <div class="detail-row"><div class="detail-key">Pembayaran</div><div class="detail-val"><span class="badge ${payMap[(o.payment_status||'').toLowerCase()]||'badge-expired'}">${o.payment_status||'—'}</span></div></div>
-    <div class="detail-row"><div class="detail-key">Produk</div><div class="detail-val">${o.product_name||'—'}</div></div>
-    <div class="detail-row"><div class="detail-key">Customer</div><div class="detail-val">${o.customer_name||'—'}</div></div>
-    <div class="detail-row"><div class="detail-key">Game User ID</div><div class="detail-val" style="font-family:monospace">${o.game_user_id||'—'}</div></div>
-    <div class="detail-row"><div class="detail-key">Email</div><div class="detail-val">${o.customer_email||'—'}</div></div>
-    <div class="detail-row"><div class="detail-key">Harga</div><div class="detail-val" style="color:var(--accent);font-size:16px">${formatRp(o.sell_price||o.total_price)}</div></div>
-    <div class="detail-row"><div class="detail-key">Profit</div><div class="detail-val" style="color:var(--green)">${formatRp(o.profit)}</div></div>
-    <div class="detail-row"><div class="detail-key">Metode Bayar</div><div class="detail-val">${o.payment_method||'—'}</div></div>
-    <div class="detail-row"><div class="detail-key">Tanggal</div><div class="detail-val">${formatDate(o.created_at)}</div></div>
-    ${o.sn?`<div class="detail-row"><div class="detail-key">SN</div><div class="detail-val" style="font-family:monospace;font-size:12px">${o.sn}</div></div>`:''}
-    ${(o.status||'').toLowerCase()==='pending_retry'?`<div style="margin-top:18px"><button class="btn btn-primary" style="width:100%;padding:13px" onclick="retrySingleOrder(${o.id})">🔄 Retry Order Ini</button></div>`:''}`;
+function setOF(el){document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));el.classList.add('active');curOF=el.dataset.s;allOrders=[];loadOrders()}
+function openOD(o){
+  const pm={success:'bs',paid:'bs',pending:'bp',expired:'be'};
+  // Hitung profit dari total_amount - base_price
+  const profit=o.total_amount&&o.base_price?(o.total_amount-o.base_price-o.payment_fee):null;
+  document.getElementById('orderDet').innerHTML=`
+    <div class="drow"><div class="dkey">Order #</div><div class="dval" style="font-family:monospace">${o.order_number||o.id}</div></div>
+    <div class="drow"><div class="dkey">Status</div><div class="dval">${sBadge(o.order_status)}</div></div>
+    <div class="drow"><div class="dkey">Pembayaran</div><div class="dval"><span class="badge ${pm[(o.payment_status||'').toLowerCase()]||'be'}">${o.payment_status||'—'}</span></div></div>
+    <div class="drow"><div class="dkey">Produk</div><div class="dval">${o.product_name||o.game_name||'—'}</div></div>
+    <div class="drow"><div class="dkey">Customer</div><div class="dval">${o.customer_name||'—'}</div></div>
+    <div class="drow"><div class="dkey">Game User ID</div><div class="dval" style="font-family:monospace">${o.game_user_id||'—'}</div></div>
+    <div class="drow"><div class="dkey">Email</div><div class="dval">${o.customer_email||'—'}</div></div>
+    <div class="drow"><div class="dkey">Total</div><div class="dval" style="color:var(--accent);font-size:16px">${Rp(o.total_amount)}</div></div>
+    ${profit!==null?`<div class="drow"><div class="dkey">Profit est.</div><div class="dval" style="color:var(--green)">${Rp(profit)}</div></div>`:''}
+    <div class="drow"><div class="dkey">Metode Bayar</div><div class="dval">${o.payment_method||'—'}</div></div>
+    <div class="drow"><div class="dkey">Tanggal</div><div class="dval">${fDate(o.created_at)}</div></div>
+    ${o.provider_serial_number?`<div class="drow"><div class="dkey">SN</div><div class="dval" style="font-family:monospace;font-size:12px">${o.provider_serial_number}</div></div>`:''}
+    ${(o.order_status||'').toLowerCase()==='pending_retry'?`<div style="margin-top:18px"><button class="btn btn-p" style="width:100%;padding:13px" onclick="retrySingle(${o.id})">🔄 Retry Order Ini</button></div>`:''}`;
   openModal('orderModal');
 }
-async function retrySingleOrder(id){try{const r=await fetch(`${API}/api/admin/orders/retry`,{method:'POST',headers:authH(),body:JSON.stringify({orderIds:[id]})});const d=await r.json();showToast(d.success?'Retry berhasil!':(d.message||'Gagal'),d.success?'success':'error');closeModal('orderModal');allOrders=[];loadOrders();}catch{showToast('Gagal retry','error');}}
+async function retrySingle(id){
+  try{const r=await fetch(`${API}/api/admin/orders/retry`,{method:'POST',headers:authH(),body:JSON.stringify({orderIds:[id]})});const d=await r.json();toast(d.success?'Retry berhasil!':(d.message||'Gagal'),d.success?'success':'error');closeModal('orderModal');allOrders=[];loadOrders()}catch{toast('Gagal retry','error')}
+}
 
+// ── CATALOG ───────────────────────────────────────
 async function loadCatalog(){
-  document.getElementById('catalogList').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat katalog…</div></div>`;
-  try{const r=await fetch(`${API}/api/admin/catalog/games`,{headers:authH()});const d=await r.json();allGames=d.data||d.games||[];renderCatalog(allGames);}
-  catch{document.getElementById('catalogList').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat katalog</p></div>`;}
+  document.getElementById('catC').innerHTML=`<div class="loading-wrap"><div class="spinner"></div></div>`;
+  try{const r=await fetch(`${API}/api/admin/catalog/games`,{headers:authH()});const d=await r.json();allGames=d.data||d.games||[];renderCatalog(allGames)}
+  catch{document.getElementById('catC').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat katalog</p></div>`}
 }
 function renderCatalog(games){
-  const el=document.getElementById('catalogList');
-  if(!games.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🗂</div><p>Tidak ada game</p></div>`;return;}
+  const el=document.getElementById('catC');
+  if(!games.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🗂</div><p>Tidak ada game</p></div>`;return}
   el.innerHTML=games.map(g=>`
     <div class="game-card">
       <div class="game-row">
         <div class="game-icon">${g.icon_url||g.icon?`<img src="${g.icon_url||g.icon}" onerror="this.parentElement.textContent='🎮'">`:'🎮'}</div>
-        <button style="flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;cursor:pointer;color:var(--text)" onclick="toggleProducts(${g.id})">
-          <div class="game-info"><div class="game-name">${g.name}</div><div class="game-meta"><span class="badge ${g.status==='active'?'badge-success':'badge-inactive'}">${g.status==='active'?'Aktif':'Nonaktif'}</span><span style="color:var(--text3);font-size:12px">${g.products_count||g.product_count||0} produk</span></div></div>
+        <button style="flex:1;min-width:0;text-align:left;background:none;border:none;padding:0;cursor:pointer;color:var(--text)" onclick="toggleProds(${g.id})">
+          <div class="game-info"><div class="game-name">${g.name}</div><div class="game-meta"><span class="badge ${g.status==='active'?'bs':'be'}">${g.status==='active'?'Aktif':'Nonaktif'}</span><span style="color:var(--text3);font-size:12px">${g.products_count||g.product_count||0} produk</span></div></div>
         </button>
-        <div style="flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick='openGameModal(${JSON.stringify(g)})'>Edit</button></div>
+        <div style="flex-shrink:0"><button class="btn btn-sm btn-s" onclick='openGameModal(${JSON.stringify(g)})'>Edit</button></div>
       </div>
-      <div class="products-sub" id="products-${g.id}"><div class="loading-wrap" style="padding:14px"><div class="spinner" style="width:20px;height:20px;border-width:2px"></div></div></div>
+      <div class="products-sub" id="ps-${g.id}"><div class="loading-wrap" style="padding:14px"><div class="spinner" style="width:20px;height:20px;border-width:2px"></div></div></div>
     </div>`).join('');
 }
-function filterCatalog(q){renderCatalog(allGames.filter(g=>g.name.toLowerCase().includes(q.toLowerCase())));}
-async function toggleProducts(gameId){
-  const el=document.getElementById(`products-${gameId}`);
-  if(el.classList.contains('open')){el.classList.remove('open');return;}
+function filterCat(q){renderCatalog(allGames.filter(g=>g.name.toLowerCase().includes(q.toLowerCase())))}
+async function toggleProds(id){
+  const el=document.getElementById(`ps-${id}`);
+  if(el.classList.contains('open')){el.classList.remove('open');return}
   el.classList.add('open');if(el.dataset.loaded)return;
-  try{const r=await fetch(`${API}/api/admin/catalog/products?game_id=${gameId}`,{headers:authH()});const d=await r.json();const prods=d.data||d.products||[];el.dataset.loaded='1';if(!prods.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0">Belum ada produk</div>';return;}el.innerHTML=prods.map(p=>`<div class="product-item"><div class="product-name">${p.name}</div><div class="product-price">${formatRp(p.sell_price||p.price)}</div><span class="badge ${p.status==='active'?'badge-success':'badge-inactive'}" style="font-size:10px;padding:2px 8px">${p.status==='active'?'Aktif':'Nonaktif'}</span></div>`).join('');}
-  catch{el.innerHTML='<div style="font-size:13px;color:var(--text3)">Gagal load produk</div>';}
+  try{const r=await fetch(`${API}/api/admin/catalog/products?game_id=${id}`,{headers:authH()});const d=await r.json();const p=d.data||d.products||[];el.dataset.loaded='1';
+    if(!p.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:4px 0">Belum ada produk</div>';return}
+    el.innerHTML=p.map(x=>`<div class="product-item"><div class="product-name">${x.name}</div><div class="product-price">${Rp(x.sell_price||x.price)}</div><span class="badge ${x.status==='active'?'bs':'be'}" style="font-size:10px;padding:2px 8px">${x.status==='active'?'Aktif':'Nonaktif'}</span></div>`).join('')}
+  catch{el.innerHTML='<div style="font-size:13px;color:var(--text3)">Gagal load produk</div>'}
 }
-function openGameModal(g){document.getElementById('gameModalTitle').textContent=g?'Edit Game':'Tambah Game';document.getElementById('gameId').value=g?.id||'';document.getElementById('gameName').value=g?.name||'';document.getElementById('gameCategory').value=g?.category||'games';document.getElementById('gameStatus').value=g?.status||'active';document.getElementById('gameIcon').value=g?.icon_url||g?.icon||'';openModal('gameModal');}
+function openGameModal(g){document.getElementById('gameMT').textContent=g?'Edit Game':'Tambah Game';document.getElementById('gameId').value=g?.id||'';document.getElementById('gameName').value=g?.name||'';document.getElementById('gameCat').value=g?.category||'games';document.getElementById('gameSt').value=g?.status||'active';document.getElementById('gameIcon').value=g?.icon_url||g?.icon||'';openModal('gameModal')}
 async function saveGame(){
   const id=document.getElementById('gameId').value;
-  const body={name:document.getElementById('gameName').value,category:document.getElementById('gameCategory').value,status:document.getElementById('gameStatus').value,icon_url:document.getElementById('gameIcon').value};
-  try{const r=await fetch(id?`${API}/api/admin/catalog/games/${id}`:`${API}/api/admin/catalog/games`,{method:id?'PUT':'POST',headers:authH(),body:JSON.stringify(body)});const d=await r.json();if(d.success){showToast(id?'Game diperbarui!':'Game ditambahkan!');closeModal('gameModal');allGames=[];loadCatalog();}else showToast(d.message||'Gagal','error');}
-  catch(e){showToast('Error: '+e.message,'error');}
+  const body={name:document.getElementById('gameName').value,category:document.getElementById('gameCat').value,status:document.getElementById('gameSt').value,icon_url:document.getElementById('gameIcon').value};
+  try{const r=await fetch(id?`${API}/api/admin/catalog/games/${id}`:`${API}/api/admin/catalog/games`,{method:id?'PUT':'POST',headers:authH(),body:JSON.stringify(body)});const d=await r.json();if(d.success){toast(id?'Game diperbarui!':'Game ditambahkan!');closeModal('gameModal');allGames=[];loadCatalog()}else toast(d.message||'Gagal','error')}
+  catch(e){toast('Error: '+e.message,'error')}
 }
 
+// ── VOUCHERS ──────────────────────────────────────
 async function loadVouchers(){
-  document.getElementById('voucherList').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">Memuat voucher…</div></div>`;
-  try{const r=await fetch(`${API}/api/admin/vouchers`,{headers:authH()});const d=await r.json();const vouchers=d.data||d.vouchers||[];
-    if(!vouchers.length){document.getElementById('voucherList').innerHTML=`<div class="empty-state"><div class="empty-icon">🎫</div><p>Belum ada voucher</p></div>`;return;}
-    document.getElementById('voucherList').innerHTML=vouchers.map(v=>{
-      const expired=v.valid_until&&new Date(v.valid_until)<new Date(),notStart=v.valid_from&&new Date(v.valid_from)>new Date();
-      const sBadge=expired?'badge-failed':notStart?'badge-pending':(v.is_active?'badge-success':'badge-inactive');
-      const sLabel=expired?'Expired':notStart?'Belum Mulai':(v.is_active?'Aktif':'Nonaktif');
-      const disc=v.discount_type==='fixed'?formatRp(v.discount_value):v.discount_type==='percentage'?`${v.discount_value}%`:'Base Price';
-      return`<div class="voucher-card"><div class="flex-between" style="margin-bottom:8px"><div class="voucher-code">${v.code}</div><span class="badge ${sBadge}">${sLabel}</span></div><div class="voucher-meta">Diskon: <strong>${disc}</strong><br>Dipakai: ${v.used_count||0}${v.max_usage?` / ${v.max_usage}`:' (unlimited)'}<br>${v.valid_from?`Mulai: ${new Date(v.valid_from).toLocaleDateString('id-ID')}<br>`:''}${v.valid_until?`Sampai: ${new Date(v.valid_until).toLocaleDateString('id-ID')}`:'Tanpa batas waktu'}</div><div class="voucher-footer"><div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="toggle" ${v.is_active?'checked':''} onchange="toggleVoucher(${v.id},this.checked)"><span style="font-size:13px;color:var(--text2)">${v.is_active?'Aktif':'Nonaktif'}</span></div><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick='openVoucherModal(${JSON.stringify(v)})'>Edit</button><button class="btn btn-sm btn-danger" onclick="deleteVoucher(${v.id})">Hapus</button></div></div></div>`;
-    }).join('');}
-  catch{document.getElementById('voucherList').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat voucher</p></div>`;}
+  document.getElementById('voucC').innerHTML=`<div class="loading-wrap"><div class="spinner"></div></div>`;
+  try{const r=await fetch(`${API}/api/admin/vouchers`,{headers:authH()});const d=await r.json();const vl=d.data||d.vouchers||[];
+    if(!vl.length){document.getElementById('voucC').innerHTML=`<div class="empty-state"><div class="empty-icon">🎫</div><p>Belum ada voucher</p></div>`;return}
+    document.getElementById('voucC').innerHTML=vl.map(v=>{
+      const exp=v.valid_until&&new Date(v.valid_until)<new Date(),ns=v.valid_from&&new Date(v.valid_from)>new Date();
+      const sb=exp?'bf':ns?'bp':(v.is_active?'bs':'be'),sl=exp?'Expired':ns?'Belum Mulai':(v.is_active?'Aktif':'Nonaktif');
+      const disc=v.discount_type==='fixed'?Rp(v.discount_value):v.discount_type==='percentage'?`${v.discount_value}%`:'Base Price';
+      return`<div class="voucher-card"><div class="fb" style="margin-bottom:8px"><div class="vcode">${v.code}</div><span class="badge ${sb}">${sl}</span></div><div class="vmeta">Diskon: <strong>${disc}</strong><br>Dipakai: ${v.used_count||0}${v.max_usage?` / ${v.max_usage}`:' (unlimited)'}<br>${v.valid_from?`Mulai: ${new Date(v.valid_from).toLocaleDateString('id-ID')}<br>`:''}${v.valid_until?`Sampai: ${new Date(v.valid_until).toLocaleDateString('id-ID')}`:'Tanpa batas waktu'}</div><div class="vfooter"><div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="toggle" ${v.is_active?'checked':''} onchange="toggleVouc(${v.id},this.checked)"><span style="font-size:13px;color:var(--text2)">${v.is_active?'Aktif':'Nonaktif'}</span></div><div style="display:flex;gap:6px"><button class="btn btn-sm btn-s" onclick='openVoucherModal(${JSON.stringify(v)})'>Edit</button><button class="btn btn-sm btn-d" onclick="delVouc(${v.id})">Hapus</button></div></div></div>`;
+    }).join('')}
+  catch{document.getElementById('voucC').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat voucher</p></div>`}
 }
-function openVoucherModal(v){document.getElementById('voucherModalTitle').textContent=v?'Edit Voucher':'Tambah Voucher';document.getElementById('voucherId').value=v?.id||'';document.getElementById('voucherCode').value=v?.code||'';document.getElementById('voucherType').value=v?.discount_type||'fixed';document.getElementById('voucherValue').value=v?.discount_value||'';document.getElementById('voucherMaxUse').value=v?.max_usage||0;document.getElementById('voucherFrom').value=v?.valid_from?new Date(v.valid_from).toISOString().slice(0,16):'';document.getElementById('voucherUntil').value=v?.valid_until?new Date(v.valid_until).toISOString().slice(0,16):'';document.getElementById('voucherPopup').checked=!!v?.show_in_popup;openModal('voucherModal');}
+function openVoucherModal(v){document.getElementById('voucMT').textContent=v?'Edit Voucher':'Tambah Voucher';document.getElementById('voucId').value=v?.id||'';document.getElementById('voucCode').value=v?.code||'';document.getElementById('voucType').value=v?.discount_type||'fixed';document.getElementById('voucVal').value=v?.discount_value||'';document.getElementById('voucMax').value=v?.max_usage||0;document.getElementById('voucFrom').value=v?.valid_from?new Date(v.valid_from).toISOString().slice(0,16):'';document.getElementById('voucUntil').value=v?.valid_until?new Date(v.valid_until).toISOString().slice(0,16):'';document.getElementById('voucPopup').checked=!!v?.show_in_popup;openModal('voucherModal')}
 async function saveVoucher(){
-  const id=document.getElementById('voucherId').value;
-  const body={code:document.getElementById('voucherCode').value.toUpperCase(),discount_type:document.getElementById('voucherType').value,discount_value:+document.getElementById('voucherValue').value,max_usage:+document.getElementById('voucherMaxUse').value||null,valid_from:document.getElementById('voucherFrom').value||null,valid_until:document.getElementById('voucherUntil').value||null,show_in_popup:document.getElementById('voucherPopup').checked};
-  try{const r=await fetch(id?`${API}/api/admin/vouchers/${id}`:`${API}/api/admin/vouchers`,{method:id?'PUT':'POST',headers:authH(),body:JSON.stringify(body)});const d=await r.json();if(d.success){showToast(id?'Voucher diperbarui!':'Voucher ditambahkan!');closeModal('voucherModal');loadVouchers();}else showToast(d.message||'Gagal','error');}
-  catch(e){showToast('Error: '+e.message,'error');}
+  const id=document.getElementById('voucId').value;
+  const body={code:document.getElementById('voucCode').value.toUpperCase(),discount_type:document.getElementById('voucType').value,discount_value:+document.getElementById('voucVal').value,max_usage:+document.getElementById('voucMax').value||null,valid_from:document.getElementById('voucFrom').value||null,valid_until:document.getElementById('voucUntil').value||null,show_in_popup:document.getElementById('voucPopup').checked};
+  try{const r=await fetch(id?`${API}/api/admin/vouchers/${id}`:`${API}/api/admin/vouchers`,{method:id?'PUT':'POST',headers:authH(),body:JSON.stringify(body)});const d=await r.json();if(d.success){toast(id?'Voucher diperbarui!':'Voucher ditambahkan!');closeModal('voucherModal');loadVouchers()}else toast(d.message||'Gagal','error')}
+  catch(e){toast('Error: '+e.message,'error')}
 }
-async function toggleVoucher(id,active){try{const r=await fetch(`${API}/api/admin/vouchers/${id}/toggle`,{method:'PATCH',headers:authH(),body:JSON.stringify({is_active:active})});const d=await r.json();if(!d.success)showToast(d.message||'Gagal','error');else showToast(active?'Voucher diaktifkan':'Voucher dinonaktifkan');}catch{showToast('Error','error');}}
-async function deleteVoucher(id){if(!confirm('Hapus voucher ini?'))return;try{const r=await fetch(`${API}/api/admin/vouchers/${id}`,{method:'DELETE',headers:authH()});const d=await r.json();if(d.success){showToast('Voucher dihapus');loadVouchers();}else showToast(d.message||'Gagal','error');}catch{showToast('Error','error');}}
+async function toggleVouc(id,active){try{const r=await fetch(`${API}/api/admin/vouchers/${id}/toggle`,{method:'PATCH',headers:authH(),body:JSON.stringify({is_active:active})});const d=await r.json();if(!d.success)toast(d.message||'Gagal','error');else toast(active?'Voucher diaktifkan':'Voucher dinonaktifkan')}catch{toast('Error','error')}}
+async function delVouc(id){if(!confirm('Hapus voucher ini?'))return;try{const r=await fetch(`${API}/api/admin/vouchers/${id}`,{method:'DELETE',headers:authH()});const d=await r.json();if(d.success){toast('Voucher dihapus');loadVouchers()}else toast(d.message||'Gagal','error')}catch{toast('Error','error')}}
 
-async function loadMoreTab(){
-  try{const r=await fetch(`${API}/api/admin/dashboard`,{headers:authH()});const d=await r.json();const df=d.data?.digiflazz||{};const cls=df.status==='CRITICAL'?'badge-failed':df.status==='WARNING'?'badge-warning':'badge-success';document.getElementById('saldoInfo').innerHTML=`<div style="font-size:22px;font-weight:700;margin-bottom:8px">${formatRp(df.deposit)}</div><span class="badge ${cls}">${df.status||'OK'}</span>`;}
-  catch{document.getElementById('saldoInfo').textContent='Gagal memuat';}
+// ── SERVER / TERMINAL ─────────────────────────────
+const CMD_GROUPS={
+  'PM2':['⚙️',[
+    {id:'pm2_status',label:'Status PM2',desc:'Lihat semua proses yang berjalan'},
+    {id:'pm2_restart_backend',label:'Restart Backend',desc:'Restart proses backend/API'},
+    {id:'pm2_restart_all',label:'Restart Semua',desc:'Restart semua proses PM2'},
+    {id:'pm2_logs',label:'Lihat Log',desc:'Tampilkan log terbaru'},
+  ]],
+  'Build':['🔨',[
+    {id:'build_frontend',label:'Build Frontend',desc:'npm run build (frontend React)'},
+    {id:'git_pull',label:'Git Pull',desc:'Pull update terbaru dari repository'},
+    {id:'deploy',label:'Full Deploy',desc:'Git pull + build + restart'},
+  ]],
+  'Nginx':['🌐',[
+    {id:'nginx_test',label:'Test Config',desc:'nginx -t'},
+    {id:'nginx_reload',label:'Reload Nginx',desc:'Terapkan config baru'},
+    {id:'nginx_status',label:'Status Nginx',desc:'Cek status Nginx'},
+  ]],
+  'System':['🖥️',[
+    {id:'sys_info',label:'Info Sistem',desc:'CPU, RAM, Disk usage'},
+    {id:'df_h',label:'Disk Space',desc:'df -h'},
+    {id:'free_m',label:'Memory',desc:'free -m'},
+  ]],
+};
+const DANGER_CMDS=['pm2_restart_all','pm2_restart_backend','build_frontend','git_pull','deploy','nginx_reload'];
+
+function loadServerTab(){
+  const el=document.getElementById('cmdGroups');
+  el.innerHTML=Object.entries(CMD_GROUPS).map(([name,[icon,cmds]])=>`
+    <div class="cmd-group">
+      <div class="cmd-group-hdr" onclick="toggleCmdGroup(this)">
+        <span>${icon} ${name}</span><span>›</span>
+      </div>
+      <div class="cmd-group-body">
+        ${cmds.map(c=>`
+          <button class="cmd-btn" onclick="runCmd('${c.id}','${c.label}')">
+            <div><div class="cmd-btn-label">${c.label}</div><div class="cmd-btn-desc">${c.desc}</div></div>
+            <span class="cmd-run">${DANGER_CMDS.includes(c.id)?'⚠️':'▶'}</span>
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
 }
 
+function toggleCmdGroup(hdr){hdr.nextElementSibling.classList.toggle('open')}
+
+function termLog(msg,type=''){
+  const out=document.getElementById('termOut');
+  const div=document.createElement('div');
+  div.className=type;div.textContent=msg;out.appendChild(div);out.scrollTop=out.scrollHeight;
+}
+
+function setTermStatus(on){
+  const el=document.getElementById('termConn');
+  el.className=`term-conn ${on?'on':'off'}`;
+  el.textContent=on?'● Online':'● Offline';
+  document.getElementById('termConnBtn').textContent=on?'🔌 Putuskan Terminal':'🔌 Hubungkan Terminal';
+}
+
+function toggleTerminal(){
+  if(wsConn&&wsConn.readyState===WebSocket.OPEN){wsConn.close();wsConn=null;setTermStatus(false);return}
+  connectWS();
+}
+
+function connectWS(){
+  const wsUrl=API.replace('https://','wss://').replace('http://','ws://')+'/ws/terminal';
+  termLog('Menghubungkan ke server…','sys');
+  try{
+    wsConn=new WebSocket(wsUrl);
+    wsConn.onopen=()=>{
+      termLog('Terhubung. Melakukan autentikasi…','sys');
+      wsConn.send(JSON.stringify({type:'auth',token:getToken()}));
+    };
+    wsConn.onmessage=(e)=>{
+      try{
+        const msg=JSON.parse(e.data);
+        if(msg.type==='auth_success'){wsAuthed=true;setTermStatus(true);termLog('✓ Autentikasi berhasil. Terminal siap.','ok')}
+        else if(msg.type==='auth_failed'){termLog('✗ Autentikasi gagal.','err');wsConn.close()}
+        else if(msg.type==='output'){termLog(msg.data)}
+        else if(msg.type==='error'){termLog('✗ '+msg.message,'err')}
+        else if(msg.type==='complete'){termLog('── Selesai ──','sys')}
+        else if(msg.type==='pong'){}
+      }catch{termLog(e.data)}
+    };
+    wsConn.onclose=()=>{wsAuthed=false;wsConn=null;setTermStatus(false);termLog('── Koneksi terputus ──','sys')};
+    wsConn.onerror=()=>{termLog('✗ Error koneksi','err')};
+  }catch(e){termLog('✗ Gagal membuat koneksi: '+e.message,'err')}
+}
+
+function runCmd(cmdId,label){
+  if(!wsConn||wsConn.readyState!==WebSocket.OPEN){toast('Terminal belum terhubung. Hubungkan dulu.','error');return}
+  if(!wsAuthed){toast('Belum terautentikasi','error');return}
+  const isDanger=DANGER_CMDS.includes(cmdId);
+  if(isDanger){
+    document.getElementById('cmdMT').textContent='⚠️ Konfirmasi '+label;
+    document.getElementById('cmdMDesc').textContent=`Apakah kamu yakin ingin menjalankan "${label}"? Proses ini tidak bisa dibatalkan.`;
+    document.getElementById('cmdMConfirm').onclick=()=>{closeModal('cmdModal');sendCmd(cmdId,label)};
+    openModal('cmdModal');
+  }else{sendCmd(cmdId,label)}
+}
+
+function sendCmd(cmdId,label){
+  termLog(`▶ Menjalankan: ${label}…`,'sys');
+  wsConn.send(JSON.stringify({type:'run',command:cmdId}));
+}
+
+// ── MORE ──────────────────────────────────────────
+async function loadMore(){
+  try{const r=await fetch(`${API}/api/admin/dashboard`,{headers:authH()});const d=await r.json();const df=d.data?.digiflazz||{};const cls=df.status==='CRITICAL'?'bf':df.status==='WARNING'?'bw':'bs';document.getElementById('saldoC').innerHTML=`<div style="font-size:22px;font-weight:700;margin-bottom:8px">${Rp(df.deposit)}</div><span class="badge ${cls}">${df.status||'OK'}</span>`}
+  catch{document.getElementById('saldoC').textContent='Gagal memuat'}
+}
+
+// ── FEEDBACK ──────────────────────────────────────
 async function loadFeedback(){
   showTab('feedback');
-  document.getElementById('feedbackList').innerHTML=`<div class="loading-wrap"><div class="spinner"></div></div>`;
+  document.getElementById('fbC').innerHTML=`<div class="loading-wrap"><div class="spinner"></div></div>`;
   try{const r=await fetch(`${API}/api/admin/feedbacks`,{headers:authH()});const d=await r.json();const items=d.data||d.feedbacks||[];
-    if(!items.length){document.getElementById('feedbackList').innerHTML=`<div class="empty-state"><div class="empty-icon">💬</div><p>Belum ada feedback</p></div>`;return;}
-    document.getElementById('feedbackList').innerHTML=items.map(f=>`<div class="feedback-card"><div class="flex-between" style="margin-bottom:6px"><div class="feedback-stars">${'★'.repeat(f.rating||5)}${'☆'.repeat(5-(f.rating||5))}</div><div style="font-size:12px;color:var(--text3)">${formatDate(f.created_at)}</div></div><div class="feedback-name">${f.name||f.customer_name||'Anonim'}</div><div class="feedback-msg">${f.message||f.comment||'—'}</div><div style="margin-top:10px;text-align:right"><button class="btn btn-sm btn-danger" onclick="deleteFeedback(${f.id})">Hapus</button></div></div>`).join('');}
-  catch{document.getElementById('feedbackList').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat feedback</p></div>`;}
+    if(!items.length){document.getElementById('fbC').innerHTML=`<div class="empty-state"><div class="empty-icon">💬</div><p>Belum ada feedback</p></div>`;return}
+    document.getElementById('fbC').innerHTML=items.map(f=>`<div class="fb-card"><div class="fb" style="margin-bottom:6px"><div class="fb-stars">${'★'.repeat(f.rating||5)}${'☆'.repeat(5-(f.rating||5))}</div><div style="font-size:12px;color:var(--text3)">${fDate(f.created_at)}</div></div><div class="fb-name">${f.name||f.customer_name||'Anonim'}</div><div class="fb-msg">${f.message||f.comment||'—'}</div><div style="margin-top:10px;text-align:right"><button class="btn btn-sm btn-d" onclick="delFB(${f.id})">Hapus</button></div></div>`).join('')}
+  catch{document.getElementById('fbC').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat feedback</p></div>`}
 }
-async function deleteFeedback(id){if(!confirm('Hapus feedback ini?'))return;try{const r=await fetch(`${API}/api/admin/feedbacks/${id}`,{method:'DELETE',headers:authH()});const d=await r.json();if(d.success){showToast('Feedback dihapus');loadFeedback();}else showToast(d.message||'Gagal','error');}catch{showToast('Error','error');}}
+async function delFB(id){if(!confirm('Hapus feedback ini?'))return;try{const r=await fetch(`${API}/api/admin/feedbacks/${id}`,{method:'DELETE',headers:authH()});const d=await r.json();if(d.success){toast('Feedback dihapus');loadFeedback()}else toast(d.message||'Gagal','error')}catch{toast('Error','error')}}
 
+// ── VISITORS ──────────────────────────────────────
 async function loadVisitors(){
   showTab('visitors');
-  document.getElementById('visitorContent').innerHTML=`<div class="loading-wrap"><div class="spinner"></div></div>`;
+  document.getElementById('visC').innerHTML=`<div class="loading-wrap"><div class="spinner"></div></div>`;
   try{
     const [sR,lR]=await Promise.all([fetch(`${API}/api/admin/visitors/stats?days=7`,{headers:authH()}),fetch(`${API}/api/admin/visitors/log?limit=15`,{headers:authH()})]);
     const [s,l]=await Promise.all([sR.json(),lR.json()]);
     const sv=s.data?.summary||{},daily=s.data?.daily||[];
     const maxV=Math.max(...daily.map(d=>+d.views||0),1);
-    document.getElementById('visitorContent').innerHTML=`
+    document.getElementById('visC').innerHTML=`
       <div class="stat-grid" style="margin-bottom:14px">
-        <div class="stat-card"><h3>Total 7 Hari</h3><div class="stat-value">${parseInt(sv.views_7days||0).toLocaleString('id-ID')}</div><div class="stat-sub">views</div></div>
-        <div class="stat-card"><h3>Hari Ini</h3><div class="stat-value">${parseInt(sv.views_today||0).toLocaleString('id-ID')}</div><div class="stat-sub">views</div></div>
+        <div class="stat-card"><h3>Total 7 Hari</h3><div class="sv">${parseInt(sv.views_7days||0).toLocaleString('id-ID')}</div><div class="ss">views</div></div>
+        <div class="stat-card"><h3>Hari Ini</h3><div class="sv">${parseInt(sv.views_today||0).toLocaleString('id-ID')}</div><div class="ss">views</div></div>
       </div>
       <div class="stat-grid" style="margin-bottom:14px">
-        <div class="stat-card"><h3>Sesi Unik</h3><div class="stat-value">${parseInt(sv.unique_sessions||0).toLocaleString('id-ID')}</div></div>
-        <div class="stat-card"><h3>Rata-rata/Hari</h3><div class="stat-value">${parseInt((sv.views_7days||0)/7).toLocaleString('id-ID')}</div></div>
+        <div class="stat-card"><h3>Sesi Unik</h3><div class="sv">${parseInt(sv.unique_sessions||0).toLocaleString('id-ID')}</div></div>
+        <div class="stat-card"><h3>Rata-rata/Hari</h3><div class="sv">${parseInt((sv.views_7days||0)/7).toLocaleString('id-ID')}</div></div>
       </div>
-      <div class="card"><div class="card-title">Traffic 7 Hari</div><div class="v-bars">${daily.slice(-7).map(d=>{const h=Math.max(4,Math.round((+d.views||0)/maxV*72));return`<div class="v-bar-col"><div class="v-bar" style="height:${h}px"></div><div class="v-bar-lbl">${new Date(d.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'})}</div></div>`;}).join('')}</div></div>
-      ${l.data?.length?`<div class="section-title" style="margin:14px 0 10px">Log Terbaru</div>${(l.data||[]).slice(0,10).map(v=>`<div class="card" style="padding:12px 14px;margin-bottom:8px"><div class="flex-between"><div style="font-size:13px;font-weight:600">${v.page||v.path||'/'}</div><div style="font-size:12px;color:var(--text3)">${formatDate(v.created_at||v.visited_at)}</div></div><div style="font-size:12px;color:var(--text3);margin-top:3px">${v.ip||''} ${v.device||''}</div></div>`).join('')}`:''}`;
-  }catch{document.getElementById('visitorContent').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data</p></div>`;}
+      <div class="card"><div class="card-title">Traffic 7 Hari</div><div class="v-bars">${daily.slice(-7).map(d=>{const h=Math.max(4,Math.round((+d.views||0)/maxV*72));return`<div class="v-bar-col"><div class="v-bar" style="height:${h}px"></div><div class="v-bar-lbl">${new Date(d.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'})}</div></div>`}).join('')}</div></div>
+      ${l.data?.length?`<div class="sec-title" style="margin:14px 0 10px">Log Terbaru</div>${(l.data||[]).slice(0,10).map(v=>`<div class="card" style="padding:12px 14px;margin-bottom:8px"><div class="fb"><div style="font-size:13px;font-weight:600">${v.page||v.path||'/'}</div><div style="font-size:12px;color:var(--text3)">${fDate(v.created_at||v.visited_at)}</div></div><div style="font-size:12px;color:var(--text3);margin-top:3px">${v.ip||''} ${v.device||''}</div></div>`).join('')}`:''}`;
+  }catch{document.getElementById('visC').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data</p></div>`}
 }
 </script>
 </body>
