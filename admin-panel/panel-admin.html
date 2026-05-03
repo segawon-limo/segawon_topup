@@ -429,10 +429,10 @@ const API='https://segawontopup.net';
 let allGames=[],allOrders=[],curOF='',curTab='dashboard';
 let wsConn=null,wsAuthed=false;
 
-const getToken=()=>localStorage.getItem('sgw_token');
-const getUser=()=>JSON.parse(localStorage.getItem('sgw_user')||'{}');
-const saveAuth=(t,u)=>{localStorage.setItem('sgw_token',t);localStorage.setItem('sgw_user',JSON.stringify(u))};
-const clearAuth=()=>{localStorage.removeItem('sgw_token');localStorage.removeItem('sgw_user')};
+const getToken=()=>localStorage.getItem('admin_token');
+const getUser=()=>JSON.parse(localStorage.getItem('admin_user')||'{}');
+const saveAuth=(t,u)=>{localStorage.setItem('admin_token',t);localStorage.setItem('admin_user',JSON.stringify(u))};
+const clearAuth=()=>{localStorage.removeItem('admin_token');localStorage.removeItem('admin_user')};
 const authH=()=>({'Authorization':`Bearer ${getToken()}`,'Content-Type':'application/json'});
 const Rp=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n||0);
 const fDate=d=>new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
@@ -464,14 +464,75 @@ async function doLogin(){
 function showErr(msg){const e=document.getElementById('lErr');e.textContent=msg;e.classList.add('show')}
 document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 
+// ── IDLE TIMEOUT ──────────────────────────────────
+const IDLE_MS = 30 * 60 * 1000;  // 30 menit
+const WARN_MS = 29 * 60 * 1000;  // warning di menit ke-29
+let idleLogoutTimer = null;
+let idleWarnTimer   = null;
+let idleWarningShown = false;
+
+function idleLogout(){
+  removeIdleWarning();
+  clearAuth();
+  if(wsConn){wsConn.close();wsConn=null}
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('loginScreen').classList.add('active');
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
+  // Tampilkan pesan di form login
+  showErr('Sesi berakhir karena tidak ada aktivitas selama 30 menit.');
+}
+
+function showIdleWarning(){
+  if(idleWarningShown)return;
+  idleWarningShown=true;
+  const el=document.createElement('div');
+  el.id='idle-warn';
+  el.innerHTML=`<div style="position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:14px 18px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;gap:12px;font-size:14px;border-left:4px solid #ed8936;min-width:280px;max-width:90vw">
+    <span style="font-size:20px">⏰</span>
+    <span style="flex:1">Sesi berakhir dalam <strong>1 menit</strong> karena tidak ada aktivitas.</span>
+    <button onclick="resetIdleTimer()" style="background:#ed8936;color:#1a202c;border:none;padding:7px 14px;border-radius:7px;cursor:pointer;font-weight:700;font-size:13px;flex-shrink:0">Lanjutkan</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+
+function removeIdleWarning(){
+  const el=document.getElementById('idle-warn');
+  if(el)el.remove();
+  idleWarningShown=false;
+}
+
+function resetIdleTimer(){
+  clearTimeout(idleLogoutTimer);
+  clearTimeout(idleWarnTimer);
+  removeIdleWarning();
+  idleWarnTimer   = setTimeout(showIdleWarning, WARN_MS);
+  idleLogoutTimer = setTimeout(idleLogout, IDLE_MS);
+}
+
+function startIdleWatch(){
+  const events=['touchstart','touchmove','click','keydown','scroll'];
+  events.forEach(ev=>window.addEventListener(ev,resetIdleTimer,{passive:true}));
+  resetIdleTimer();
+}
+
+function stopIdleWatch(){
+  const events=['touchstart','touchmove','click','keydown','scroll'];
+  events.forEach(ev=>window.removeEventListener(ev,resetIdleTimer));
+  clearTimeout(idleLogoutTimer);
+  clearTimeout(idleWarnTimer);
+  removeIdleWarning();
+}
+
 function enterApp(admin){
   document.getElementById('loginScreen').classList.remove('active');
   document.getElementById('appScreen').classList.add('active');
   document.getElementById('tbUser').textContent=admin?.full_name||admin?.username||'Admin';
+  startIdleWatch();
   loadDashboard();
 }
 function doLogout(){
   if(!confirm('Yakin mau logout?'))return;
+  stopIdleWatch();
   if(wsConn){wsConn.close();wsConn=null}
   clearAuth();
   document.getElementById('appScreen').classList.remove('active');
