@@ -1116,34 +1116,158 @@ const generatePascabayarStrukHTML = (data) => {
 /**
  * Generate PDF buffer dari struk HTML
  */
-const generatePascabayarPdfBuffer = async (strukcData) => {
-  // Bungkus dengan timeout 15 detik agar tidak hang
-  const withTimeout = (promise, ms) => {
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`PDF timeout after ${ms}ms`)), ms)
-    );
-    return Promise.race([promise, timeout]);
-  };
-
+const generatePascabayarPdfBuffer = async (data) => {
   try {
-    const htmlPdf = require('html-pdf-node');
-    const options = {
-      format: 'A5',
-      printBackground: true,
-      margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-zygote',
-        '--single-process',
-      ],
+    const PDFDocument = require('pdfkit');
+
+    const {
+      orderNumber, customerEmail, customerNo,
+      pln_customer_name, tarif, daya, detail = [],
+      selling_price, admin_fee,
+      payment_fee = 0, voucher_code = null, voucher_discount = 0,
+      totalAmount, paymentMethod, paidAt,
+      buyer_sku_code,
+    } = data;
+
+    const isPLN = PLN_SKUS.includes(buyer_sku_code);
+    const providerLabel = PROVIDER_LABELS[buyer_sku_code] || buyer_sku_code || 'Pascabayar';
+
+    const rp = (n) => n != null ? 'Rp ' + Number(n).toLocaleString('id-ID') : '-';
+    const tglBayar = paidAt
+      ? new Date(paidAt).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })
+      : '-';
+    const nilaiTagihan = (Number(selling_price) || 0) - (Number(admin_fee) || 0);
+
+    // Warna brand
+    const DARK   = '#1a2332';
+    const ORANGE = '#FF6B35';
+    const GRAY   = '#6b7280';
+    const BLACK  = '#111827';
+    const GREEN  = '#10b981';
+    const RED    = '#ef4444';
+
+    const doc = new PDFDocument({ size: 'A5', margin: 0 });
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+
+    const W = doc.page.width;   // 419.53
+    const PAD = 28;
+    const contentW = W - PAD * 2;
+
+    // ── Header gelap ─────────────────────────────────────────────────────────
+    doc.rect(0, 0, W, 90).fill(DARK);
+
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(ORANGE)
+      .text('SEGAWON TOPUP', PAD, 20, { width: contentW, align: 'center' });
+
+    const struktitle = isPLN
+      ? 'Struk Pembayaran Tagihan Listrik PLN'
+      : `Struk Pembayaran Tagihan Internet ${providerLabel}`;
+
+    doc.font('Helvetica-Bold').fontSize(11).fillColor('#ffffff')
+      .text(struktitle, PAD, 34, { width: contentW, align: 'center' });
+
+    doc.font('Helvetica').fontSize(8).fillColor('rgba(255,255,255,0.5)')
+      .text(orderNumber, PAD, 54, { width: contentW, align: 'center' });
+
+    // ── Helper functions ──────────────────────────────────────────────────────
+    let y = 100;
+
+    const sectionTitle = (label) => {
+      doc.font('Helvetica-Bold').fontSize(7).fillColor(GRAY)
+        .text(label.toUpperCase(), PAD, y, { characterSpacing: 1 });
+      y += 12;
+      doc.moveTo(PAD, y).lineTo(W - PAD, y).strokeColor('#f3f4f6').lineWidth(0.5).stroke();
+      y += 6;
     };
-    return await withTimeout(
-      htmlPdf.generatePdf({ content: generatePascabayarStrukHTML(strukcData) }, options),
-      15000
-    );
+
+    const infoRow = (label, value, valueColor = BLACK) => {
+      doc.font('Helvetica').fontSize(9).fillColor(GRAY)
+        .text(label, PAD, y, { width: contentW * 0.48 });
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(valueColor)
+        .text(value, PAD + contentW * 0.48, y, { width: contentW * 0.52, align: 'right' });
+      y += 16;
+    };
+
+    const gap = (n = 10) => { y += n; };
+
+    // ── Pelanggan ─────────────────────────────────────────────────────────────
+    sectionTitle('Pelanggan');
+    infoRow('No. Pelanggan', customerNo || '-');
+    if (pln_customer_name) infoRow('Nama Pelanggan', pln_customer_name);
+    if (isPLN && (tarif || daya)) {
+      infoRow('Tarif / Daya', [tarif, daya ? daya + ' VA' : null].filter(Boolean).join(' / '));
+    }
+    gap();
+
+    // ── Detail tagihan per lembar ─────────────────────────────────────────────
+    detail.forEach((d, i) => {
+      const periodeLabel = detail.length > 1
+        ? `Tagihan ${i + 1} — ${fmtPeriode(d.periode) || '-'}`
+        : `Tagihan — ${fmtPeriode(d.periode) || '-'}`;
+      sectionTitle(periodeLabel);
+      infoRow(isPLN ? 'RP Tag PLN' : 'Nilai Tagihan', rp(d.nilai_tagihan || nilaiTagihan));
+      if (isPLN && parseInt(d.denda || 0) > 0) infoRow('Denda', rp(d.denda), RED);
+      infoRow('Admin', rp(d.admin || admin_fee));
+      if (isPLN && (d.meter_awal || d.meter_akhir)) {
+        infoRow('Stand Meter', `${d.meter_awal || '?'} → ${d.meter_akhir || '?'}`);
+      }
+      gap();
+    });
+
+    // ── Rincian biaya ─────────────────────────────────────────────────────────
+    sectionTitle('Rincian Biaya');
+    infoRow(isPLN ? 'Tagihan PLN' : 'Tagihan', rp(nilaiTagihan));
+    infoRow('Admin Bank', rp(admin_fee));
+    if (Number(payment_fee) > 0) infoRow('Biaya Layanan', rp(payment_fee));
+    if (Number(voucher_discount) > 0) {
+      infoRow(`Diskon${voucher_code ? ' (' + voucher_code + ')' : ''}`, '- ' + rp(voucher_discount), GREEN);
+    }
+    gap();
+
+    // ── Pembayaran ────────────────────────────────────────────────────────────
+    sectionTitle('Pembayaran');
+    infoRow('Metode', PAYMENT_METHOD_NAMES[paymentMethod] || paymentMethod || '-');
+    infoRow('Tanggal Bayar', tglBayar);
+    infoRow('Email', customerEmail || '-');
+    gap();
+
+    // ── Total box ─────────────────────────────────────────────────────────────
+    const boxH = 38;
+    doc.rect(PAD, y, contentW, boxH).fill('#f9fafb').stroke('#e5e7eb');
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(BLACK)
+      .text('Total Bayar', PAD + 12, y + 12, { width: contentW * 0.5 });
+    doc.font('Helvetica-Bold').fontSize(16).fillColor(ORANGE)
+      .text(rp(totalAmount), PAD, y + 9, { width: contentW - 12, align: 'right' });
+    y += boxH + 12;
+
+    // ── No Ref ────────────────────────────────────────────────────────────────
+    if (data.noRef) {
+      doc.rect(PAD, y, contentW, 30).fill('#fafafa').stroke('#f3f4f6');
+      doc.font('Helvetica').fontSize(7).fillColor(GRAY)
+        .text('NO. REFERENSI', PAD + 10, y + 5, { characterSpacing: 1 });
+      doc.font('Helvetica').fontSize(8).fillColor('#374151')
+        .text(data.noRef, PAD + 10, y + 16, { width: contentW - 20 });
+      y += 40;
+    }
+
+    // ── Footer ────────────────────────────────────────────────────────────────
+    gap(8);
+    doc.moveTo(PAD, y).lineTo(W - PAD, y).strokeColor('#f3f4f6').lineWidth(0.5).stroke();
+    y += 10;
+    doc.font('Helvetica').fontSize(8).fillColor(GRAY)
+      .text('Struk ini merupakan bukti pembayaran yang sah', PAD, y, { width: contentW, align: 'center' });
+    y += 12;
+    doc.font('Helvetica').fontSize(8).fillColor(GRAY)
+      .text('Terima kasih telah menggunakan Segawon Topup', PAD, y, { width: contentW, align: 'center' });
+
+    doc.end();
+
+    return await new Promise((resolve, reject) => {
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+    });
+
   } catch (err) {
     console.error('⚠️  PDF generation failed (non-blocking):', err.message);
     return null;
