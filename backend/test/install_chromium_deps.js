@@ -33,6 +33,7 @@ const PACKAGES = [
   'libcairo2',
   'libnspr4',
   'libnss3',
+  'libxshmfence1',   // libxshmfence.so.1
 ];
 
 console.log(C.bold('\n══════════════════════════════════════════════'));
