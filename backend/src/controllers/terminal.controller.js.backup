@@ -97,7 +97,25 @@ function runProc(ws, cmd, args, cwd, env = {}) {
 function initWebSocket(server) {
   const wss = new WebSocket.Server({ server, path: '/ws/terminal' });
 
+  // [ADDED] Heartbeat — kirim ping ke semua client setiap 30 detik
+  // Mencegah koneksi dianggap idle dan diputus oleh proxy/firewall/OS
+  const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach(ws => {
+      if (ws.isAlive === false) {
+        // Client tidak merespons ping sebelumnya → terminate
+        console.log('[Terminal WS] Client tidak merespons ping, terminate koneksi');
+        return ws.terminate();
+      }
+      ws.isAlive = false;
+      ws.ping(); // native WebSocket ping frame
+    });
+  }, 30000);
+
+  wss.on('close', () => clearInterval(heartbeatInterval));
+
   wss.on('connection', (ws) => {
+    ws.isAlive = true; // [ADDED] flag untuk heartbeat
+    ws.on('pong', () => { ws.isAlive = true; }); // [ADDED] client masih hidup
     console.log('[Terminal WS] Client connected');
     let authed = false;
 
@@ -120,6 +138,12 @@ function initWebSocket(server) {
       }
 
       if (!authed) { ws.send(JSON.stringify({ type:'error', message:'Tidak terautentikasi' })); return; }
+
+      // [ADDED] Application-level ping dari frontend — balas pong, tidak perlu log
+      if (msg.type === 'ping') {
+        ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type: 'pong' }));
+        return;
+      }
 
       // Static command
       if (msg.type === 'run') {

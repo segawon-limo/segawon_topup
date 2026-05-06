@@ -3,6 +3,39 @@
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
+}
+
+/* ── Deploy Countdown Banner ───────────────────────────────── */
+.term-deploy-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #276749, #38a169);
+  color: white;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  animation: slideDown 0.3s ease;
+}
+
+.term-deploy-spinner {
+  font-size: 20px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+
+.terminal-page {
   background: #1a2030;
   color: #dce6f0;
   font-family: 'Segoe UI', system-ui, sans-serif;

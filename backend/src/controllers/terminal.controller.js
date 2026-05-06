@@ -82,7 +82,7 @@ const toPublic = (map) => Object.entries(map).reduce((acc, [k, v]) => {
   return acc;
 }, {});
 
-function runProc(ws, cmd, args, cwd, env = {}) {
+function runProc(ws, cmd, args, cwd, env = {}, onClose = null) {
   const proc = spawn(cmd, args, {
     cwd: cwd || BACKEND_DIR,
     env: { ...process.env, ...env, FORCE_COLOR: '0', TERM: 'xterm' },
@@ -90,8 +90,12 @@ function runProc(ws, cmd, args, cwd, env = {}) {
   });
   proc.stdout.on('data', d => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'stdout', data:d.toString() })));
   proc.stderr.on('data', d => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'stderr', data:d.toString() })));
-  proc.on('close', code => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'done', code, success:code===0 })));
+  proc.on('close', code => {
+    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type:'done', code, success:code===0 }));
+    if (onClose) onClose(code);
+  });
   proc.on('error', err => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type:'error', message:err.message })));
+  return proc;
 }
 
 function initWebSocket(server) {
@@ -118,6 +122,7 @@ function initWebSocket(server) {
     ws.on('pong', () => { ws.isAlive = true; }); // [ADDED] client masih hidup
     console.log('[Terminal WS] Client connected');
     let authed = false;
+    let currentProc = null; // track proses yang sedang berjalan untuk kill
 
     ws.send(JSON.stringify({ type:'init', commands:toPublic(COMMANDS), inputCommands:toPublic(INPUT_COMMANDS) }));
 
@@ -142,6 +147,23 @@ function initWebSocket(server) {
       // [ADDED] Application-level ping dari frontend — balas pong, tidak perlu log
       if (msg.type === 'ping') {
         ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type: 'pong' }));
+        return;
+      }
+
+      // Kill proses yang sedang berjalan
+      if (msg.type === 'kill') {
+        if (currentProc) {
+          try {
+            process.kill(-currentProc.pid, 'SIGTERM'); // kill process group
+          } catch (e) {
+            try { currentProc.kill('SIGTERM'); } catch (_) {}
+          }
+          ws.send(JSON.stringify({ type:'stdout', data:'\n[Proses dihentikan oleh user]\n' }));
+          ws.send(JSON.stringify({ type:'done', code:-1, success:false }));
+          currentProc = null;
+        } else {
+          ws.send(JSON.stringify({ type:'stdout', data:'[Tidak ada proses yang berjalan]\n' }));
+        }
         return;
       }
 
@@ -181,7 +203,7 @@ function initWebSocket(server) {
           return;
         }
 
-        runProc(ws, def.cmd, def.args, def.cwd || BACKEND_DIR);
+        currentProc = runProc(ws, def.cmd, def.args, def.cwd || BACKEND_DIR, {}, () => { currentProc = null; });
         return;
       }
 
@@ -192,7 +214,7 @@ function initWebSocket(server) {
         console.log(`[Terminal] psql: ${query.substring(0,80)}`);
         ws.send(JSON.stringify({ type:'start', command:'psql', label:'PostgreSQL Query' }));
         ws.send(JSON.stringify({ type:'stdout', data:`Query: ${query}\n` }));
-        runProc(ws, 'psql', ['-h',DB_HOST,'-U',DB_USER,'-d',DB_NAME,'-c',query], APP_ROOT, { PGPASSWORD: DB_PASS });
+        currentProc = runProc(ws, 'psql', ['-h',DB_HOST,'-U',DB_USER,'-d',DB_NAME,'-c',query], APP_ROOT, { PGPASSWORD: DB_PASS }, () => { currentProc = null; });
         return;
       }
 
@@ -207,7 +229,7 @@ function initWebSocket(server) {
         console.log(`[Terminal] rm: ${resolved}`);
         ws.send(JSON.stringify({ type:'start', command:'rm', label:'Remove File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`Menghapus: ${resolved}\n` }));
-        runProc(ws, 'rm', ['-v', resolved], APP_ROOT);
+        currentProc = runProc(ws, 'rm', ['-v', resolved], APP_ROOT, () => { currentProc = null; });
         return;
       }
 
@@ -218,7 +240,7 @@ function initWebSocket(server) {
         const resolved = path.resolve('/home/segawon', filePath.startsWith('/') ? filePath.slice(1) : filePath);
         ws.send(JSON.stringify({ type:'start', command:'cat', label:'Cat File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`File: ${filePath}\n` }));
-        runProc(ws, 'cat', [filePath], '/home/segawon');
+        currentProc = runProc(ws, 'cat', [filePath], '/home/segawon', () => { currentProc = null; });
         return;
       }
 
@@ -231,7 +253,7 @@ function initWebSocket(server) {
         if (!filePath) { ws.send(JSON.stringify({ type:'error', message:'Path kosong' })); return; }
         ws.send(JSON.stringify({ type:'start', command:'head', label:'Head File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`File: ${filePath} (${lines} baris pertama)\n` }));
-        runProc(ws, 'head', ['-n', lines, filePath], '/home/segawon');
+        currentProc = runProc(ws, 'head', ['-n', lines, filePath], '/home/segawon', () => { currentProc = null; });
         return;
       }
 
@@ -244,7 +266,7 @@ function initWebSocket(server) {
         if (!filePath) { ws.send(JSON.stringify({ type:'error', message:'Path kosong' })); return; }
         ws.send(JSON.stringify({ type:'start', command:'tail', label:'Tail File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`File: ${filePath} (${lines} baris terakhir)\n` }));
-        runProc(ws, 'tail', ['-n', lines, filePath], '/home/segawon');
+        currentProc = runProc(ws, 'tail', ['-n', lines, filePath], '/home/segawon', () => { currentProc = null; });
         return;
       }
 
@@ -262,7 +284,7 @@ function initWebSocket(server) {
         }
         ws.send(JSON.stringify({ type:'start', command:'grep', label:'Grep File' }));
         ws.send(JSON.stringify({ type:'stdout', data:`grep "${pattern}" ${filePath}\n` }));
-        runProc(ws, 'grep', ['-n', '--color=never', pattern, filePath], '/home/segawon');
+        currentProc = runProc(ws, 'grep', ['-n', '--color=never', pattern, filePath], '/home/segawon', () => { currentProc = null; });
         return;
       }
 
@@ -304,7 +326,7 @@ function initWebSocket(server) {
         console.log(`[Terminal] exec: ${displayCmd}`);
         ws.send(JSON.stringify({ type:'start', command:'node_exec', label:`▶ ${path.basename(resolved)} ${args.join(' ')}`.trim() }));
         ws.send(JSON.stringify({ type:'stdout', data:`$ ${displayCmd}\n` }));
-        runProc(ws, runner, runnerArgs, BACKEND_DIR);
+        currentProc = runProc(ws, runner, runnerArgs, BACKEND_DIR, () => { currentProc = null; });
         return;
       }
     });

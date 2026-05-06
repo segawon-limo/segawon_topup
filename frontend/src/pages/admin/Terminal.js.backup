@@ -19,6 +19,7 @@ export default function AdminTerminal() {
   const wsRef        = useRef(null);
   const outputRef    = useRef(null);
   const reconnTimer  = useRef(null);
+  const pingTimer    = useRef(null); // [ADDED] interval untuk application-level ping
 
   const [connected,    setConnected]    = useState(false);
   const [authed,       setAuthed]       = useState(false);
@@ -114,9 +115,19 @@ export default function AdminTerminal() {
       setReconnecting(false);
       manualReconn.current = false;
       ws.send(JSON.stringify({ type:'auth', token }));
+
+      // [ADDED] Kirim ping application-level setiap 25 detik
+      // Memastikan koneksi tetap aktif selama proses build yang lama
+      clearInterval(pingTimer.current);
+      pingTimer.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 25000);
     };
 
     ws.onclose = () => {
+      clearInterval(pingTimer.current); // [ADDED] stop ping saat koneksi tutup
       setConnected(false);
       setAuthed(false);
       setRunning(null);
@@ -140,6 +151,7 @@ export default function AdminTerminal() {
           if (msg.success) { setAuthed(true); append('── Siap. Pilih command di kiri.', 'system'); }
           else append('── Auth gagal: ' + msg.message, 'error');
           break;
+        case 'pong': break; // [ADDED] silent — hanya untuk keep-alive
         case 'start':
           setRunning(msg.command);
           isAtBottom.current = true;

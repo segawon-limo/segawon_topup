@@ -319,6 +319,28 @@
 }
 .btn-clear:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.btn-kill {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+.btn-kill:hover {
+  background: #ef4444;
+  color: #fff;
+  animation: none;
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%       { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+}
+
 .term-output {
   flex: 1;
   overflow-y: auto;

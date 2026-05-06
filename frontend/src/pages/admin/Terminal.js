@@ -30,6 +30,7 @@ export default function AdminTerminal() {
   const [confirmCmd,   setConfirmCmd]   = useState(null);
   const [inputPanel,   setInputPanel]   = useState(null);
   const [deployCountdown, setDeployCountdown] = useState(null); // null | number
+  const [killConfirm,    setKillConfirm]    = useState(false);
   const countdownRef = useRef(null);
 
   // Collapsible state: semua group terbuka by default
@@ -206,6 +207,11 @@ export default function AdminTerminal() {
     wsRef.current.send(JSON.stringify(payload));
   }
 
+  function sendKill() {
+    send({ type: 'kill' });
+    setKillConfirm(false);
+  }
+
   function clickCmd(key) {
     const cmd = commands[key];
     if (!cmd || running || !authed) return;
@@ -311,6 +317,21 @@ export default function AdminTerminal() {
             <div className="term-confirm-btns">
               <button className="btn-cancel" onClick={() => setConfirmCmd(null)}>Batal</button>
               <button className="btn-run"    onClick={execConfirm}>▶ Jalankan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Kill Confirm Modal */}
+      {killConfirm && (
+        <div className="term-overlay" onClick={() => setKillConfirm(false)}>
+          <div className="term-confirm" onClick={e => e.stopPropagation()}>
+            <div className="term-confirm-icon">🛑</div>
+            <h3>Hentikan Proses?</h3>
+            <p>Proses <strong>{commands[running]?.label || inputCmds[running]?.label || running}</strong> akan dihentikan paksa.</p>
+            <div className="term-confirm-btns">
+              <button className="btn-cancel" onClick={() => setKillConfirm(false)}>Batal</button>
+              <button className="btn-run" style={{ background:'#ef4444' }} onClick={sendKill}>🛑 Hentikan</button>
             </div>
           </div>
         </div>
@@ -444,6 +465,15 @@ export default function AdminTerminal() {
             <span className="term-output-title">
               {running ? `▶ ${commands[running]?.label || inputCmds[running]?.label || running}...` : '● Output'}
             </span>
+            {running && (
+              <button
+                className="btn-kill"
+                onClick={() => setKillConfirm(true)}
+                title="Hentikan proses yang sedang berjalan"
+              >
+                🛑 Kill
+              </button>
+            )}
             <button className="btn-clear" onClick={() => setOutput([])} disabled={!!running}>🗑 Clear</button>
           </div>
           <div className="term-output" ref={outputRef} onScroll={handleOutputScroll}>
