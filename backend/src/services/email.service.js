@@ -1117,14 +1117,33 @@ const generatePascabayarStrukHTML = (data) => {
  * Generate PDF buffer dari struk HTML
  */
 const generatePascabayarPdfBuffer = async (strukcData) => {
+  // Bungkus dengan timeout 15 detik agar tidak hang
+  const withTimeout = (promise, ms) => {
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`PDF timeout after ${ms}ms`)), ms)
+    );
+    return Promise.race([promise, timeout]);
+  };
+
   try {
     const htmlPdf = require('html-pdf-node');
     const options = {
       format: 'A5',
       printBackground: true,
       margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-zygote',
+        '--single-process',
+      ],
     };
-    return await htmlPdf.generatePdf({ content: generatePascabayarStrukHTML(strukcData) }, options);
+    return await withTimeout(
+      htmlPdf.generatePdf({ content: generatePascabayarStrukHTML(strukcData) }, options),
+      15000
+    );
   } catch (err) {
     console.error('⚠️  PDF generation failed (non-blocking):', err.message);
     return null;
