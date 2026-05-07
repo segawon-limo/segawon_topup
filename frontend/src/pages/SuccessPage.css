@@ -411,8 +411,9 @@
   font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 16px;
 }
 
-.sp-cs-viewport { overflow: hidden; position: relative; }
-.sp-cs-track    { display: flex; will-change: transform; }
+.sp-cs-viewport { overflow: hidden; position: relative; cursor: grab; user-select: none; }
+.sp-cs-viewport:active { cursor: grabbing; }
+.sp-cs-track    { display: flex; will-change: transform; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .sp-cs-page     { display: flex; gap: 10px; }
 
 .sp-cs-card {

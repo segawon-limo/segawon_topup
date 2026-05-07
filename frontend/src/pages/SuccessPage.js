@@ -34,6 +34,13 @@ export default function SuccessPage() {
   const csDotsRef  = useRef(null);
   const csBarRef   = useRef(null);
 
+  // ── drag / swipe refs ─────────────────────────────────────
+  const csDragRef      = useRef(null); // ref ke viewport element
+  const csDragging     = useRef(false);
+  const csDragStartX   = useRef(0);
+  const csDragCurrentX = useRef(0);
+  const csDragStarted  = useRef(false); // true setelah threshold terlampaui
+
   const isCodeProduct = (o) => o && CODE_PRODUCT_TYPES.includes(o.productType);
   const hasCode       = (o) => o && o.serialNumber;
 
@@ -203,6 +210,88 @@ export default function SuccessPage() {
     if (!csPaused.current) return;
     csPaused.current = false; csResetBar(); csElapsed.current = 0; csStartBar(); csTick();
   }
+
+  // ── drag / swipe handlers ─────────────────────────────────
+  function csDragStart(clientX) {
+    csDragging.current   = true;
+    csDragStarted.current = false;
+    csDragStartX.current = clientX;
+    csDragCurrentX.current = clientX;
+    csPause();
+    const track = csTrackRef.current;
+    if (track) track.style.transition = 'none';
+  }
+
+  function csDragMove(clientX) {
+    if (!csDragging.current) return;
+    csDragCurrentX.current = clientX;
+    const diff = clientX - csDragStartX.current;
+
+    // tandai drag dimulai setelah gerak ≥ 5px (biar klik tetap jalan)
+    if (!csDragStarted.current && Math.abs(diff) >= 5) {
+      csDragStarted.current = true;
+    }
+    if (!csDragStarted.current) return;
+
+    const pages = csPages.current;
+    if (!pages.length) return;
+    const track = csTrackRef.current;
+    if (!track) return;
+
+    const pct = (csCurrent.current / pages.length) * 100;
+    const offsetPct = (diff / track.parentElement.offsetWidth) * (100 / pages.length);
+    track.style.transform = `translateX(calc(-${pct}% + ${offsetPct * pages.length}%))`;
+  }
+
+  function csDragEnd() {
+    if (!csDragging.current) return;
+    csDragging.current = false;
+
+    const track = csTrackRef.current;
+    if (track) track.style.transition = '';
+
+    if (!csDragStarted.current) {
+      // hanya klik biasa, resume auto-play
+      csResume();
+      return;
+    }
+
+    const diff = csDragCurrentX.current - csDragStartX.current;
+    const threshold = (csDragRef.current?.offsetWidth || 200) * 0.2;
+
+    if (Math.abs(diff) >= threshold) {
+      const next = diff < 0
+        ? csCurrent.current + 1
+        : csCurrent.current - 1;
+      csGoTo(next);
+    } else {
+      // kembalikan ke posisi semula
+      csGoTo(csCurrent.current, true);
+    }
+
+    csResetBar();
+    csElapsed.current = 0;
+    csStartBar();
+    csTick();
+    csPaused.current = false;
+  }
+
+  // mouse events
+  function csOnMouseDown(e) { csDragStart(e.clientX); }
+  function csOnMouseMove(e) { csDragMove(e.clientX); }
+  function csOnMouseUp()    { csDragEnd(); }
+  function csOnMouseLeave() {
+    if (csDragging.current) csDragEnd();
+    else csResume();
+  }
+
+  // touch events
+  function csOnTouchStart(e) { csDragStart(e.touches[0].clientX); }
+  function csOnTouchMove(e)  {
+    if (csDragStarted.current) e.preventDefault(); // cegah scroll halaman saat swipe
+    csDragMove(e.touches[0].clientX);
+  }
+  function csOnTouchEnd()    { csDragEnd(); }
 
   // ── copy ──────────────────────────────────────────────────
   const copy = async () => {
@@ -451,12 +540,16 @@ export default function SuccessPage() {
             <p className="sp-crosssell-title">🎮 Mau topup game lain?</p>
             <div
               className="sp-cs-viewport"
-              ref={el => { /* attach pause/resume ke DOM element */ }}
+              ref={el => { csDragRef.current = el; }}
               onMouseEnter={csPause}
-              onMouseLeave={csResume}
-              onTouchStart={csPause}
-              onTouchEnd={csResume}
-              onTouchCancel={csResume}
+              onMouseLeave={csOnMouseLeave}
+              onMouseDown={csOnMouseDown}
+              onMouseMove={csOnMouseMove}
+              onMouseUp={csOnMouseUp}
+              onTouchStart={csOnTouchStart}
+              onTouchMove={csOnTouchMove}
+              onTouchEnd={csOnTouchEnd}
+              onTouchCancel={csDragEnd}
             >
               <div className="sp-cs-track" ref={csTrackRef}/>
             </div>
