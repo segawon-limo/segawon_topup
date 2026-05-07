@@ -535,14 +535,16 @@ export default function SuccessPage() {
 
         {/* ── CROSS-SELL ────────────────────────────── */}
         {crossSellGames.length >= CS_PER_PAGE && (
-          <div className="sp-crosssell">
+          <div
+            className="sp-crosssell"
+            onMouseEnter={csPause}
+            onMouseLeave={csOnMouseLeave}
+          >
             <p className="sp-crosssell-label">Rekomendasi untuk kamu</p>
             <p className="sp-crosssell-title">🎮 Mau topup game lain?</p>
             <div
               className="sp-cs-viewport"
               ref={el => { csDragRef.current = el; }}
-              onMouseEnter={csPause}
-              onMouseLeave={csOnMouseLeave}
               onMouseDown={csOnMouseDown}
               onMouseMove={csOnMouseMove}
               onMouseUp={csOnMouseUp}
