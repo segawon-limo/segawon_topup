@@ -1131,6 +1131,43 @@ function AdminCatalog() {
         <div className="cstat cstat-divider" />
         <div className="cstat"><strong>{products.filter(p => p.is_active).length}</strong> Products Aktif</div>
         <div className="cstat"><strong>{products.filter(p => !p.is_active).length}</strong> Products Nonaktif</div>
+        <div className="cstat-actions">
+          {products.filter(p => p.seller_price_warning).length > 0 && (
+            <button
+              className={`filter-price-warning-btn${filterPriceWarning ? ' active' : ''}`}
+              onClick={() => setFilterPriceWarning(v => !v)}
+              title="Filter produk yang harga Digiflazz-nya lebih tinggi dari harga modal di DB"
+            >
+              🔴 Harga Seller Naik
+              <span className="price-warning-badge">
+                {products.filter(p => p.seller_price_warning).length}
+              </span>
+            </button>
+          )}
+          {products.filter(p => p.seller_available === false).length > 0 && (
+            <button
+              className="btn-action-stock"
+              onClick={() => setActionConfirm({ type: 'updateStock' })}
+              disabled={actionLoading}
+              title="Set semua produk OOS → Ready"
+            >
+              {actionLoading ? '⏳' : '📦'} Update Stock
+              <span className="price-warning-badge oos-badge">
+                {products.filter(p => p.seller_available === false).length}
+              </span>
+            </button>
+          )}
+          {products.filter(p => p.seller_price_warning).length > 0 && (
+            <button
+              className="btn-action-reset"
+              onClick={() => setActionConfirm({ type: 'resetWarnings' })}
+              disabled={actionLoading}
+              title="Reset flag harga naik setelah update harga di catalog"
+            >
+              {actionLoading ? '⏳' : '✅'} Reset Warning
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -1182,31 +1219,6 @@ function AdminCatalog() {
                 {products.filter(p => p.seller_price_warning).length}
               </span>
             )}
-          </button>
-        )}
-        {tab === 'products' && (
-          <button
-            className="btn-action-stock"
-            onClick={() => setActionConfirm({ type: 'updateStock' })}
-            disabled={actionLoading}
-            title="Set semua produk OOS → Ready"
-          >
-            {actionLoading ? '⏳' : '📦'} Update Stock
-            {products.filter(p => p.seller_available === false).length > 0 && (
-              <span className="price-warning-badge oos-badge">
-                {products.filter(p => p.seller_available === false).length}
-              </span>
-            )}
-          </button>
-        )}
-        {tab === 'products' && products.filter(p => p.seller_price_warning).length > 0 && (
-          <button
-            className="btn-action-reset"
-            onClick={() => setActionConfirm({ type: 'resetWarnings' })}
-            disabled={actionLoading}
-            title="Reset flag harga naik setelah update harga di catalog"
-          >
-            {actionLoading ? '⏳' : '✅'} Reset Warning
           </button>
         )}
         <button
