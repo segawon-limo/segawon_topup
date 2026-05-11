@@ -53,6 +53,10 @@ router.put   ('/catalog/products/:id',      catalogController.updateProduct);
 router.delete('/catalog/products/:id',      catalogController.deleteProduct);
 router.post  ('/catalog/products/bulk',     catalogController.bulkCreateProducts);
 
+// ── Stock & Warning actions ────────────────────────────────────
+router.post  ('/catalog/update-stock',     catalogController.updateStock);
+router.post  ('/catalog/reset-warnings',   catalogController.resetWarnings);
+
 // Image Upload (base64, no multer)
 router.post('/catalog/upload-image', catalogController.uploadImage);
 

@@ -785,6 +785,8 @@ function AdminCatalog() {
   const [gameModal,    setGameModal]    = useState(null);  // null | 'new' | {game}
   const [productModal, setProductModal] = useState(null);  // null | 'new' | {product}
   const [confirmDel,   setConfirmDel]   = useState(null);  // { type, id, name }
+  const [actionConfirm, setActionConfirm] = useState(null); // { type: 'updateStock'|'resetWarnings' }
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -883,6 +885,54 @@ function AdminCatalog() {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     navigate('/admin/login');
+  };
+
+  // ── Update Stock: OOS → Ready ──────────────────────────────
+  const handleUpdateStock = async () => {
+    setActionConfirm(null);
+    setActionLoading(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/admin/catalog/update-stock`, {
+        method: 'POST', headers: { ...authHeader, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.count === 0
+          ? 'Tidak ada produk OOS saat ini.'
+          : `✅ ${data.count} produk berhasil di-set Ready!`, 'success');
+        if (data.count > 0) await loadAll();
+      } else {
+        showToast('Gagal update stock: ' + data.message, 'error');
+      }
+    } catch (err) {
+      showToast('Gagal update stock: ' + err.message, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── Reset Warnings: hapus flag harga naik ─────────────────
+  const handleResetWarnings = async () => {
+    setActionConfirm(null);
+    setActionLoading(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/admin/catalog/reset-warnings`, {
+        method: 'POST', headers: { ...authHeader, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.count === 0
+          ? 'Tidak ada flag harga naik saat ini.'
+          : `✅ ${data.count} flag harga naik berhasil direset!`, 'success');
+        if (data.count > 0) await loadAll();
+      } else {
+        showToast('Gagal reset warnings: ' + data.message, 'error');
+      }
+    } catch (err) {
+      showToast('Gagal reset warnings: ' + err.message, 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // ── Delete handler ─────────────────────────────────────────
@@ -1134,6 +1184,31 @@ function AdminCatalog() {
             )}
           </button>
         )}
+        {tab === 'products' && (
+          <button
+            className="btn-action-stock"
+            onClick={() => setActionConfirm({ type: 'updateStock' })}
+            disabled={actionLoading}
+            title="Set semua produk OOS → Ready"
+          >
+            {actionLoading ? '⏳' : '📦'} Update Stock
+            {products.filter(p => p.seller_available === false).length > 0 && (
+              <span className="price-warning-badge oos-badge">
+                {products.filter(p => p.seller_available === false).length}
+              </span>
+            )}
+          </button>
+        )}
+        {tab === 'products' && products.filter(p => p.seller_price_warning).length > 0 && (
+          <button
+            className="btn-action-reset"
+            onClick={() => setActionConfirm({ type: 'resetWarnings' })}
+            disabled={actionLoading}
+            title="Reset flag harga naik setelah update harga di catalog"
+          >
+            {actionLoading ? '⏳' : '✅'} Reset Warning
+          </button>
+        )}
         <button
           className="btn-primary"
           onClick={() => tab === 'games' ? setGameModal('new') : setProductModal('new')}
@@ -1304,6 +1379,18 @@ function AdminCatalog() {
           message={`Nonaktifkan "${confirmDel.name}"? Game/produk tidak akan tampil di halaman order, tapi data tetap aman.`}
           onConfirm={handleDelete}
           onCancel={() => setConfirmDel(null)}
+        />
+      )}
+
+      {actionConfirm && (
+        <ConfirmDialog
+          message={
+            actionConfirm.type === 'updateStock'
+              ? `Set semua produk OOS → Ready? Ini akan mengaktifkan kembali semua produk yang sedang Out of Stock.`
+              : `Reset semua flag "Harga Seller Naik"? Pastikan kamu sudah update harga modal & harga jual di catalog sebelum reset.`
+          }
+          onConfirm={actionConfirm.type === 'updateStock' ? handleUpdateStock : handleResetWarnings}
+          onCancel={() => setActionConfirm(null)}
         />
       )}
 

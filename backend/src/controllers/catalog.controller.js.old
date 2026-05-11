@@ -216,12 +216,13 @@ exports.deleteGame = async (req, res) => {
  */
 exports.getProducts = async (req, res) => {
   try {
-    const { game_id, search } = req.query;
+    const { game_id, search, price_warning } = req.query;
     const params = [];
     let where = [];
 
-    if (game_id) { params.push(game_id); where.push(`p.game_id = $${params.length}`); }
-    if (search)  { params.push(`%${search}%`); where.push(`(p.name ILIKE $${params.length} OR p.sku ILIKE $${params.length})`); }
+    if (game_id)       { params.push(game_id); where.push(`p.game_id = $${params.length}`); }
+    if (search)        { params.push(`%${search}%`); where.push(`(p.name ILIKE $${params.length} OR p.sku ILIKE $${params.length})`); }
+    if (price_warning === 'true') { where.push(`p.seller_price_warning = true`); }
 
     const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -230,6 +231,7 @@ exports.getProducts = async (req, res) => {
         p.id, p.name, p.description, p.sku,
         p.base_price, p.selling_price, p.profit_price,
         p.is_active, p.sort_order, p.seller_available,
+        p.seller_price_warning,
         p.compare_price, p.compare_percentage,
         p.section,
         g.icon_product_url,

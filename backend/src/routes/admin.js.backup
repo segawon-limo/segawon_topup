@@ -22,6 +22,11 @@ router.get('/stats/top-products',    adminController.getTopProducts);
 router.get('/stats/payment-methods', adminController.getPaymentStats);
 router.get('/stats/hourly-pattern',  adminController.getHourlyPattern);
 
+// [ADDED] Visitor Analytics
+const visitorController = require('../controllers/visitor.controller');
+router.get('/visitors/stats', visitorController.getVisitorStats);
+router.get('/visitors/log',   visitorController.getVisitorLog);
+
 // Orders Management
 router.get ('/orders',        adminController.getOrders);
 router.post('/orders/retry',  adminController.retryFailedOrders);

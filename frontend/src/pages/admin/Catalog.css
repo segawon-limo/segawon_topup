@@ -487,6 +487,49 @@
   line-height: 1;
 }
 
+.price-warning-badge.oos-badge {
+  background: #f97316;
+}
+
+/* ── Action buttons: Update Stock & Reset Warning ── */
+.btn-action-stock,
+.btn-action-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+  border: 1.5px solid;
+}
+.btn-action-stock {
+  border-color: #f97316;
+  background: transparent;
+  color: #f97316;
+}
+.btn-action-stock:hover:not(:disabled) {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.btn-action-reset {
+  border-color: #10b981;
+  background: transparent;
+  color: #10b981;
+}
+.btn-action-reset:hover:not(:disabled) {
+  background: #ecfdf5;
+  color: #065f46;
+}
+.btn-action-stock:disabled,
+.btn-action-reset:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Badge merah di kolom Stock tabel produk */
 .badge-price-warning {
   display: inline-block;
