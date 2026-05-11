@@ -1207,20 +1207,6 @@ function AdminCatalog() {
             <option value="ready">✓ Ready</option>
           </select>
         )}
-        {tab === 'products' && (
-          <button
-            className={`filter-price-warning-btn${filterPriceWarning ? ' active' : ''}`}
-            onClick={() => setFilterPriceWarning(v => !v)}
-            title="Filter produk yang harga Digiflazz-nya lebih tinggi dari harga modal di DB"
-          >
-            🔴 Harga Seller Naik
-            {products.filter(p => p.seller_price_warning).length > 0 && (
-              <span className="price-warning-badge">
-                {products.filter(p => p.seller_price_warning).length}
-              </span>
-            )}
-          </button>
-        )}
         <button
           className="btn-primary"
           onClick={() => tab === 'games' ? setGameModal('new') : setProductModal('new')}
