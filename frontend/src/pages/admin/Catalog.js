@@ -455,8 +455,8 @@ function ProductModal({ product, games, onClose, onSaved, authHeader }) {
     base_price:       product?.base_price       || '',
     selling_price:    product?.selling_price    || '',
     profit_price:     product?.profit_price     || '',
-    margin:           product?.selling_price && product?.profit_price
-                        ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.selling_price)) * 1000) / 10).toFixed(1)
+    margin:           product?.base_price && product?.profit_price
+                        ? (Math.ceil((parseFloat(product.profit_price) / parseFloat(product.base_price)) * 1000) / 10).toFixed(1)
                         : '',
     compare_price:      product?.compare_price      || '',
     compare_percentage: product?.compare_price && product?.selling_price

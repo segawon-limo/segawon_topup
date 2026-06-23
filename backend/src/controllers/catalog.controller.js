@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { computePricingFields } = require('../services/pricingFields.service');
 
 // ══════════════════════════════════════════════════════════════
 // GAMES
@@ -230,6 +231,7 @@ exports.getProducts = async (req, res) => {
       SELECT
         p.id, p.name, p.description, p.sku,
         p.base_price, p.selling_price, p.profit_price,
+        p.pricing_mode, p.margin_percent, p.fixed_profit_amount,
         p.is_active, p.sort_order, p.seller_available,
         p.seller_price_warning,
         p.compare_price, p.compare_percentage,
@@ -262,7 +264,7 @@ exports.createProduct = async (req, res) => {
       base_price, selling_price, profit_price,
       is_active, sort_order, seller_available,
       compare_price, compare_percentage,
-      section
+      section, pricing_mode: pricingModeInput,
     } = req.body;
 
     if (!game_id || !name || !sku || !selling_price) {
@@ -275,24 +277,39 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: `SKU "${sku}" sudah ada` });
     }
 
-    // Auto-hitung profit_price jika tidak diisi
-    const computedProfit = profit_price || (selling_price - (base_price || 0));
+    // Tentukan pricing_mode: pakai yang dikirim FE kalau ada, kalau tidak,
+    // infer dari game (produk baru di game "Token PLN" default fixed_amount).
+    let pricingMode = pricingModeInput;
+    if (pricingMode !== 'percentage' && pricingMode !== 'fixed_amount') {
+      const gameRow = await pool.query(`SELECT slug, name FROM games WHERE id = $1`, [game_id]);
+      const game = gameRow.rows[0];
+      const isPln = game && (/pln/i.test(game.slug || '') || /pln/i.test(game.name || ''));
+      pricingMode = isPln ? 'fixed_amount' : 'percentage';
+    }
+
+    // Hitung profit_price/margin_percent/fixed_profit_amount dari SATU sumber kebenaran
+    // (bukan dihitung manual di sini lagi — supaya konsisten dengan auto-reprice cron)
+    const finalBase = base_price || 0;
+    const finalSelling = parseFloat(selling_price);
+    const pf = computePricingFields(finalBase, finalSelling, pricingMode);
 
     const result = await pool.query(`
       INSERT INTO products (
         game_id, name, description, sku,
         base_price, selling_price, profit_price,
+        pricing_mode, margin_percent, fixed_profit_amount,
         is_active, sort_order, seller_available,
         compare_price, compare_percentage,
         section,
         created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, NOW(), NOW())
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, NOW(), NOW())
       RETURNING *
     `, [
       game_id, name, description || null, sku,
-      base_price || 0,
-      parseFloat(selling_price),
-      computedProfit,
+      finalBase,
+      finalSelling,
+      pf.profit_price,
+      pricingMode, pf.margin_percent, pf.fixed_profit_amount,
       is_active !== false,
       sort_order || 0,
       seller_available !== false,
@@ -320,7 +337,7 @@ exports.updateProduct = async (req, res) => {
       base_price, selling_price, profit_price,
       is_active, sort_order, seller_available,
       compare_price, compare_percentage,
-      section
+      section, pricing_mode: pricingModeInput,
     } = req.body;
 
     // Cek SKU duplicate (exclude diri sendiri)
@@ -333,27 +350,49 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
+    // Ambil base_price/selling_price/pricing_mode SAAT INI dulu — base_price &
+    // selling_price final perlu diketahui pasti (bukan COALESCE di level SQL)
+    // supaya margin_percent/fixed_profit_amount dihitung dari nilai yang BENAR
+    // akan tersimpan, bukan dari input parsial yang mungkin undefined.
+    const current = await pool.query(
+      `SELECT base_price, selling_price, pricing_mode FROM products WHERE id = $1`, [id]
+    );
+    if (!current.rows.length) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    const finalBase    = base_price !== undefined && base_price !== null ? base_price : current.rows[0].base_price;
+    const finalSelling = selling_price !== undefined && selling_price !== null ? selling_price : current.rows[0].selling_price;
+    const finalPricingMode = (pricingModeInput === 'percentage' || pricingModeInput === 'fixed_amount')
+      ? pricingModeInput
+      : current.rows[0].pricing_mode;
+
+    const pf = computePricingFields(finalBase, finalSelling, finalPricingMode);
+
     const result = await pool.query(`
       UPDATE products SET
         game_id          = COALESCE($1, game_id),
         name             = COALESCE($2, name),
         description      = $3,
         sku              = COALESCE($4, sku),
-        base_price       = COALESCE($5, base_price),
-        selling_price    = COALESCE($6, selling_price),
-        profit_price     = COALESCE($7, profit_price),
-        is_active        = COALESCE($8, is_active),
-        sort_order       = COALESCE($9, sort_order),
-        seller_available = COALESCE($10, seller_available),
-        compare_price      = $11,
-        compare_percentage = $12,
-        section            = $13,
+        base_price       = $5,
+        selling_price    = $6,
+        profit_price     = $7,
+        pricing_mode     = $8,
+        margin_percent   = $9,
+        fixed_profit_amount = $10,
+        is_active        = COALESCE($11, is_active),
+        sort_order       = COALESCE($12, sort_order),
+        seller_available = COALESCE($13, seller_available),
+        compare_price      = $14,
+        compare_percentage = $15,
+        section            = $16,
         updated_at       = NOW()
-      WHERE id = $14
+      WHERE id = $17
       RETURNING *
     `, [
       game_id, name, description, sku,
-      base_price, selling_price, profit_price,
+      finalBase, finalSelling, pf.profit_price,
+      finalPricingMode, pf.margin_percent, pf.fixed_profit_amount,
       is_active, sort_order,
       seller_available !== undefined ? seller_available : null,
       compare_price ? parseFloat(compare_price) : null,

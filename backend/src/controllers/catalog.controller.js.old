@@ -520,3 +520,66 @@ exports.uploadImage = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+// ── Update Stock: set semua OOS → Ready ──────────────────────
+exports.updateStock = async (req, res) => {
+  try {
+    const oosResult = await pool.query(`
+      SELECT p.name, p.sku, g.name as game_name
+      FROM products p
+      LEFT JOIN games g ON g.id = p.game_id
+      WHERE p.seller_available = false
+      ORDER BY g.name, p.name
+    `);
+
+    if (oosResult.rows.length === 0) {
+      return res.json({ success: true, count: 0, message: 'Tidak ada produk OOS saat ini.' });
+    }
+
+    const count = oosResult.rows.length;
+    await pool.query(`UPDATE products SET seller_available = true, updated_at = NOW() WHERE seller_available = false`);
+
+    const grouped = {};
+    oosResult.rows.forEach(p => {
+      if (!grouped[p.game_name]) grouped[p.game_name] = [];
+      grouped[p.game_name].push({ name: p.name, sku: p.sku });
+    });
+
+    res.json({ success: true, count, grouped, message: `${count} produk berhasil dikembalikan ke status Ready.` });
+  } catch (err) {
+    console.error('updateStock error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ── Reset Warnings: hapus flag seller_price_warning ──────────
+exports.resetWarnings = async (req, res) => {
+  try {
+    const check = await pool.query(`SELECT COUNT(*) as count FROM products WHERE seller_price_warning = true`);
+    const count = parseInt(check.rows[0].count);
+
+    if (count === 0) {
+      return res.json({ success: true, count: 0, message: 'Tidak ada produk dengan flag harga naik saat ini.' });
+    }
+
+    const before = await pool.query(`
+      SELECT p.name, p.sku, g.name as game_name
+      FROM products p
+      LEFT JOIN games g ON g.id = p.game_id
+      WHERE p.seller_price_warning = true
+      ORDER BY g.name, p.name
+    `);
+
+    await pool.query(`UPDATE products SET seller_price_warning = false, updated_at = NOW() WHERE seller_price_warning = true`);
+
+    const grouped = {};
+    before.rows.forEach(p => {
+      if (!grouped[p.game_name]) grouped[p.game_name] = [];
+      grouped[p.game_name].push({ name: p.name, sku: p.sku });
+    });
+
+    res.json({ success: true, count, grouped, message: `${count} flag harga naik berhasil direset.` });
+  } catch (err) {
+    console.error('resetWarnings error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
