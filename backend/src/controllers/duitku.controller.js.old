@@ -313,6 +313,17 @@ exports.duitkuCallback = async (req, res) => {
       }
 
       // Update order status
+      // PENTING: provider_response di-MERGE, bukan di-overwrite
+      // agar data pascabayar (ref_id, admin_fee, dll) tidak hilang
+      const existingProviderData = typeof order.provider_response === 'string'
+        ? (() => { try { return JSON.parse(order.provider_response); } catch(e) { return {}; } })()
+        : (order.provider_response || {});
+
+      const mergedProviderData = {
+        ...existingProviderData,
+        duitku: { reference, paymentCode, settlementDate, issuerCode, resultCode }
+      };
+
       await pool.query(`
         UPDATE orders 
         SET 
@@ -322,16 +333,7 @@ exports.duitkuCallback = async (req, res) => {
           provider_response = $1,
           updated_at = CURRENT_TIMESTAMP
         WHERE order_number = $2
-      `, [
-        JSON.stringify({
-          reference,
-          paymentCode,
-          settlementDate,
-          issuerCode,
-          resultCode
-        }),
-        merchantOrderId
-      ]);
+      `, [JSON.stringify(mergedProviderData), merchantOrderId]);
 
       // Insert transaction record
       await pool.query(`
