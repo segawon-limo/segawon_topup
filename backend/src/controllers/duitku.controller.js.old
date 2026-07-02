@@ -5,6 +5,7 @@
 
 const duitkuService = require('../services/duitku.service');
 const digiflazzService = require('../services/digiflazz.service');
+const emailService = require('../services/email.service');
 const { pool } = require('../config/database');
 
 /**
@@ -565,6 +566,50 @@ async function processPascabayarPayment(order) {
       `UPDATE pascabayar_inquiries SET status = 'paid', updated_at = NOW() WHERE ref_id = $1`,
       [ref_id]
     );
+
+    // ── Kirim email struk pascabayar ──────────────────────────────────────
+    // PENTING: ini jalur penyelesaian UTAMA untuk pascabayar (sinkron, lewat
+    // pay-pasca Digiflazz di atas) — bukan via webhook digiflazz.controller.js.
+    // Webhook Digiflazz untuk transaksi yang sudah selesai sinkron seperti ini
+    // kemungkinan besar TIDAK pernah dikirim oleh Digiflazz, dan kalaupun
+    // dikirim akan di-skip karena order_status sudah 'completed' duluan.
+    // Jadi email HARUS dikirim di sini, bukan hanya di webhook handler.
+    if (orderStatus === 'completed' && order.customer_email) {
+      try {
+        const webhookDetail = digiflazzResult?.data?.desc?.detail || [];
+        emailService.sendPascabayarCompleteEmail({
+          orderNumber:       order.order_number,
+          customerName:      order.customer_name || null,
+          customerEmail:     order.customer_email,
+          buyer_sku_code:    buyer_sku_code,
+          customerNo:        customer_no,
+          pln_customer_name: digiflazzResult?.data?.customer_name || null,
+          tarif:             digiflazzResult?.data?.desc?.tarif || null,
+          daya:              digiflazzResult?.data?.desc?.daya  || null,
+          periode:           providerData?.periode || digiflazzResult?.data?.periode || null,
+          detail:            webhookDetail,
+          selling_price:     providerData?.selling_price || null,
+          admin_fee:         providerData?.admin_fee     || null,
+          payment_fee:       order.payment_fee      || 0,
+          voucher_code:      order.voucher_code     || null,
+          voucher_discount:  order.voucher_discount || 0,
+          totalAmount:       order.total_amount,
+          paymentMethod:     order.payment_method || null,
+          noRef:             sn || null,
+          paidAt:            new Date().toISOString(),
+        }).then(result => {
+          if (result.success) {
+            console.log(`✅ Pascabayar email terkirim: ${order.order_number} → ${order.customer_email}`);
+          } else {
+            console.error(`❌ Pascabayar email GAGAL terkirim: ${order.order_number}`, result.error);
+          }
+        }).catch(err => console.error('❌ Pascabayar email error (uncaught):', err.message));
+      } catch (emailErr) {
+        console.error('❌ Pascabayar email service error:', emailErr);
+      }
+    } else if (orderStatus === 'completed' && !order.customer_email) {
+      console.error(`⚠️  Pascabayar ${order.order_number} completed TAPI customer_email kosong — email tidak terkirim`);
+    }
 
     console.log(`✅ Pascabayar done: ${order.order_number} status=${orderStatus} sn=${sn}`);
 

@@ -29,7 +29,9 @@ router.get('/visitors/log',   visitorController.getVisitorLog);
 
 // Orders Management
 router.get ('/orders',        adminController.getOrders);
-router.post('/orders/retry',  adminController.retryFailedOrders);
+router.post('/orders/retry',                    adminController.retryFailedOrders);
+router.post('/orders/retry-pascabayar-inquiry', adminController.retryPascabayarInquiry);
+router.post('/orders/retry-pascabayar-pay',     adminController.retryPascabayarPay);
 
 // Alerts
 router.get('/alerts', adminController.getAlerts);

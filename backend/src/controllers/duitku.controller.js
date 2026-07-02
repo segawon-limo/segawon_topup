@@ -880,5 +880,6 @@ module.exports = {
   createTransaction: exports.createTransaction,
   checkTransactionStatus: exports.checkTransactionStatus,
   duitkuCallback: exports.duitkuCallback,
-  testDuitku: exports.testDuitku
+  testDuitku: exports.testDuitku,
+  processPascabayarPayment, // dipakai oleh admin.controller.js untuk retry pascabayar
 };

@@ -39,7 +39,8 @@ const getPayStatus = (s) => PAY_CONFIG[(s||'').toLowerCase()]    || { label: s, 
 
 // ── Confirm Retry Modal ───────────────────────────────────────
 function ConfirmModal({ order, onConfirm, onCancel }) {
-  const hasUserId = !!order.game_user_id;
+  const isPascabayar = !order.product_id;
+  const hasUserId    = !!order.game_user_id;
   return (
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
@@ -47,17 +48,15 @@ function ConfirmModal({ order, onConfirm, onCancel }) {
           <div style={{ fontSize:48, marginBottom:6 }}>🔄</div>
           <h2 style={{ margin:0, fontSize:20 }}>Konfirmasi Retry</h2>
           <p style={{ color:'#718096', fontSize:13, margin:'6px 0 0' }}>
-            Kirim ulang request topup ke Digiflazz
+            {isPascabayar ? 'Cek tagihan terbaru ke Digiflazz' : 'Kirim ulang request topup ke Digiflazz'}
           </p>
         </div>
 
         <div style={{ background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:10, padding:'14px 16px', marginBottom:16 }}>
-          {[
-            ['Order',    order.order_number, true],
-            ['Produk',   order.product_name, false],
-            ['Customer', order.customer_name, false],
-            ['User ID',  order.game_user_id,  false],
-          ].map(([label, value, mono]) => (
+          {(isPascabayar
+            ? [['Order', order.order_number, true], ['Produk', order.product_name, false], ['Customer', order.customer_name, false]]
+            : [['Order', order.order_number, true], ['Produk', order.product_name, false], ['Customer', order.customer_name, false], ['User ID', order.game_user_id, false]]
+          ).map(([label, value, mono]) => (
             <div key={label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'7px 0', borderBottom:'1px solid #edf2f7' }}>
               <span style={{ color:'#718096', fontSize:13 }}>{label}</span>
               <span style={{ fontFamily: mono ? 'monospace':'inherit', fontSize:13, fontWeight:600, color: (!value && label==='User ID') ? '#e53e3e':'#2d3748' }}>
@@ -67,22 +66,79 @@ function ConfirmModal({ order, onConfirm, onCancel }) {
           ))}
         </div>
 
-        {!hasUserId && (
+        {!isPascabayar && !hasUserId && (
           <div style={{ background:'#fff5f5', border:'1px solid #fed7d7', borderRadius:8, padding:'10px 14px', marginBottom:16, color:'#c53030', fontSize:13 }}>
             ⚠️ User ID kosong — topup kemungkinan akan gagal lagi.
           </div>
         )}
 
+        {isPascabayar && (
+          <div style={{ background:'#fffbeb', border:'1px solid #fcd34d', borderRadius:8, padding:'10px 14px', marginBottom:16, color:'#92400e', fontSize:13 }}>
+            📋 Sistem akan cek tagihan terbaru. Konfirmasi bayar dilakukan di langkah berikutnya.
+          </div>
+        )}
+
         <div style={{ display:'flex', gap:10 }}>
           <button onClick={onCancel}  className="btn-secondary" style={{ flex:1, padding:'11px 0' }}>Batal</button>
-          <button onClick={onConfirm} className="btn-primary"   style={{ flex:1, padding:'11px 0' }}>🔄 Ya, Retry</button>
+          <button onClick={onConfirm} className="btn-primary"   style={{ flex:1, padding:'11px 0' }}>
+            {isPascabayar ? '📋 Cek Tagihan' : '🔄 Ya, Retry'}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Order Detail Modal ────────────────────────────────────────
+// ── Pascabayar Retry Step 2: Konfirmasi Bayar ─────────────────
+function PascabayarPayConfirmModal({ inquiryData, orderId, orderNumber, onConfirm, onCancel, paying }) {
+  if (!inquiryData) return null;
+  const detail = inquiryData.inquiry?.detail || inquiryData.inquiry?.desc?.detail || [];
+  const total  = inquiryData.inquiry?.selling_price;
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+        <div style={{ textAlign:'center', marginBottom:16 }}>
+          <div style={{ fontSize:40, marginBottom:6 }}>📋</div>
+          <h2 style={{ margin:0, fontSize:18 }}>Tagihan Terbaru — Konfirmasi Bayar</h2>
+          <p style={{ color:'#718096', fontSize:12, margin:'4px 0 0' }}>{orderNumber}</p>
+        </div>
+
+        <div style={{ background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:10, padding:'14px 16px', marginBottom:14 }}>
+          {[
+            ['Pelanggan',  inquiryData.inquiry?.customer_name],
+            ['Periode',    inquiryData.inquiry?.periode || '—'],
+            ['Tagihan',    total ? `Rp ${parseInt(total).toLocaleString('id-ID')}` : '—'],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #edf2f7' }}>
+              <span style={{ color:'#718096', fontSize:13 }}>{label}</span>
+              <span style={{ fontSize:13, fontWeight:600 }}>{value || '—'}</span>
+            </div>
+          ))}
+          {detail.map((d, i) => (
+            <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid #edf2f7' }}>
+              <span style={{ color:'#a0aec0', fontSize:12 }}>Detail {i+1}</span>
+              <span style={{ fontSize:12 }}>
+                {d.periode || ''} {d.nilai_tagihan ? `Rp ${parseInt(d.nilai_tagihan).toLocaleString('id-ID')}` : ''}
+                {d.admin && parseInt(d.admin) > 0 ? ` + admin Rp ${parseInt(d.admin).toLocaleString('id-ID')}` : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background:'#fffbeb', border:'1px solid #fcd34d', borderRadius:8, padding:'10px 14px', marginBottom:14, color:'#92400e', fontSize:13 }}>
+          ⚠️ Pastikan nominal sesuai sebelum konfirmasi — pembayaran tidak bisa dibatalkan.
+        </div>
+
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={onCancel} className="btn-secondary" style={{ flex:1, padding:'11px 0' }} disabled={paying}>Batal</button>
+          <button onClick={onConfirm} className="btn-primary" style={{ flex:1, padding:'11px 0' }} disabled={paying}>
+            {paying ? '⏳ Memproses...' : '✅ Konfirmasi Bayar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 function OrderDetailModal({ order, onClose, onRetry, retrying }) {
   const status    = getStatus(order.order_status);
   const payStatus = getPayStatus(order.payment_status);
@@ -197,6 +253,8 @@ function AdminOrders() {
   const [orders,       setOrders]       = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [retrying,     setRetrying]     = useState(null);
+  const [paying,       setPaying]       = useState(false);
+  const [pascabayarInquiryResult, setPascabayarInquiryResult] = useState(null);
   const [toast,        setToast]        = useState(null);
   const [detailOrder,  setDetailOrder]  = useState(null);
   const [confirmOrder, setConfirmOrder] = useState(null);
@@ -234,6 +292,30 @@ function AdminOrders() {
   const doRetry = async (order) => {
     setConfirmOrder(null);
     setDetailOrder(null);
+    const isPascabayar = !order.product_id;
+
+    if (isPascabayar) {
+      // Step 1 pascabayar: inquiry ulang dulu, tampilkan tagihan ke admin
+      setRetrying(order.id);
+      try {
+        const res  = await fetch(`${API_URL}/api/admin/orders/retry-pascabayar-inquiry`, {
+          method:'POST',
+          headers: { ...authHeader, 'Content-Type':'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setPascabayarInquiryResult({ ...data, originalOrder: order });
+        } else {
+          showToast(`❌ Inquiry gagal: ${data.message}`, 'error');
+        }
+      } catch (err) {
+        showToast(`❌ Error: ${err.message}`, 'error');
+      } finally { setRetrying(null); }
+      return;
+    }
+
+    // Prabayar — flow retry normal
     setRetrying(order.id);
     try {
       const res  = await fetch(`${API_URL}/api/admin/orders/retry`, {
@@ -253,6 +335,31 @@ function AdminOrders() {
     } finally { setRetrying(null); }
   };
 
+  const doPascabayarPay = async () => {
+    if (!pascabayarInquiryResult) return;
+    setPaying(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/orders/retry-pascabayar-pay`, {
+        method:'POST',
+        headers: { ...authHeader, 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          orderId: pascabayarInquiryResult.orderId,
+          ref_id:  pascabayarInquiryResult.inquiry?.ref_id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ Pembayaran berhasil! SN: ${data.sn || '-'}`, 'success');
+        setPascabayarInquiryResult(null);
+        loadOrders();
+      } else {
+        showToast(`❌ Gagal: ${data.message}`, 'error');
+      }
+    } catch (err) {
+      showToast(`❌ Error: ${err.message}`, 'error');
+    } finally { setPaying(false); }
+  };
+
   const handleRetryClick = (order, e) => { e?.stopPropagation(); setConfirmOrder(order); };
 
   return (
@@ -260,6 +367,16 @@ function AdminOrders() {
       {toast && <div className={`toast-notif ${toast.type==='error'?'toast-error':'toast-success'}`}>{toast.message}</div>}
       {detailOrder  && <OrderDetailModal order={detailOrder}  onClose={() => setDetailOrder(null)}  onRetry={handleRetryClick} retrying={retrying} />}
       {confirmOrder && <ConfirmModal     order={confirmOrder} onConfirm={() => doRetry(confirmOrder)} onCancel={() => setConfirmOrder(null)} />}
+      {pascabayarInquiryResult && (
+        <PascabayarPayConfirmModal
+          inquiryData={pascabayarInquiryResult}
+          orderId={pascabayarInquiryResult.orderId}
+          orderNumber={pascabayarInquiryResult.orderNumber}
+          onConfirm={doPascabayarPay}
+          onCancel={() => setPascabayarInquiryResult(null)}
+          paying={paying}
+        />
+      )}
 
       <AdminPageHeader title="Orders Management">
         <button onClick={() => navigate('/admin/dashboard')} className="btn-secondary">📊 Dashboard</button>
