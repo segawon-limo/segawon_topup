@@ -2,6 +2,7 @@ const pool = require('../config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const digiflazzService = require('../services/digiflazz.service');
+const pascabayarController = require('./pascabayar.controller');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segawon-admin-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '7d';
@@ -355,6 +356,18 @@ exports.retryFailedOrders = async (req, res) => {
 
         const order = orderResult.rows[0];
 
+        // Pascabayar orders (product_id = NULL) tidak bisa di-retry lewat endpoint ini.
+        // Retry pascabayar butuh inquiry ulang ke Digiflazz dulu — gunakan
+        // POST /api/admin/orders/retry-pascabayar-inquiry endpoint yang terpisah.
+        if (!order.product_id) {
+          results.failed.push({
+            orderId,
+            reason: 'Order ini adalah pascabayar. Gunakan tombol "Retry Inquiry" untuk cek tagihan terbaru dulu.',
+            isPascabayar: true,
+          });
+          continue;
+        }
+
         // Get product SKU
         const productResult = await pool.query(
           'SELECT sku FROM products WHERE id = $1',
@@ -477,5 +490,182 @@ exports.getAlerts = async (req, res) => {
       success: false,
       message: 'Failed to load alerts'
     });
+  }
+};
+/**
+ * POST /api/admin/orders/retry-pascabayar-inquiry
+ * Body: { orderId }
+ *
+ * Step 1 dari 2-step retry untuk order pascabayar yang failed:
+ * Jalankan ulang inquiry ke Digiflazz pakai buyer_sku_code + customer_no
+ * yang tersimpan di provider_response order lama.
+ *
+ * Ini TIDAK langsung membayar — hasilnya (tagihan terbaru) dikembalikan
+ * ke admin untuk dikonfirmasi dulu sebelum bayar.
+ * Step 2 adalah admin klik konfirmasi, yang akan memanggil langsung
+ * processPascabayarPayment (tanpa perlu customer bayar lagi karena sudah Lunas).
+ */
+exports.retryPascabayarInquiry = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'orderId wajib diisi' });
+    }
+
+    // Ambil order — harus failed, lunas (payment_status completed), dan pascabayar
+    const orderResult = await pool.query(
+      `SELECT * FROM orders
+       WHERE id = $1
+         AND product_id IS NULL
+         AND order_status IN ('failed', 'FAILED', 'pending_retry', 'PENDING_RETRY')`,
+      [orderId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order pascabayar tidak ditemukan atau statusnya tidak bisa di-retry'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Ambil buyer_sku_code dan customer_no dari provider_response yang tersimpan
+    const providerData = typeof order.provider_response === 'string'
+      ? (() => { try { return JSON.parse(order.provider_response); } catch (e) { return {}; } })()
+      : (order.provider_response || {});
+
+    const buyer_sku_code = providerData.buyer_sku_code || providerData.digiflazz?.buyer_sku_code;
+    const customer_no    = providerData.customer_no;
+
+    if (!buyer_sku_code || !customer_no) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data buyer_sku_code atau customer_no tidak ditemukan di order lama. Tidak bisa inquiry ulang.'
+      });
+    }
+
+    // Delegate ke pascabayar inquiry — persis sama dengan flow normal customer,
+    // tapi dipanggil oleh admin. Hasilnya dikembalikan ke frontend untuk ditampilkan
+    // sebelum admin konfirmasi pembayaran.
+    const fakeReq = {
+      body: { buyer_sku_code, customer_no }
+    };
+
+    let inquiryResult = null;
+    let inquiryError  = null;
+
+    const fakeRes = {
+      status: (code) => ({
+        json: (data) => { inquiryError = { code, ...data }; }
+      }),
+      json: (data) => { inquiryResult = data; }
+    };
+
+    await pascabayarController.inquiry(fakeReq, fakeRes);
+
+    if (inquiryError) {
+      return res.status(inquiryError.code || 400).json({
+        success: false,
+        message: inquiryError.message || 'Gagal inquiry ulang ke Digiflazz',
+      });
+    }
+
+    // Kembalikan hasil inquiry + orderId agar frontend bisa konfirmasi di step 2
+    return res.json({
+      success: true,
+      orderId,
+      orderNumber: order.order_number,
+      customerEmail: order.customer_email,
+      customerName:  order.customer_name,
+      customerPhone: order.customer_phone,
+      inquiry: inquiryResult?.data,
+    });
+
+  } catch (err) {
+    console.error('retryPascabayarInquiry error:', err);
+    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
+  }
+};
+
+/**
+ * POST /api/admin/orders/retry-pascabayar-pay
+ * Body: { orderId, ref_id }
+ *
+ * Step 2 dari 2-step retry:
+ * Admin sudah konfirmasi tagihan dari inquiry terbaru.
+ * Langsung hit Digiflazz pay-pasca pakai ref_id inquiry baru,
+ * lalu update order_status ke completed/failed.
+ * Tidak perlu buat order baru atau bayar ke Duitku lagi — sudah Lunas.
+ */
+exports.retryPascabayarPay = async (req, res) => {
+  try {
+    const { orderId, ref_id } = req.body;
+
+    if (!orderId || !ref_id) {
+      return res.status(400).json({ success: false, message: 'orderId dan ref_id wajib diisi' });
+    }
+
+    const orderResult = await pool.query(
+      `SELECT * FROM orders WHERE id = $1 AND product_id IS NULL`,
+      [orderId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Order tidak ditemukan' });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Cek inquiry masih valid di DB
+    const inquiryResult = await pool.query(
+      `SELECT * FROM pascabayar_inquiries WHERE ref_id = $1 AND status = 'pending'`,
+      [ref_id]
+    );
+
+    if (inquiryResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Inquiry sudah expired atau tidak ditemukan. Lakukan retry inquiry ulang.'
+      });
+    }
+
+    // Delegate ke duitku processPascabayarPayment — fungsi yang sama dengan
+    // alur normal (sudah include kirim email, update order, dll)
+    const { processPascabayarPayment } = require('./duitku.controller');
+
+    // Override ref_id dan provider_response untuk pakai inquiry baru
+    const orderForRetry = {
+      ...order,
+      provider_response: {
+        ...(typeof order.provider_response === 'object'
+          ? order.provider_response
+          : (() => { try { return JSON.parse(order.provider_response); } catch (e) { return {}; } })()),
+        ref_id,
+      }
+    };
+
+    await processPascabayarPayment(orderForRetry);
+
+    // Cek hasil: apakah order sudah completed?
+    const updatedOrder = await pool.query(
+      `SELECT order_status, provider_serial_number FROM orders WHERE id = $1`,
+      [orderId]
+    );
+    const updated = updatedOrder.rows[0];
+
+    return res.json({
+      success: updated.order_status === 'completed',
+      order_status: updated.order_status,
+      sn: updated.provider_serial_number || null,
+      message: updated.order_status === 'completed'
+        ? 'Pembayaran pascabayar berhasil diproses'
+        : 'Digiflazz memproses — cek kembali status order',
+    });
+
+  } catch (err) {
+    console.error('retryPascabayarPay error:', err);
+    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
   }
 };

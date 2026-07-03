@@ -270,7 +270,7 @@ exports.getOrders = async (req, res) => {
     params.push(limit, offset);
     const result = await pool.query(`
       SELECT 
-        o.id, o.order_number, o.game_user_id, o.game_user_tag,
+        o.id, o.order_number, o.product_id, o.game_user_id, o.game_user_tag,
         o.customer_name, o.customer_email, o.customer_phone,
         o.amount, o.payment_fee, o.subtotal, o.total_amount,
         o.order_status, o.payment_status, o.payment_method, o.payment_gateway,
